@@ -29,3 +29,6 @@ Quando o orquestrador pedir, atualize o status (A fazer → Em andamento → Em 
 
 ## Entrega
 Responda com a tabela dos cards (ID, título, camada, prioridade, dependências) e o caminho de `docs/backlog.md`. Não resuma critérios de aceite: eles ficam no card. Se alguma informação essencial da demanda estiver ambígua, liste as perguntas em vez de inventar critérios.
+
+## Projeto web (pasta `web/`)
+Se a atividade for do site Stocky Web, leia `docs/web/CONTEXTO.md` e `docs/web/requisitos.md` antes de tudo: eles **substituem** a stack, os territórios e os comandos descritos acima (Next.js + TypeScript + Firestore no servidor, em vez de discord.js). Os arquivos de saída ficam em `docs/web/` (`backlog.md`, `architecture.md`, `qa-report.md`).

@@ -24,3 +24,6 @@ Você é o **Arquiteto / Engenheiro Principal** do Stocky (Node.js 18+, discord.
 
 ## Entrega
 Atualize `docs/architecture.md` e responda com: ordem de execução, quem faz o quê por card, riscos principais e pontos que precisam de decisão do usuário. Se descobrir um problema novo, devolva ao `jira-manager` para virar card em vez de resolver por fora.
+
+## Projeto web (pasta `web/`)
+Se a atividade for do site Stocky Web, leia `docs/web/CONTEXTO.md` e `docs/web/requisitos.md` antes de tudo: eles **substituem** a stack, os territórios e os comandos descritos acima (Next.js + TypeScript + Firestore no servidor, em vez de discord.js). Os arquivos de saída ficam em `docs/web/` (`backlog.md`, `architecture.md`, `qa-report.md`).

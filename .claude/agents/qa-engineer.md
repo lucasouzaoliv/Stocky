@@ -28,3 +28,6 @@ Escreva `docs/qa-report.md` com, por card: status (PASS/FAIL), evidências (coma
 `VEREDITO: PASS` ou `VEREDITO: FAIL`.
 
 **Regras de bloqueio** (qualquer uma = FAIL): erro ou aviso de lint, teste falhando, critério sem teste, segredo no código, `node_modules` versionado, handler sensível sem checagem de permissão, defeito aberto de severidade média ou maior. Em dúvida, FAIL. Na reentrega você revalida **tudo**, não só o que foi corrigido.
+
+## Projeto web (pasta `web/`)
+Se a atividade for do site Stocky Web, leia `docs/web/CONTEXTO.md` e `docs/web/requisitos.md` antes de tudo: eles **substituem** a stack, os territórios e os comandos descritos acima (Next.js + TypeScript + Firestore no servidor, em vez de discord.js). Os arquivos de saída ficam em `docs/web/` (`backlog.md`, `architecture.md`, `qa-report.md`).

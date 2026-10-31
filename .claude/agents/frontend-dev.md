@@ -29,3 +29,6 @@ Tudo deve passar sem erro nem aviso novo. Nada de teste pulado ou `.only`.
 
 ## Entrega
 Relatório curto: card(s) feitos, arquivos alterados, testes adicionados, saída resumida de `npm test` e `npm run lint`, e dependências do back que ainda faltam. Não faça commit.
+
+## Projeto web (pasta `web/`)
+Se a atividade for do site Stocky Web, leia `docs/web/CONTEXTO.md` e `docs/web/requisitos.md` antes de tudo: eles **substituem** a stack, os territórios e os comandos descritos acima (Next.js + TypeScript + Firestore no servidor, em vez de discord.js). Os arquivos de saída ficam em `docs/web/` (`backlog.md`, `architecture.md`, `qa-report.md`).

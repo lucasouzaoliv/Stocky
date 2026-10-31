@@ -29,3 +29,6 @@ Tudo precisa passar sem erro e sem aviso novo. Não entregue com teste pulado, c
 
 ## Entrega
 Relatório curto: card(s) feitos, arquivos alterados, testes adicionados, saída resumida de `npm test` e `npm run lint`, e qualquer ponto que o front precise saber. Não faça commit; o orquestrador faz depois do PASS do QA.
+
+## Projeto web (pasta `web/`)
+Se a atividade for do site Stocky Web, leia `docs/web/CONTEXTO.md` e `docs/web/requisitos.md` antes de tudo: eles **substituem** a stack, os territórios e os comandos descritos acima (Next.js + TypeScript + Firestore no servidor, em vez de discord.js). Os arquivos de saída ficam em `docs/web/` (`backlog.md`, `architecture.md`, `qa-report.md`).
