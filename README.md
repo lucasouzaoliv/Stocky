@@ -11,8 +11,9 @@ Bot Discord para registro e controle de inventário (baú) e caixa de grupos em 
 - **Caixa da Gangue** — controle de dinheiro sujo e limpo, com anotação e histórico em canal de log
 - **Inventário em tempo real** — mensagens de inventário nos canais atualizadas após as movimentações
 - **Logs** — registro de entradas e saídas com responsável, item e quantidade
-- **Ajuste em massa** — a gerência edita o inventário de um baú inteiro de uma vez, por modal de texto (uma linha `Item: quantidade`; até 200 linhas)
-- **Auditoria** — a camada de dados grava na coleção `auditoria` do Firestore as ações sensíveis (zerar baú, ajuste em massa, remoção de item do catálogo), com usuário, estado antes e depois
+- **Ajuste em massa** — a gerência edita o inventário de um baú inteiro de uma vez, por modal de texto, vê um resumo das alterações (antes e depois) e só então confirma por botão. Veja [Ajuste em massa](#ajuste-em-massa)
+- **Auditoria** — remover item do catálogo, zerar baú e ajuste em massa gravam um registro na coleção `auditoria` do Firestore, na mesma transação da operação (usuário, data/hora, alvo, estado antes e depois). Ainda não existe tela de leitura desse registro: consulte-o direto no console do Firebase
+- **Painéis fixos** — o id da mensagem dos painéis de inventário e de saldo do caixa fica guardado na coleção `paineis`, e o bot edita essa mesma mensagem a cada movimentação
 - **Firebase Firestore** — dados persistentes entre deploys
 
 ---
@@ -160,6 +161,26 @@ Quantidades e valores devem ser números inteiros positivos, sem pontos, vírgul
 
 ---
 
+## Ajuste em massa
+
+No Painel da Gerência, os botões "Ajustar Baú Membros" e "Ajustar Baú Gerência" abrem um modal para colar o inventário em texto:
+
+```
+# Armas
+Colt: 3
+# Medicamentos
+Gaze: 120
+```
+
+- Cada linha `# Categoria` abre uma seção; as linhas seguintes são `Item: quantidade`, separadas no último `:`. Sem cabeçalho, o item é procurado em todas as categorias (e é recusado se existir em mais de uma).
+- Quantidade é um inteiro de 0 a 100.000; `0` remove o item do baú. Nome e categoria ignoram maiúsculas e acentos.
+- No máximo 200 linhas não vazias. Se houver qualquer linha inválida (categoria ou item inexistente, item repetido, quantidade inválida), **nada é gravado** e o bot lista os erros por linha.
+- Se o texto é válido, o bot mostra um resumo só do que muda e dois botões, Confirmar e Cancelar. Nada é gravado antes da confirmação.
+- A confirmação vale por **10 minutos** e **só quem gerou o ajuste** pode confirmar ou cancelar. Ela fica em memória: se o bot reiniciar, refaça o ajuste. Cada confirmação só pode ser usada uma vez.
+- Ao confirmar, o ajuste é aplicado em uma única transação, junto com o registro em `auditoria`, e o painel de inventário é atualizado.
+
+---
+
 ## Testes e lint
 
 ```bash
@@ -167,7 +188,7 @@ npm test         # testes (node:test), com Firestore falso em memória
 npm run lint     # ESLint
 ```
 
-Os testes nunca acessam o banco real.
+Os testes nunca acessam o banco real. O `test/readme.test.js` confere que este README continua batendo com o código (variáveis, limites, licença, links e scripts).
 
 ---
 
