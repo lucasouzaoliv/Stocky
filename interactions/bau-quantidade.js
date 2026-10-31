@@ -1,27 +1,12 @@
-const { embedSucesso, embedErro, embedLog, embedInventario, embedMenuPrincipal } = require('../utils/embeds');
-const { adicionarAoBau, removerDoBau, getItensDaCategoria, getCategorias, addLog, getBau } = require('../utils/db');
+const { embedSucesso, embedErro, embedLog, embedMenuPrincipal } = require('../utils/embeds');
+const { adicionarAoBau, removerDoBau, getItensDaCategoria, getCategorias, addLog } = require('../utils/db');
 const { getConfig } = require('../utils/config');
+const { atualizarPainelInventario } = require('../utils/painel');
 const { parseInteiroPositivo, LIMITES } = require('../utils/validacao');
 const { rowMenuBau, respostaEfemera, responderErro, permissaoBau } = require('../utils/ui');
 
 async function restaurarMenu(interaction, tipo) {
   await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
-}
-
-async function atualizarInventario(client, tipo) {
-  const { channels } = getConfig();
-  const canalInvId = tipo === 'gerencia' ? channels.inventarioGerencia : channels.inventarioMembros;
-  const canalInv = client.channels.cache.get(canalInvId);
-  if (!canalInv) return;
-  const bau = await getBau(tipo);
-  const inventarioEmbed = await embedInventario(bau, tipo);
-  const msgs = await canalInv.messages.fetch({ limit: 10 });
-  const msgBot = msgs.find(m => m.author.id === client.user.id);
-  if (msgBot) {
-    await msgBot.edit({ embeds: [inventarioEmbed] });
-  } else {
-    await canalInv.send({ embeds: [inventarioEmbed] });
-  }
 }
 
 // Efeitos secundários (log e painéis): falhar aqui não desfaz a movimentação já feita.
@@ -44,11 +29,12 @@ async function registrarEfeitos(interaction, client, dados) {
     if (canalLog) {
       await canalLog.send({ embeds: [embedLog(acao, interaction.user, item, categoria.nome, quantidade, novaQtd, tipo)] });
     }
-
-    await atualizarInventario(client, tipo);
   } catch (erro) {
-    console.error('Falha ao registrar log/atualizar inventário:', erro);
+    console.error('Falha ao registrar log da movimentação:', erro);
   }
+
+  // O painel não depende do log e nunca lança.
+  await atualizarPainelInventario(client, tipo);
 }
 
 module.exports = {

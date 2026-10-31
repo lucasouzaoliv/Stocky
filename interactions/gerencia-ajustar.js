@@ -1,60 +1,22 @@
-const { embedSucesso, embedInventario } = require('../utils/embeds');
+const { embedErro } = require('../utils/embeds');
 const { getCatalogo, getBau } = require('../utils/db');
-const { getDb } = require('../utils/firebase');
-const { getConfig } = require('../utils/config');
-const { respostaEfemera, responderErro } = require('../utils/ui');
+const { interpretarAjuste } = require('../utils/ajuste-texto');
+const { criarPendente, TTL_PENDENTE_MS } = require('../utils/ajustes-pendentes');
+const { respostaEfemera, responderErro, rowConfirmarAjuste, embedResumoAjuste } = require('../utils/ui');
 
-function aplicarLinhas(texto, catalogo, novoBau) {
-  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-  let atualizados = 0;
-  const erros = [];
+const MAX_ERROS_EXIBIDOS = 15;
+const MAX_TRECHO_LINHA = 60;
 
-  for (const linha of linhas) {
-    if (!linha.includes(':')) continue;
-    const [nomeRaw, qtdRaw] = linha.split(':');
-    const nome = nomeRaw.trim();
-    const qtd = parseInt(qtdRaw.trim());
-
-    if (isNaN(qtd) || qtd < 0) {
-      erros.push(`Quantidade inválida: **${linha}**`);
-      continue;
-    }
-
-    let encontrado = false;
-    for (const [catId, cat] of Object.entries(catalogo)) {
-      const item = cat.items.find(i => i.nome.toLowerCase() === nome.toLowerCase());
-      if (item) {
-        const key = `${catId}__${item.id}`;
-        if (qtd === 0) {
-          delete novoBau[key];
-        } else {
-          novoBau[key] = { nome: item.nome, categoria: cat.nome, categoriaId: catId, quantidade: qtd };
-        }
-        atualizados++;
-        encontrado = true;
-        break;
-      }
-    }
-
-    if (!encontrado) erros.push(`Item não encontrado: **${nome}**`);
-  }
-
-  return { atualizados, erros };
+function trecho(linha) {
+  return linha.length > MAX_TRECHO_LINHA ? `${linha.slice(0, MAX_TRECHO_LINHA - 1)}…` : linha;
 }
 
-async function atualizarInventario(client, tipo, bau) {
-  const { channels } = getConfig();
-  const canalInvId = tipo === 'gerencia' ? channels.inventarioGerencia : channels.inventarioMembros;
-  const canalInv = client.channels.cache.get(canalInvId);
-  if (!canalInv) return;
-  const inventarioEmbed = await embedInventario(bau, tipo);
-  const msgs = await canalInv.messages.fetch({ limit: 10 });
-  const msgBot = msgs.find(m => m.author.id === client.user.id);
-  if (msgBot) {
-    await msgBot.edit({ embeds: [inventarioEmbed] });
-  } else {
-    await canalInv.send({ embeds: [inventarioEmbed] });
-  }
+function descreverErros(erros) {
+  const linhas = erros.slice(0, MAX_ERROS_EXIBIDOS).map(
+    (e) => `Linha ${e.numero}: ${e.motivo}\n\`${trecho(e.linha).replace(/`/g, "'")}\``
+  );
+  if (erros.length > MAX_ERROS_EXIBIDOS) linhas.push(`… e mais ${erros.length - MAX_ERROS_EXIBIDOS} erro(s).`);
+  return `${linhas.join('\n')}\n\nNada foi alterado. Corrija e envie de novo.`;
 }
 
 module.exports = {
@@ -62,25 +24,45 @@ module.exports = {
   customIds: ['ger_modal_ajustar'],
   permissao: 'gerente',
 
-  async execute(interaction, client) {
+  async execute(interaction) {
     const [, tipo] = interaction.customId.split(':');
     const texto = interaction.fields.getTextInputValue('inventario');
 
+    await interaction.deferReply(respostaEfemera());
+
     try {
       const catalogo = await getCatalogo();
-      const bauAtual = await getBau(tipo);
-      const novoBau = { ...bauAtual };
-      const { atualizados, erros } = aplicarLinhas(texto, catalogo, novoBau);
+      const bau = await getBau(tipo);
+      const { mudancas, erros } = interpretarAjuste(texto, catalogo);
 
-      await getDb().collection('bau').doc(tipo).set(novoBau);
-      await atualizarInventario(client, tipo, novoBau);
+      if (erros.length > 0) {
+        return await interaction.editReply({ embeds: [embedErro('Ajuste inválido', descreverErros(erros))] });
+      }
 
-      let descricao = `**${atualizados}** item(s) atualizado(s) com sucesso!`;
-      if (erros.length) descricao += `\n\n⚠️ Erros:\n${erros.join('\n')}`;
+      // Só o que de fato muda entra na pendência: o resto do baú fica como está.
+      const alteracoes = mudancas
+        .map((m) => {
+          const atual = bau[`${m.categoriaId}__${m.itemId}`];
+          return { ...m, antes: atual ? atual.quantidade : 0, categoria: catalogo[m.categoriaId].nome };
+        })
+        .filter((m) => m.antes !== m.quantidade);
 
-      return await interaction.reply(respostaEfemera({
-        embeds: [embedSucesso('Inventário ajustado!', descricao)]
-      }));
+      if (alteracoes.length === 0) {
+        return await interaction.editReply({ content: 'ℹ️ Nenhuma alteração: as quantidades informadas já são as atuais.' });
+      }
+
+      const id = criarPendente({
+        tipo,
+        mudancas: alteracoes.map(({ categoriaId, itemId, nome, quantidade }) => ({ categoriaId, itemId, nome, quantidade })),
+        usuarioId: interaction.user.id
+      });
+
+      const minutos = Math.round(TTL_PENDENTE_MS / 60000);
+      return await interaction.editReply({
+        content: `Confira as alterações abaixo. Nada foi gravado ainda; confirme em até ${minutos} minutos.`,
+        embeds: [embedResumoAjuste(tipo, alteracoes.map((a) => ({ nome: a.nome, categoria: a.categoria, antes: a.antes, depois: a.quantidade })))],
+        components: [rowConfirmarAjuste(id)]
+      });
     } catch (erro) {
       console.error('Erro em ger_modal_ajustar:', erro);
       await responderErro(interaction);

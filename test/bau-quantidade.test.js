@@ -114,3 +114,48 @@ test('baú da gerência usa os canais da gerência', async (t) => {
   await handler.execute(i, client);
   assert.equal(logG.send.mock.callCount(), 1);
 });
+
+test('painel de inventário: usa o id guardado e não varre as últimas 10 mensagens', async (t) => {
+  const env = montarAmbiente({ seed: { 'paineis/inventario_membros': { canalId: 'c-inv-membros', mensagemId: 'm-painel' } } });
+  t.after(env.limpar);
+  const inv = criarCanalFalso({ id: env.config.channels.inventarioMembros, mensagens: [{ id: 'm-painel', author: { id: 'bot' } }] });
+  const client = criarClientFalso({ canais: [inv] });
+  const i = modal({ client });
+  await handler.execute(i, client);
+  assert.equal(inv.mensagens[0].edit.mock.callCount(), 1);
+  assert.equal(inv.send.mock.callCount(), 0);
+  assert.equal(inv.messages.fetch.mock.calls[0].arguments[0], 'm-painel');
+});
+
+test('painel salvo apagado: recria e grava o novo id; o sucesso continua visível', async (t) => {
+  const env = montarAmbiente({ seed: { 'paineis/inventario_membros': { canalId: 'c-inv-membros', mensagemId: 'sumiu' } } });
+  t.after(env.limpar);
+  const inv = criarCanalFalso({ id: env.config.channels.inventarioMembros });
+  const client = criarClientFalso({ canais: [inv] });
+  const i = modal({ client });
+  await handler.execute(i, client);
+  assert.equal(inv.send.mock.callCount(), 1);
+  assert.equal(env.fake.dump()['paineis/inventario_membros'].mensagemId, inv.mensagens[0].id);
+  assert.deepEqual(metodos(i), ['reply']);
+});
+
+test('falha ao atualizar o painel não desfaz nem esconde o sucesso', async (t) => {
+  const env = montarAmbiente();
+  t.after(env.limpar);
+  const inv = criarCanalFalso({ id: env.config.channels.inventarioMembros });
+  inv.send.mock.mockImplementation(() => Promise.reject(new Error('sem permissão')));
+  const client = criarClientFalso({ canais: [inv] });
+  const i = modal({ client });
+  await assert.doesNotReject(handler.execute(i, client));
+  assert.deepEqual(metodos(i), ['reply']);
+  assert.equal(env.fake.dump()['bau/membros'].armas__colt.quantidade, 5);
+});
+
+test('falha no log não impede a atualização do painel', async (t) => {
+  const env = montarAmbiente();
+  t.after(env.limpar);
+  env.fake.falharEm('add', /logs\/membros\/entradas/, new Error('log falhou'));
+  const { client, inv } = clienteComCanais(env.config);
+  await handler.execute(modal({ client }), client);
+  assert.equal(inv.send.mock.callCount(), 1);
+});

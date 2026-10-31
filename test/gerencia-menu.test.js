@@ -55,23 +55,53 @@ test('deferUpdate antes de qualquer leitura do banco', async (t) => {
   assert.equal(registro[0].metodo, 'deferUpdate');
 });
 
-test('Ajustar baú: resposta efêmera com o inventário e botão do modal', async (t) => {
-  const env = montarAmbiente({ seed: { 'bau/gerencia': { armas__colt: { nome: 'Colt', categoria: 'Armas', categoriaId: 'armas', quantidade: 3 } } } });
+test('Ajustar baú: defer efêmero antes do banco, texto com cabeçalhos # Categoria e botão do modal', async (t) => {
+  const registro = [];
+  const env = montarAmbiente({ registro, seed: { 'bau/gerencia': { armas__colt: { nome: 'Colt', categoria: 'Armas', categoriaId: 'armas', quantidade: 3 } } } });
   t.after(env.limpar);
-  const i = clique('ger_ajustar_gerencia');
+  const i = clique('ger_ajustar_gerencia', registro);
   await handler.execute(i);
-  const p = ultima(i, 'reply').payload;
-  assert.ok(ehEfemera(p));
+  assert.deepEqual(metodos(i), ['deferReply', 'editReply']);
+  assert.equal(registro[0].metodo, 'deferReply');
+  assert.ok(ehEfemera(registro[0].payload));
+  const p = ultima(i, 'editReply').payload;
   assert.match(p.content, /# Armas\nColt:3/);
   assert.deepEqual(idsDasLinhas(p.components), [['ger_abrir_modal_ajustar:gerencia']]);
 });
 
-test('Ajustar baú vazio mostra "Bau vazio."', async (t) => {
+test('Ajustar baú vazio explica o formato', async (t) => {
   const env = montarAmbiente();
   t.after(env.limpar);
   const i = clique('ger_ajustar_membros');
   await handler.execute(i);
-  assert.match(ultima(i, 'reply').payload.content, /Bau vazio\./);
+  assert.match(ultima(i, 'editReply').payload.content, /vazio/);
+  assert.match(ultima(i, 'editReply').payload.content, /# Armas\nColt:2/);
+});
+
+test('Ajustar baú grande: mensagem nunca passa de 2000 caracteres (texto vai em anexo)', async (t) => {
+  const itens = Array.from({ length: 25 }, (_, n) => ({ id: `i${n}`, nome: `Item de nome bem comprido numero ${n} ${"x".repeat(40)}` }));
+  const bau = Object.fromEntries(itens.map((it) => [`armas__${it.id}`, { nome: it.nome, categoria: 'Armas', categoriaId: 'armas', quantidade: 99999 }]));
+  const env = montarAmbiente({ seed: { 'bau/membros': bau, 'catalogo/items': { armas: { nome: 'Armas', emoji: '🔫', items: itens } } } });
+  t.after(env.limpar);
+  const i = clique('ger_ajustar_membros');
+  await handler.execute(i);
+  const p = ultima(i, 'editReply').payload;
+  assert.ok(p.content.length <= 2000);
+  assert.equal(p.files.length, 1);
+  const texto = p.files[0].attachment.toString('utf8');
+  assert.match(texto, /^# Armas\nItem de nome bem comprido numero 0 x{40}:99999/);
+  assert.equal(texto.split('\n').length, 26);
+});
+
+test('falha do banco em Ajustar: erro efêmero genérico depois do defer', async (t) => {
+  const env = montarAmbiente();
+  t.after(env.limpar);
+  env.fake.falharEm('get', /bau\/membros/, new Error('segredo'));
+  const i = clique('ger_ajustar_membros');
+  await assert.doesNotReject(handler.execute(i));
+  assert.deepEqual(metodos(i), ['deferReply', 'followUp']);
+  assert.ok(ehEfemera(ultima(i, 'followUp').payload));
+  assert.ok(!/segredo/.test(ultima(i, 'followUp').payload.content));
 });
 
 test('falha do banco ao listar categorias: painel restaurado + aviso efêmero', async (t) => {
@@ -83,16 +113,6 @@ test('falha do banco ao listar categorias: painel restaurado + aviso efêmero', 
   assert.deepEqual(metodos(i), ['deferUpdate', 'editReply', 'followUp']);
   assert.deepEqual(idsDasLinhas(ultima(i, 'editReply').payload.components), PAINEL);
   assert.ok(ehEfemera(ultima(i, 'followUp').payload));
-});
-
-test('falha do banco em Ajustar: erro efêmero', async (t) => {
-  const env = montarAmbiente();
-  t.after(env.limpar);
-  env.fake.falharEm('get', /bau\/membros/, new Error('x'));
-  const i = clique('ger_ajustar_membros');
-  await assert.doesNotReject(handler.execute(i));
-  assert.deepEqual(metodos(i), ['reply']);
-  assert.ok(ehEfemera(ultima(i, 'reply').payload));
 });
 
 test('gerencia-abrir-modal: showModal é a primeira resposta, campo com maxLength 4000', async () => {

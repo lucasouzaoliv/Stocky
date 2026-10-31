@@ -18,7 +18,7 @@ module.exports = {
           .setCustomId('inventario')
           .setLabel('Cole o inventário editado aqui')
           .setStyle(TextInputStyle.Paragraph)
-          .setPlaceholder('Gaze:120\nBandagem:97\n...')
+          .setPlaceholder('# Armas\nColt:3\n# Medicamentos\nGaze:120')
           .setRequired(true)
           .setMaxLength(4000)
       )

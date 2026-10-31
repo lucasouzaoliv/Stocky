@@ -117,3 +117,100 @@ test('falha do banco: painel restaurado e aviso efêmero, sem lançar', async (t
   assert.ok(ehEfemera(aviso));
   assert.ok(!/segredo/.test(aviso.content));
 });
+
+// ---- STK-014 / STK-016f / STK-020 ----
+
+const fs = require('node:fs');
+const path = require('node:path');
+
+const USUARIO = { id: 'g7', tag: 'gerente#0007' };
+
+function auditorias(env) {
+  return Object.entries(env.fake.dump()).filter(([c]) => c.startsWith('auditoria/')).map(([, d]) => d);
+}
+
+test('remover item registra auditoria com o usuário e informa de quais baús saiu', async (t) => {
+  const env = montarAmbiente({ seed: { 'bau/membros': BAU_COLT } });
+  t.after(env.limpar);
+  const i = criarInteracao({ tipo: 'select', customId: 'ger_item_remover:armas', values: ['colt'], usuario: USUARIO });
+  await handler.execute(i, criarClientFalso());
+  const aud = auditorias(env);
+  assert.equal(aud.length, 1);
+  assert.equal(aud[0].acao, 'catalogo.remover_item');
+  assert.equal(aud[0].usuarioId, 'g7');
+  assert.deepEqual(metodos(i), ['deferUpdate', 'editReply']);
+  assert.match(ultima(i, 'editReply').payload.embeds[0].toJSON().title, /Item removido/);
+});
+
+test('zerar baú registra auditoria com o usuário; "ambos" gera um único registro', async (t) => {
+  const env = montarAmbiente({ seed: { 'bau/membros': BAU_COLT, 'bau/gerencia': BAU_COLT } });
+  t.after(env.limpar);
+  const i = criarInteracao({ tipo: 'select', customId: 'ger_zerar_confirmar', values: ['ambos'], usuario: USUARIO });
+  await handler.execute(i, criarClientFalso());
+  const aud = auditorias(env);
+  assert.equal(aud.length, 1);
+  assert.equal(aud[0].acao, 'bau.zerar');
+  assert.equal(aud[0].usuarioId, 'g7');
+  assert.deepEqual(aud[0].alvo.tipos, ['membros', 'gerencia']);
+  assert.match(ultima(i, 'editReply').payload.embeds[0].toJSON().title, /zerado/);
+});
+
+test('o handler não importa getDb nem escreve direto no banco (varredura)', () => {
+  const fonte = fs.readFileSync(path.join(__dirname, '..', 'interactions', 'gerencia-selects.js'), 'utf8');
+  assert.ok(!/getDb|firebase/.test(fonte));
+  assert.ok(!/\.collection\(|\.set\(|\.update\(/.test(fonte));
+});
+
+test('zerar com valor forjado: erro amigável, nada gravado', async (t) => {
+  const env = montarAmbiente({ seed: { 'bau/membros': BAU_COLT } });
+  t.after(env.limpar);
+  const i = selecao('ger_zerar_confirmar', 'xyz');
+  await handler.execute(i, criarClientFalso());
+  assert.deepEqual(env.fake.dump()['bau/membros'], BAU_COLT);
+  assert.match(ultima(i, 'editReply').payload.embeds[0].toJSON().title, /Erro/);
+});
+
+test('falha do Firestore ao remover/zerar: erro amigável, painel restaurado, nada gravado', async (t) => {
+  const env = montarAmbiente({ seed: { 'bau/membros': BAU_COLT } });
+  t.after(env.limpar);
+  for (const [id, valor] of [['ger_item_remover:armas', 'colt'], ['ger_zerar_confirmar', 'membros']]) {
+    env.fake.falharProximoCommit(new Error('segredo'));
+    const i = selecao(id, valor);
+    await assert.doesNotReject(handler.execute(i, criarClientFalso()));
+    assert.deepEqual(metodos(i), ['deferUpdate', 'editReply', 'followUp']);
+    assert.ok(ehEfemera(ultima(i, 'followUp').payload));
+    assert.ok(!/segredo/.test(ultima(i, 'followUp').payload.content));
+    assert.deepEqual(idsDasLinhas(ultima(i, 'editReply').payload.components), PAINEL);
+  }
+  assert.deepEqual(env.fake.dump()['bau/membros'], BAU_COLT);
+  assert.equal(auditorias(env).length, 0);
+});
+
+test('zerar: painel salvo que sumiu é recriado e o id novo é guardado', async (t) => {
+  const env = montarAmbiente({ seed: { 'bau/membros': BAU_COLT, 'paineis/inventario_membros': { canalId: 'c-inv-membros', mensagemId: 'sumiu' } } });
+  t.after(env.limpar);
+  const inv = criarCanalFalso({ id: env.config.channels.inventarioMembros });
+  const i = selecao('ger_zerar_confirmar', 'membros');
+  await handler.execute(i, criarClientFalso({ canais: [inv] }));
+  assert.equal(inv.send.mock.callCount(), 1);
+  assert.equal(env.fake.dump()['paineis/inventario_membros'].mensagemId, inv.mensagens[0].id);
+});
+
+test('falha ao atualizar o painel não esconde o sucesso de zerar', async (t) => {
+  const env = montarAmbiente({ seed: { 'bau/membros': BAU_COLT } });
+  t.after(env.limpar);
+  const inv = criarCanalFalso({ id: env.config.channels.inventarioMembros });
+  inv.send.mock.mockImplementation(() => Promise.reject(new Error('sem permissão')));
+  const i = selecao('ger_zerar_confirmar', 'membros');
+  await assert.doesNotReject(handler.execute(i, criarClientFalso({ canais: [inv] })));
+  assert.deepEqual(env.fake.dump()['bau/membros'], {});
+  assert.deepEqual(metodos(i), ['deferUpdate', 'editReply']);
+  assert.match(ultima(i, 'editReply').payload.embeds[0].toJSON().title, /zerado/);
+});
+
+test('modal de cadastro tem campo de nome com maxLength 50', async () => {
+  const i = selecao('ger_cat_adicionar', 'armas');
+  await handler.execute(i, criarClientFalso());
+  const campo = ultima(i, 'showModal').payload.toJSON().components[0].components[0];
+  assert.equal(campo.max_length, 50);
+});

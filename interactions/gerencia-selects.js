@@ -1,23 +1,16 @@
 const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, StringSelectMenuBuilder } = require('discord.js');
-const { embedGerencia, embedSucesso, embedErro, embedInventario } = require('../utils/embeds');
-const { getItensDaCategoria, zerarBau, getLogs, removerItemDoCatalogo, getBau } = require('../utils/db');
-const { getDb } = require('../utils/firebase');
-const { getConfig } = require('../utils/config');
+const { embedGerencia, embedSucesso, embedErro } = require('../utils/embeds');
+const { getItensDaCategoria, zerarBau, getLogs, removerItemDoCatalogo } = require('../utils/db');
+const { atualizarPainelInventario } = require('../utils/painel');
+const { LIMITES } = require('../utils/validacao');
 const { rowsPainelGerencia, embedLogsBau, responderErro } = require('../utils/ui');
 
-async function atualizarInventario(client, tipo) {
-  const { channels } = getConfig();
-  const canalInvId = tipo === 'gerencia' ? channels.inventarioGerencia : channels.inventarioMembros;
-  const canalInv = client.channels.cache.get(canalInvId);
-  if (!canalInv) return;
-  const bau = await getBau(tipo);
-  const inventarioEmbed = await embedInventario(bau, tipo);
-  const msgs = await canalInv.messages.fetch({ limit: 10 });
-  const msgBot = msgs.find(m => m.author.id === client.user.id);
-  if (msgBot) {
-    await msgBot.edit({ embeds: [inventarioEmbed] });
-  } else {
-    await canalInv.send({ embeds: [inventarioEmbed] });
+const TIPOS_ZERAR = ['membros', 'gerencia', 'ambos'];
+
+// Falha ao atualizar o painel nunca desfaz nem esconde o sucesso da operação (o painel nunca lança).
+async function atualizarPaineis(client, tipos) {
+  for (const tipo of tipos) {
+    await atualizarPainelInventario(client, tipo);
   }
 }
 
@@ -35,6 +28,7 @@ function abrirModalAdicionar(interaction) {
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('Ex: Granada')
         .setRequired(true)
+        .setMaxLength(LIMITES.NOME_ITEM_MAX)
     )
   );
 
@@ -67,7 +61,7 @@ async function removerItem(interaction, client) {
   const [, categoriaId] = interaction.customId.split(':');
   const itemId = interaction.values[0];
 
-  const resultado = await removerItemDoCatalogo(categoriaId, itemId);
+  const resultado = await removerItemDoCatalogo(categoriaId, itemId, interaction.user);
   if (!resultado.sucesso) {
     return interaction.editReply({
       embeds: [embedErro('Erro', resultado.motivo)],
@@ -75,46 +69,36 @@ async function removerItem(interaction, client) {
     });
   }
 
-  const db = getDb();
-  const bauMembros = await getBau('membros');
-  const bauGerencia = await getBau('gerencia');
-  const key = `${categoriaId}__${itemId}`;
-
-  if (bauMembros[key]) {
-    delete bauMembros[key];
-    await db.collection('bau').doc('membros').set(bauMembros);
-  }
-  if (bauGerencia[key]) {
-    delete bauGerencia[key];
-    await db.collection('bau').doc('gerencia').set(bauGerencia);
-  }
-
-  await atualizarInventario(client, 'membros');
-  await atualizarInventario(client, 'gerencia');
-
-  return interaction.editReply({
+  await interaction.editReply({
     embeds: [embedSucesso('Item removido!', 'Item removido do catalogo e dos baus com sucesso.')],
     components: rowsPainelGerencia()
   });
+  await atualizarPaineis(client, ['membros', 'gerencia']);
 }
 
 async function zerar(interaction, client) {
   const tipo = interaction.values[0];
 
-  if (tipo === 'ambos') {
-    await zerarBau('membros');
-    await zerarBau('gerencia');
-    await atualizarInventario(client, 'membros');
-    await atualizarInventario(client, 'gerencia');
-  } else {
-    await zerarBau(tipo);
-    await atualizarInventario(client, tipo);
+  if (!TIPOS_ZERAR.includes(tipo)) {
+    return interaction.editReply({
+      embeds: [embedErro('Erro', 'Opção de baú inválida.')],
+      components: rowsPainelGerencia()
+    });
   }
 
-  return interaction.editReply({
+  const resultado = await zerarBau(tipo, interaction.user);
+  if (!resultado.sucesso) {
+    return interaction.editReply({
+      embeds: [embedErro('Erro', resultado.motivo || 'Não foi possível zerar o baú.')],
+      components: rowsPainelGerencia()
+    });
+  }
+
+  await interaction.editReply({
     embeds: [embedSucesso('Bau zerado!', 'O bau foi resetado e o inventario atualizado.')],
     components: rowsPainelGerencia()
   });
+  await atualizarPaineis(client, resultado.tipos);
 }
 
 async function verLogs(interaction) {

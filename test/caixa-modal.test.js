@@ -94,3 +94,38 @@ test('falha ao gravar o histórico não esconde o sucesso', async (t) => {
   assert.deepEqual(metodos(i), ['reply']);
   assert.equal(env.fake.dump()['caixa/saldo'].sujo, 1500);
 });
+
+test('painel de saldo: usa o id guardado, edita essa mensagem e mostra o saldo novo', async (t) => {
+  const env = montarAmbiente({ seed: { ...SALDO, 'paineis/saldo_caixa': { canalId: 'c-saldo-caixa', mensagemId: 'm-saldo' } } });
+  t.after(env.limpar);
+  const saldoCanal = criarCanalFalso({ id: env.config.channels.saldoCaixa, mensagens: [{ id: 'm-saldo', author: { id: 'bot' } }] });
+  const client = criarClientFalso({ canais: [saldoCanal] });
+  const i = modal({ client });
+  await handler.execute(i, client);
+  assert.equal(saldoCanal.messages.fetch.mock.calls[0].arguments[0], 'm-saldo');
+  const campos = saldoCanal.mensagens[0].edit.mock.calls[0].arguments[0].embeds[0].toJSON().fields;
+  assert.deepEqual(campos.map((c) => c.value), ['$1.500', '$200']);
+});
+
+test('painel de saldo apagado: recria e guarda o novo id', async (t) => {
+  const env = montarAmbiente({ seed: { ...SALDO, 'paineis/saldo_caixa': { canalId: 'c-saldo-caixa', mensagemId: 'sumiu' } } });
+  t.after(env.limpar);
+  const saldoCanal = criarCanalFalso({ id: env.config.channels.saldoCaixa });
+  const client = criarClientFalso({ canais: [saldoCanal] });
+  const i = modal({ client });
+  await handler.execute(i, client);
+  assert.equal(saldoCanal.send.mock.callCount(), 1);
+  assert.equal(env.fake.dump()['paineis/saldo_caixa'].mensagemId, saldoCanal.mensagens[0].id);
+});
+
+test('falha ao atualizar o painel de saldo não esconde o sucesso', async (t) => {
+  const env = montarAmbiente({ seed: SALDO });
+  t.after(env.limpar);
+  const saldoCanal = criarCanalFalso({ id: env.config.channels.saldoCaixa });
+  saldoCanal.send.mock.mockImplementation(() => Promise.reject(new Error('sem permissão')));
+  const client = criarClientFalso({ canais: [saldoCanal] });
+  const i = modal({ client });
+  await assert.doesNotReject(handler.execute(i, client));
+  assert.deepEqual(metodos(i), ['reply']);
+  assert.equal(env.fake.dump()['caixa/saldo'].sujo, 1500);
+});

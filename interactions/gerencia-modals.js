@@ -10,24 +10,28 @@ module.exports = {
   async execute(interaction) {
     const [, categoriaId] = interaction.customId.split(':');
     const nome = interaction.fields.getTextInputValue('nome');
-    const id = nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     try {
-      const resultado = await adicionarItemAoCatalogo(categoriaId, id, nome);
+      const resultado = await adicionarItemAoCatalogo(categoriaId, nome);
 
       if (!resultado.sucesso) {
         await interaction.reply(respostaEfemera({ embeds: [embedErro('Erro', resultado.motivo)] }));
       } else {
-        await interaction.reply(respostaEfemera({ embeds: [embedSucesso('Item adicionado!', `**${nome}** foi adicionado ao catalogo com sucesso!`)] }));
+        await interaction.reply(respostaEfemera({
+          embeds: [embedSucesso('Item adicionado!', `**${resultado.item.nome}** foi adicionado ao catalogo com sucesso!`)]
+        }));
       }
-
-      await interaction.message.edit({
-        embeds: [embedGerencia()],
-        components: rowsPainelGerencia()
-      });
     } catch (erro) {
       console.error('Erro em ger_modal_adicionar:', erro);
       await responderErro(interaction);
+      return;
+    }
+
+    // O painel volta ao normal (duas linhas de botões); falhar aqui não esconde o resultado acima.
+    try {
+      await interaction.message.edit({ embeds: [embedGerencia()], components: rowsPainelGerencia() });
+    } catch (erro) {
+      console.error('Falha ao restaurar o painel da gerência:', erro);
     }
   }
 };

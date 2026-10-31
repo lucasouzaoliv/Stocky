@@ -1,6 +1,7 @@
-const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const { embedGerencia } = require('../utils/embeds');
 const { getCategorias, getBau } = require('../utils/db');
+const { gerarTextoAjuste } = require('../utils/ajuste-texto');
 const { rowsPainelGerencia, rowCancelarGerencia, respostaEfemera, responderErro } = require('../utils/ui');
 
 function selectCategorias(customId, placeholder, categorias) {
@@ -10,23 +11,16 @@ function selectCategorias(customId, placeholder, categorias) {
     .addOptions(categorias.map(cat => ({ label: cat.nome, value: cat.id, emoji: cat.emoji })));
 }
 
+const LIMITE_MENSAGEM = 2000;
+const INSTRUCOES = 'Edite as quantidades mantendo os cabeçalhos `# Categoria`. Linhas que você apagar ficam como estão. Use `0` para remover um item.';
+
 async function abrirAjuste(interaction, acao) {
   const tipo = acao === 'ger_ajustar_membros' ? 'membros' : 'gerencia';
+  await interaction.deferReply(respostaEfemera());
+
   const bau = await getBau(tipo);
   const categorias = await getCategorias();
-
-  let texto = '';
-  for (const cat of categorias) {
-    const itensNoBau = Object.entries(bau).filter(([key]) => key.startsWith(cat.id + '__'));
-    if (itensNoBau.length === 0) continue;
-    texto += `# ${cat.nome}\n`;
-    for (const [, item] of itensNoBau) {
-      texto += `${item.nome}:${item.quantidade}\n`;
-    }
-    texto += '\n';
-  }
-
-  if (!texto) texto = 'Bau vazio.';
+  const texto = gerarTextoAjuste(bau, categorias);
 
   const rowAbrir = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -35,10 +29,28 @@ async function abrirAjuste(interaction, acao) {
       .setStyle(ButtonStyle.Primary)
   );
 
-  return interaction.reply(respostaEfemera({
-    content: `📋 **Inventário atual — Baú dos ${tipo === 'membros' ? 'Membros' : 'Gerência'}**\n\nAnote as alterações e clique no botão abaixo:\n\`\`\`\n${texto}\`\`\``,
+  const titulo = `📋 **Inventário atual — Baú dos ${tipo === 'membros' ? 'Membros' : 'Gerência'}**`;
+  const exemplo = '# Armas\nColt:2';
+  const comBloco = (conteudo) => `${titulo}\n\n${INSTRUCOES}\n\`\`\`\n${conteudo}\n\`\`\``;
+
+  if (!texto) {
+    return interaction.editReply({
+      content: `${titulo}\n\nO baú está vazio. Para adicionar itens, escreva neste formato:\n\`\`\`\n${exemplo}\n\`\`\``,
+      components: [rowAbrir]
+    });
+  }
+
+  const bloco = comBloco(texto);
+  if (bloco.length <= LIMITE_MENSAGEM && !texto.includes('`')) {
+    return interaction.editReply({ content: bloco, components: [rowAbrir] });
+  }
+
+  // Texto grande demais para a mensagem: vai como anexo.
+  return interaction.editReply({
+    content: `${titulo}\n\n${INSTRUCOES}\nO inventário é grande e está no arquivo anexo.`,
+    files: [new AttachmentBuilder(Buffer.from(texto, 'utf8'), { name: `inventario-${tipo}.txt` })],
     components: [rowAbrir]
-  }));
+  });
 }
 
 async function montarTela(acao) {

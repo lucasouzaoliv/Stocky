@@ -1,24 +1,13 @@
 const { EmbedBuilder } = require('discord.js');
 const { getSaldo, adicionarCaixa, retirarCaixa, addLogCaixa } = require('../utils/caixa');
 const { getConfig } = require('../utils/config');
+const { atualizarPainelSaldo } = require('../utils/painel');
 const { parseInteiroPositivo, LIMITES } = require('../utils/validacao');
 const { rowCaixa, embedCaixa, embedLogCaixa, formatarDinheiro, respostaEfemera, responderErro } = require('../utils/ui');
 
 async function restaurarPainel(interaction) {
   const saldo = await getSaldo();
   await interaction.message.edit({ embeds: [embedCaixa(saldo)], components: [rowCaixa()] });
-}
-
-async function atualizarPainelSaldo(client, saldo) {
-  const canalSaldo = client.channels.cache.get(getConfig().channels.saldoCaixa);
-  if (!canalSaldo) return;
-  const msgs = await canalSaldo.messages.fetch({ limit: 10 });
-  const msgBot = msgs.find(m => m.author.id === client.user.id);
-  if (msgBot) {
-    await msgBot.edit({ embeds: [embedCaixa(saldo)] });
-  } else {
-    await canalSaldo.send({ embeds: [embedCaixa(saldo)] });
-  }
 }
 
 // Efeitos secundários (histórico e canais): falhar aqui não desfaz a movimentação já feita.
@@ -38,11 +27,12 @@ async function registrarEfeitos(interaction, client, dados) {
     if (canalLog) {
       await canalLog.send({ embeds: [embedLogCaixa(acao, interaction.user, tipo, valor, anotacao, saldo)] });
     }
-
-    await atualizarPainelSaldo(client, saldo);
   } catch (erro) {
-    console.error('Falha ao registrar histórico/atualizar painel do caixa:', erro);
+    console.error('Falha ao registrar histórico da movimentação do caixa:', erro);
   }
+
+  // O painel não depende do histórico e nunca lança.
+  await atualizarPainelSaldo(client, saldo);
 }
 
 module.exports = {
