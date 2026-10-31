@@ -297,3 +297,25 @@ test('todos os rows e embeds são construídos novos a cada chamada', () => {
   assert.notEqual(ui.rowCaixa(), ui.rowCaixa());
   assert.notEqual(ui.embedCaixa({}), ui.embedCaixa({}));
 });
+
+test('responderErro: reply em interação nova, followUp em deferida, sempre efêmero e sem lançar', async () => {
+  const { criarInteracao } = require('./helpers/fake-interaction');
+  const nova = criarInteracao({ tipo: 'button', customId: 'x' });
+  await ui.responderErro(nova);
+  assert.equal(nova.reply.mock.callCount(), 1);
+  assert.equal(nova.reply.mock.calls[0].arguments[0].flags, MessageFlags.Ephemeral);
+  assert.equal(nova.reply.mock.calls[0].arguments[0].content, ui.MENSAGEM_ERRO_GENERICA);
+
+  const deferida = criarInteracao({ tipo: 'button', customId: 'x' });
+  await deferida.deferUpdate();
+  await ui.responderErro(deferida, 'Outra mensagem');
+  assert.equal(deferida.followUp.mock.calls[0].arguments[0].content, 'Outra mensagem');
+  assert.equal(deferida.followUp.mock.calls[0].arguments[0].flags, MessageFlags.Ephemeral);
+
+  const quebrada = criarInteracao({ tipo: 'button', customId: 'x' });
+  quebrada.reply.mock.mockImplementation(() => Promise.reject(new Error('discord caiu')));
+  const { mock } = require('node:test');
+  const erro = mock.method(console, 'error', () => {});
+  await assert.doesNotReject(ui.responderErro(quebrada));
+  erro.mock.restore();
+});

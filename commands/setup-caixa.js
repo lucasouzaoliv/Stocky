@@ -1,36 +1,7 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
-const config = require('../config.json');
+const { SlashCommandBuilder } = require('discord.js');
+const { getConfig } = require('../utils/config');
 const { getSaldo } = require('../utils/caixa');
-
-function embedCaixa(saldo) {
-  return new EmbedBuilder()
-    .setColor(0x3498DB)
-    .setTitle('💰 Caixa da Gangue')
-    .setDescription('> Área restrita para **Consejeros** e **El Diablo**.')
-    .addFields(
-      { name: '🖤 Dinheiro Sujo', value: `$${saldo.sujo.toLocaleString('pt-BR')}`, inline: true },
-      { name: '💵 Dinheiro Limpo', value: `$${saldo.limpo.toLocaleString('pt-BR')}`, inline: true }
-    )
-    .setFooter({ text: 'Marabunta Grande — Stocky' })
-    .setTimestamp();
-}
-
-function rowCaixa() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('caixa_adicionar')
-      .setLabel('➕ Adicionar')
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId('caixa_retirar')
-      .setLabel('➖ Retirar')
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId('caixa_logs')
-      .setLabel('📋 Ver Histórico')
-      .setStyle(ButtonStyle.Primary)
-  );
-}
+const { rowCaixa, embedCaixa, respostaEfemera, responderErro } = require('../utils/ui');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,13 +9,19 @@ module.exports = {
     .setDescription('Envia a mensagem fixa do caixa no canal (use apenas uma vez)'),
 
   async execute(interaction, client) {
-    const canal = client.channels.cache.get(config.channels.caixaGangue);
+    const canal = client.channels.cache.get(getConfig().channels.caixaGangue);
     if (!canal) {
-      return interaction.reply({ content: '❌ Canal do caixa não encontrado.', flags: 64 });
+      return interaction.reply(respostaEfemera({ content: '❌ Canal do caixa não encontrado.' }));
     }
 
-    const saldo = getSaldo();
-    await canal.send({ embeds: [embedCaixa(saldo)], components: [rowCaixa()] });
-    return interaction.reply({ content: '✅ Caixa enviado!', flags: 64 });
+    await interaction.deferReply(respostaEfemera());
+    try {
+      const saldo = await getSaldo();
+      await canal.send({ embeds: [embedCaixa(saldo)], components: [rowCaixa()] });
+      return await interaction.editReply({ content: '✅ Caixa enviado!' });
+    } catch (erro) {
+      console.error('Erro em /setup-caixa:', erro);
+      await responderErro(interaction);
+    }
   }
 };

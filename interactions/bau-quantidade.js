@@ -1,23 +1,53 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { embedSucesso, embedErro, embedLog, embedInventario, embedMenuPrincipal } = require('../utils/embeds');
 const { adicionarAoBau, removerDoBau, getItensDaCategoria, getCategorias, addLog, getBau } = require('../utils/db');
-const config = require('../config.json');
+const { getConfig } = require('../utils/config');
+const { rowMenuBau, respostaEfemera, responderErro } = require('../utils/ui');
 
-function rowMenuBau(tipo) {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`bau_adicionar:${tipo}`)
-      .setLabel('📥 Adicionar')
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId(`bau_remover:${tipo}`)
-      .setLabel('📤 Remover')
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId(`bau_estoque:${tipo}`)
-      .setLabel('📋 Ver Estoque')
-      .setStyle(ButtonStyle.Primary)
-  );
+async function restaurarMenu(interaction, tipo) {
+  await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
+}
+
+async function atualizarInventario(client, tipo) {
+  const { channels } = getConfig();
+  const canalInvId = tipo === 'gerencia' ? channels.inventarioGerencia : channels.inventarioMembros;
+  const canalInv = client.channels.cache.get(canalInvId);
+  if (!canalInv) return;
+  const bau = await getBau(tipo);
+  const inventarioEmbed = await embedInventario(bau, tipo);
+  const msgs = await canalInv.messages.fetch({ limit: 10 });
+  const msgBot = msgs.find(m => m.author.id === client.user.id);
+  if (msgBot) {
+    await msgBot.edit({ embeds: [inventarioEmbed] });
+  } else {
+    await canalInv.send({ embeds: [inventarioEmbed] });
+  }
+}
+
+// Efeitos secundários (log e painéis): falhar aqui não desfaz a movimentação já feita.
+async function registrarEfeitos(interaction, client, dados) {
+  const { acao, tipo, itemId, item, categoria, quantidade, novaQtd } = dados;
+  try {
+    await addLog(tipo, {
+      acao,
+      usuarioId: interaction.user.id,
+      usuarioTag: interaction.user.tag,
+      item: { id: itemId, nome: item.nome },
+      categoria: categoria.nome,
+      quantidade,
+      novaQtd
+    });
+
+    const { channels } = getConfig();
+    const canalLogId = tipo === 'gerencia' ? channels.logGerencia : channels.logMembros;
+    const canalLog = client.channels.cache.get(canalLogId);
+    if (canalLog) {
+      await canalLog.send({ embeds: [embedLog(acao, interaction.user, item, categoria.nome, quantidade, novaQtd, tipo)] });
+    }
+
+    await atualizarInventario(client, tipo);
+  } catch (erro) {
+    console.error('Falha ao registrar log/atualizar inventário:', erro);
+  }
 }
 
 module.exports = {
@@ -29,75 +59,49 @@ module.exports = {
     const quantidadeRaw = interaction.fields.getTextInputValue('quantidade');
     const quantidade = parseInt(quantidadeRaw);
 
-    if (isNaN(quantidade) || quantidade <= 0) {
-      await interaction.reply({ embeds: [embedErro('Quantidade inválida', 'Digite um número inteiro maior que zero.')], flags: 64 });
-      await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
-      return;
-    }
-
-    const itens = await getItensDaCategoria(categoriaId);
-    const item = itens.find(i => i.id === itemId);
-    const categorias = await getCategorias();
-    const categoria = categorias.find(c => c.id === categoriaId);
-
-    if (!item || !categoria) {
-      await interaction.reply({ embeds: [embedErro('Erro', 'Item ou categoria não encontrado.')], flags: 64 });
-      await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
-      return;
-    }
-
-    let novaQtd;
-
-    if (acao === 'adicionar') {
-      novaQtd = await adicionarAoBau(tipo, categoriaId, itemId, quantidade, item.nome, categoria.nome);
-      await interaction.reply({
-        embeds: [embedSucesso('Item adicionado!', `**${item.nome}** — adicionado **${quantidade}** unidade(s).\nSaldo atual: **${novaQtd}**`)],
-        flags: 64
-      });
-    } else {
-      const resultado = await removerDoBau(tipo, categoriaId, itemId, quantidade);
-      if (!resultado.sucesso) {
-        await interaction.reply({ embeds: [embedErro('Estoque insuficiente', resultado.motivo)], flags: 64 });
-        await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
+    try {
+      if (isNaN(quantidade) || quantidade <= 0) {
+        await interaction.reply(respostaEfemera({ embeds: [embedErro('Quantidade inválida', 'Digite um número inteiro maior que zero.')] }));
+        await restaurarMenu(interaction, tipo);
         return;
       }
-      novaQtd = resultado.novaQtd;
-      await interaction.reply({
-        embeds: [embedSucesso('Item removido!', `**${item.nome}** — removido **${quantidade}** unidade(s).\nSaldo atual: **${novaQtd}**`)],
-        flags: 64
-      });
-    }
 
-    await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
+      const itens = await getItensDaCategoria(categoriaId);
+      const item = itens.find(i => i.id === itemId);
+      const categorias = await getCategorias();
+      const categoria = categorias.find(c => c.id === categoriaId);
 
-    await addLog(tipo, {
-      acao,
-      usuarioId: interaction.user.id,
-      usuarioTag: interaction.user.tag,
-      item: { id: itemId, nome: item.nome },
-      categoria: categoria.nome,
-      quantidade,
-      novaQtd
-    });
-
-    const canalLogId = tipo === 'gerencia' ? config.channels.logGerencia : config.channels.logMembros;
-    const canalLog = client.channels.cache.get(canalLogId);
-    if (canalLog) {
-      await canalLog.send({ embeds: [embedLog(acao, interaction.user, item, categoria.nome, quantidade, novaQtd, tipo)] });
-    }
-
-    const canalInvId = tipo === 'gerencia' ? config.channels.inventarioGerencia : config.channels.inventarioMembros;
-    const canalInv = client.channels.cache.get(canalInvId);
-    if (canalInv) {
-      const bau = await getBau(tipo);
-      const inventarioEmbed = await embedInventario(bau, tipo);
-      const msgs = await canalInv.messages.fetch({ limit: 10 });
-      const msgBot = msgs.find(m => m.author.id === client.user.id);
-      if (msgBot) {
-        await msgBot.edit({ embeds: [inventarioEmbed] });
-      } else {
-        await canalInv.send({ embeds: [inventarioEmbed] });
+      if (!item || !categoria) {
+        await interaction.reply(respostaEfemera({ embeds: [embedErro('Erro', 'Item ou categoria não encontrado.')] }));
+        await restaurarMenu(interaction, tipo);
+        return;
       }
+
+      let novaQtd;
+
+      if (acao === 'adicionar') {
+        novaQtd = await adicionarAoBau(tipo, categoriaId, itemId, quantidade, item.nome, categoria.nome);
+        await interaction.reply(respostaEfemera({
+          embeds: [embedSucesso('Item adicionado!', `**${item.nome}** — adicionado **${quantidade}** unidade(s).\nSaldo atual: **${novaQtd}**`)]
+        }));
+      } else {
+        const resultado = await removerDoBau(tipo, categoriaId, itemId, quantidade);
+        if (!resultado.sucesso) {
+          await interaction.reply(respostaEfemera({ embeds: [embedErro('Estoque insuficiente', resultado.motivo)] }));
+          await restaurarMenu(interaction, tipo);
+          return;
+        }
+        novaQtd = resultado.novaQtd;
+        await interaction.reply(respostaEfemera({
+          embeds: [embedSucesso('Item removido!', `**${item.nome}** — removido **${quantidade}** unidade(s).\nSaldo atual: **${novaQtd}**`)]
+        }));
+      }
+
+      await restaurarMenu(interaction, tipo);
+      await registrarEfeitos(interaction, client, { acao, tipo, itemId, item, categoria, quantidade, novaQtd });
+    } catch (erro) {
+      console.error('Erro em bau_quantidade:', erro);
+      await responderErro(interaction);
     }
   }
 };

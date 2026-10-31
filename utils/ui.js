@@ -24,6 +24,23 @@ function respostaEfemera(payload = {}) {
   return { ...payload, flags: MessageFlags.Ephemeral };
 }
 
+const MENSAGEM_ERRO_GENERICA = '❌ Ocorreu um erro ao processar essa ação. Tente novamente em instantes.';
+
+// Resposta efêmera de erro sem detalhes internos. Usa reply se a interação ainda
+// não foi respondida e followUp caso contrário; nunca lança.
+async function responderErro(interaction, mensagem = MENSAGEM_ERRO_GENERICA) {
+  const payload = respostaEfemera({ content: mensagem });
+  try {
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp(payload);
+    } else {
+      await interaction.reply(payload);
+    }
+  } catch (erro) {
+    console.error('Falha ao responder erro ao usuário:', erro);
+  }
+}
+
 function numeroSeguro(valor) {
   const n = Number(valor);
   return Number.isFinite(n) ? n : 0;
@@ -228,7 +245,9 @@ function embedResumoAjuste(tipo, linhas) {
 }
 
 module.exports = {
+  MENSAGEM_ERRO_GENERICA,
   respostaEfemera,
+  responderErro,
   formatarDinheiro,
   rowMenuBau,
   rowCancelarBau,

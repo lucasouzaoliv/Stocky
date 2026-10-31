@@ -4,7 +4,7 @@ module.exports = {
   type: 'button',
   customIds: ['ger_abrir_modal_ajustar'],
 
-  async execute(interaction, client) {
+  execute(interaction) {
     const [, tipo] = interaction.customId.split(':');
 
     const modal = new ModalBuilder()

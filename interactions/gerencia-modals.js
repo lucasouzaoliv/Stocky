@@ -1,48 +1,32 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { embedSucesso, embedErro, embedGerencia } = require('../utils/embeds');
 const { adicionarItemAoCatalogo } = require('../utils/db');
-
-function rowMenuGerencia() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('ger_adicionar_item')
-      .setLabel('➕ Adicionar Item')
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId('ger_remover_item')
-      .setLabel('➖ Remover Item')
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId('ger_zerar_bau')
-      .setLabel('🗑️ Zerar Baú')
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId('ger_ver_logs')
-      .setLabel('📋 Ver Logs')
-      .setStyle(ButtonStyle.Primary)
-  );
-}
+const { rowsPainelGerencia, respostaEfemera, responderErro } = require('../utils/ui');
 
 module.exports = {
   type: 'modal',
   customIds: ['ger_modal_adicionar'],
 
-  async execute(interaction, client) {
+  async execute(interaction) {
     const [, categoriaId] = interaction.customId.split(':');
     const nome = interaction.fields.getTextInputValue('nome');
-    const id = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    const id = nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
-    const resultado = await adicionarItemAoCatalogo(categoriaId, id, nome);
+    try {
+      const resultado = await adicionarItemAoCatalogo(categoriaId, id, nome);
 
-    if (!resultado.sucesso) {
-      await interaction.reply({ embeds: [embedErro('Erro', resultado.motivo)], flags: 64 });
-    } else {
-      await interaction.reply({ embeds: [embedSucesso('Item adicionado!', `**${nome}** foi adicionado ao catalogo com sucesso!`)], flags: 64 });
+      if (!resultado.sucesso) {
+        await interaction.reply(respostaEfemera({ embeds: [embedErro('Erro', resultado.motivo)] }));
+      } else {
+        await interaction.reply(respostaEfemera({ embeds: [embedSucesso('Item adicionado!', `**${nome}** foi adicionado ao catalogo com sucesso!`)] }));
+      }
+
+      await interaction.message.edit({
+        embeds: [embedGerencia()],
+        components: rowsPainelGerencia()
+      });
+    } catch (erro) {
+      console.error('Erro em ger_modal_adicionar:', erro);
+      await responderErro(interaction);
     }
-
-    await interaction.message.edit({
-      embeds: [embedGerencia()],
-      components: [rowMenuGerencia()]
-    });
   }
 };
