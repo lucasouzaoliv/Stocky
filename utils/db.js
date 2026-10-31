@@ -1,4 +1,5 @@
 const { getDb } = require('./firebase');
+const { LIMITES, TIPOS_BAU, ErroValidacao, exigirInteiro } = require('./validacao');
 
 const CATALOGO_PADRAO = {
   medicamentos: {
@@ -69,40 +70,72 @@ const CATALOGO_PADRAO = {
 
 // ─── BAÚ ─────────────────────────────────────────────────────────────────────
 
+function exigirTipoBau(tipo) {
+  if (!TIPOS_BAU.includes(tipo)) throw new ErroValidacao('Tipo de baú inválido.');
+}
+
+function exigirTexto(valor, campo) {
+  if (typeof valor !== 'string' || valor.trim() === '') throw new ErroValidacao(`O ${campo} é obrigatório.`);
+}
+
+function exigirQuantidadeItem(quantidade) {
+  return exigirInteiro(quantidade, { min: 1, max: LIMITES.QUANTIDADE_ITEM_MAX, campo: 'quantidade' });
+}
+
 async function getBau(tipo) {
+  exigirTipoBau(tipo);
   const db = getDb();
   const doc = await db.collection('bau').doc(tipo).get();
   return doc.exists ? doc.data() : {};
 }
 
 async function adicionarAoBau(tipo, categoriaId, itemId, quantidade, nomeItem, nomeCategoria) {
+  exigirTipoBau(tipo);
+  exigirTexto(categoriaId, 'id da categoria');
+  exigirTexto(itemId, 'id do item');
+  exigirQuantidadeItem(quantidade);
+
   const db = getDb();
   const ref = db.collection('bau').doc(tipo);
-  const doc = await ref.get();
-  const bau = doc.exists ? doc.data() : {};
   const key = `${categoriaId}__${itemId}`;
-  if (!bau[key]) {
-    bau[key] = { nome: nomeItem, categoria: nomeCategoria, categoriaId, quantidade: 0 };
-  }
-  bau[key].quantidade += quantidade;
-  await ref.set(bau);
-  return bau[key].quantidade;
+  return await db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const bau = doc.exists ? doc.data() : {};
+    if (!bau[key]) {
+      exigirTexto(nomeItem, 'nome do item');
+      exigirTexto(nomeCategoria, 'nome da categoria');
+      bau[key] = { nome: nomeItem, categoria: nomeCategoria, categoriaId, quantidade: 0 };
+    }
+    const novaQtd = bau[key].quantidade + quantidade;
+    if (!Number.isSafeInteger(novaQtd)) throw new ErroValidacao('O estoque excede o limite suportado.');
+    bau[key].quantidade = novaQtd;
+    tx.set(ref, bau);
+    return novaQtd;
+  });
 }
 
 async function removerDoBau(tipo, categoriaId, itemId, quantidade) {
+  exigirTipoBau(tipo);
+  exigirTexto(categoriaId, 'id da categoria');
+  exigirTexto(itemId, 'id do item');
+  exigirQuantidadeItem(quantidade);
+
   const db = getDb();
   const ref = db.collection('bau').doc(tipo);
-  const doc = await ref.get();
-  const bau = doc.exists ? doc.data() : {};
   const key = `${categoriaId}__${itemId}`;
-  if (!bau[key]) return { sucesso: false, motivo: 'Item não encontrado no baú.' };
-  if (bau[key].quantidade < quantidade) {
-    return { sucesso: false, motivo: `Estoque insuficiente. Disponível: **${bau[key].quantidade}**` };
-  }
-  bau[key].quantidade -= quantidade;
-  if (bau[key].quantidade === 0) delete bau[key];
-  await ref.set(bau);
-  return { sucesso: true, novaQtd: bau[key] ? bau[key].quantidade : 0 };
+  return await db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const bau = doc.exists ? doc.data() : {};
+    if (!bau[key]) return { sucesso: false, motivo: 'Item não encontrado no baú.' };
+    if (bau[key].quantidade < quantidade) {
+      return { sucesso: false, motivo: `Estoque insuficiente. Disponível: **${bau[key].quantidade}**` };
+    }
+    const novaQtd = bau[key].quantidade - quantidade;
+    if (novaQtd === 0) delete bau[key];
+    else bau[key].quantidade = novaQtd;
+    tx.set(ref, bau);
+    return { sucesso: true, novaQtd };
+  });
 }
 
 async function zerarBau(tipo) {

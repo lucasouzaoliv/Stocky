@@ -1,8 +1,9 @@
 const { REST, Routes } = require('discord.js');
-const { token, clientId, guildId } = require('./config.json');
+const { getConfig } = require('./utils/config');
 const fs = require('fs');
 const path = require('path');
 
+const { token, clientId, guildId } = getConfig();
 const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
