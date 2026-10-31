@@ -244,8 +244,20 @@ function embedResumoAjuste(tipo, linhas) {
   return embed.setDescription(juntarLinhas(texto));
 }
 
+// Permissão dos handlers do baú: o nível depende do `tipo` presente no customId.
+// `posicaoTipo` é o índice do tipo ao separar o customId por ':'.
+function permissaoBau(posicaoTipo) {
+  return (interaction) => {
+    const tipo = String(interaction.customId).split(':')[posicaoTipo];
+    if (tipo === 'membros') return 'membro';
+    if (tipo === 'gerencia') return 'gerente';
+    return null;
+  };
+}
+
 module.exports = {
   MENSAGEM_ERRO_GENERICA,
+  permissaoBau,
   respostaEfemera,
   responderErro,
   formatarDinheiro,

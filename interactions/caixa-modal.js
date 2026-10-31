@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { getSaldo, adicionarCaixa, retirarCaixa, addLogCaixa } = require('../utils/caixa');
 const { getConfig } = require('../utils/config');
+const { parseInteiroPositivo, LIMITES } = require('../utils/validacao');
 const { rowCaixa, embedCaixa, embedLogCaixa, formatarDinheiro, respostaEfemera, responderErro } = require('../utils/ui');
 
 async function restaurarPainel(interaction) {
@@ -47,11 +48,12 @@ async function registrarEfeitos(interaction, client, dados) {
 module.exports = {
   type: 'modal',
   customIds: ['caixa_modal'],
+  permissao: 'gerente',
 
   async execute(interaction, client) {
     const [, acao] = interaction.customId.split(':');
     const tipoRaw = interaction.fields.getTextInputValue('tipo').toLowerCase().trim();
-    const valorRaw = interaction.fields.getTextInputValue('valor').replace(/\D/g, '');
+    const valorRaw = interaction.fields.getTextInputValue('valor');
     const anotacao = interaction.fields.getTextInputValue('anotacao');
 
     try {
@@ -61,13 +63,14 @@ module.exports = {
         return;
       }
 
-      const valor = parseInt(valorRaw);
-      if (isNaN(valor) || valor <= 0) {
-        await interaction.reply(respostaEfemera({ content: '❌ Valor inválido! Digite um número maior que zero.' }));
+      const analise = parseInteiroPositivo(valorRaw, { max: LIMITES.VALOR_CAIXA_MAX });
+      if (!analise.ok) {
+        await interaction.reply(respostaEfemera({ content: `❌ Valor inválido! ${analise.erro}` }));
         await restaurarPainel(interaction);
         return;
       }
 
+      const valor = analise.valor;
       const nomeTipo = tipoRaw === 'sujo' ? '🖤 Dinheiro Sujo' : '💵 Dinheiro Limpo';
       let saldo;
 

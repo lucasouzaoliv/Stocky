@@ -5,6 +5,7 @@ const { rowsPainelGerencia, respostaEfemera, responderErro } = require('../utils
 module.exports = {
   type: 'modal',
   customIds: ['ger_modal_adicionar'],
+  permissao: 'gerente',
 
   async execute(interaction) {
     const [, categoriaId] = interaction.customId.split(':');

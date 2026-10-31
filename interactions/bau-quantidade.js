@@ -1,7 +1,8 @@
 const { embedSucesso, embedErro, embedLog, embedInventario, embedMenuPrincipal } = require('../utils/embeds');
 const { adicionarAoBau, removerDoBau, getItensDaCategoria, getCategorias, addLog, getBau } = require('../utils/db');
 const { getConfig } = require('../utils/config');
-const { rowMenuBau, respostaEfemera, responderErro } = require('../utils/ui');
+const { parseInteiroPositivo, LIMITES } = require('../utils/validacao');
+const { rowMenuBau, respostaEfemera, responderErro, permissaoBau } = require('../utils/ui');
 
 async function restaurarMenu(interaction, tipo) {
   await interaction.message.edit({ embeds: [embedMenuPrincipal(tipo)], components: [rowMenuBau(tipo)] });
@@ -53,19 +54,21 @@ async function registrarEfeitos(interaction, client, dados) {
 module.exports = {
   type: 'modal',
   customIds: ['bau_quantidade'],
+  permissao: permissaoBau(2),
 
   async execute(interaction, client) {
     const [, acao, tipo, categoriaId, itemId] = interaction.customId.split(':');
     const quantidadeRaw = interaction.fields.getTextInputValue('quantidade');
-    const quantidade = parseInt(quantidadeRaw);
+    const analise = parseInteiroPositivo(quantidadeRaw, { max: LIMITES.QUANTIDADE_ITEM_MAX });
 
     try {
-      if (isNaN(quantidade) || quantidade <= 0) {
-        await interaction.reply(respostaEfemera({ embeds: [embedErro('Quantidade inválida', 'Digite um número inteiro maior que zero.')] }));
+      if (!analise.ok) {
+        await interaction.reply(respostaEfemera({ embeds: [embedErro('Quantidade inválida', analise.erro)] }));
         await restaurarMenu(interaction, tipo);
         return;
       }
 
+      const quantidade = analise.valor;
       const itens = await getItensDaCategoria(categoriaId);
       const item = itens.find(i => i.id === itemId);
       const categorias = await getCategorias();

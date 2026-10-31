@@ -3,6 +3,7 @@ const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = req
 module.exports = {
   type: 'button',
   customIds: ['ger_abrir_modal_ajustar'],
+  permissao: 'gerente',
 
   execute(interaction) {
     const [, tipo] = interaction.customId.split(':');

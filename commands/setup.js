@@ -18,6 +18,8 @@ module.exports = {
         )
     ),
 
+  permissao: 'gerente',
+
   async execute(interaction, client) {
     const tipo = interaction.options.getString('tipo');
     const { channels } = getConfig();

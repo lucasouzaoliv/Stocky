@@ -1,19 +1,13 @@
 const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { getSaldo, getLogsCaixa } = require('../utils/caixa');
-const { podeUsarBauGerencia } = require('../utils/permissoes');
-const { rowCaixa, embedCaixa, embedHistoricoCaixa, respostaEfemera, responderErro } = require('../utils/ui');
+const { rowCaixa, embedCaixa, embedHistoricoCaixa, responderErro } = require('../utils/ui');
 
 module.exports = {
   type: 'button',
   customIds: ['caixa_adicionar', 'caixa_retirar', 'caixa_logs'],
+  permissao: 'gerente',
 
   async execute(interaction) {
-    if (!podeUsarBauGerencia(interaction.member)) {
-      return interaction.reply(respostaEfemera({
-        content: '❌ Apenas **Consejeros** e **El Diablo** podem usar o caixa.'
-      }));
-    }
-
     const acao = interaction.customId;
 
     if (acao === 'caixa_logs') {
@@ -61,7 +55,7 @@ module.exports = {
           .setStyle(TextInputStyle.Short)
           .setPlaceholder('Ex: 50000')
           .setRequired(true)
-          .setMaxLength(15)
+          .setMaxLength(10)
       ),
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()

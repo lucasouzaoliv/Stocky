@@ -1,10 +1,11 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { getItensDaCategoria } = require('../utils/db');
-const { respostaEfemera, responderErro } = require('../utils/ui');
+const { respostaEfemera, responderErro, permissaoBau } = require('../utils/ui');
 
 module.exports = {
   type: 'select',
   customIds: ['bau_item'],
+  permissao: permissaoBau(2),
 
   async execute(interaction) {
     const [, acao, tipo, categoriaId] = interaction.customId.split(':');

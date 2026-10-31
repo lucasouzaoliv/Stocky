@@ -8,6 +8,8 @@ module.exports = {
     .setName('setup-caixa')
     .setDescription('Envia a mensagem fixa do caixa no canal (use apenas uma vez)'),
 
+  permissao: 'gerente',
+
   async execute(interaction, client) {
     const canal = client.channels.cache.get(getConfig().channels.caixaGangue);
     if (!canal) {

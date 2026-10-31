@@ -97,6 +97,7 @@ async function montarTela(acao) {
 module.exports = {
   type: 'button',
   customIds: ['ger_adicionar_item', 'ger_remover_item', 'ger_zerar_bau', 'ger_ver_logs', 'ger_cancelar', 'ger_ajustar_membros', 'ger_ajustar_gerencia'],
+  permissao: 'gerente',
 
   async execute(interaction) {
     const acao = interaction.customId;

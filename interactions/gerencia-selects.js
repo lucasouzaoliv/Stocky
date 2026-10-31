@@ -137,6 +137,7 @@ async function verLogs(interaction) {
 module.exports = {
   type: 'select',
   customIds: ['ger_cat_adicionar', 'ger_cat_remover', 'ger_zerar_confirmar', 'ger_logs_tipo', 'ger_item_remover'],
+  permissao: 'gerente',
 
   async execute(interaction, client) {
     const acao = interaction.customId;

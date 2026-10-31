@@ -1,11 +1,12 @@
 const { ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const { embedSelecionarCategoria, embedInventario, embedMenuPrincipal } = require('../utils/embeds');
 const { getCategorias, getBau } = require('../utils/db');
-const { rowMenuBau, rowCancelarBau, responderErro } = require('../utils/ui');
+const { rowMenuBau, rowCancelarBau, responderErro, permissaoBau } = require('../utils/ui');
 
 module.exports = {
   type: 'button',
   customIds: ['bau_adicionar', 'bau_remover', 'bau_estoque', 'bau_cancelar'],
+  permissao: permissaoBau(1),
 
   async execute(interaction) {
     await interaction.deferUpdate();

@@ -13,14 +13,8 @@ function clique(customId, extras = {}) {
   return criarInteracao({ tipo: 'button', customId, cargos: GERENTE, ...extras });
 }
 
-test('sem cargo: resposta efêmera e nenhuma leitura', async (t) => {
-  const env = montarAmbiente();
-  t.after(env.limpar);
-  const i = clique('caixa_logs', { cargos: ['r-membro'] });
-  await handler.execute(i);
-  assert.deepEqual(metodos(i), ['reply']);
-  assert.ok(ehEfemera(ultima(i, 'reply').payload));
-  assert.equal(env.fake.chamadas.length, 0);
+test('declara permissão de gerente (aplicada pelo roteador)', () => {
+  assert.equal(handler.permissao, 'gerente');
 });
 
 test('Adicionar/Retirar abrem o modal do caixa como primeira resposta', async (t) => {

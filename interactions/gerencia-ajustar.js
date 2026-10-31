@@ -60,6 +60,7 @@ async function atualizarInventario(client, tipo, bau) {
 module.exports = {
   type: 'modal',
   customIds: ['ger_modal_ajustar'],
+  permissao: 'gerente',
 
   async execute(interaction, client) {
     const [, tipo] = interaction.customId.split(':');
