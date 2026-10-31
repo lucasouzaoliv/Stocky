@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Bot de gerenciamento de baú para facções FiveM RP",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucasouzaoliv/stocky.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lucasouzaoliv/stocky/issues"
+  },
+  "homepage": "https://github.com/lucasouzaoliv/stocky#readme",
   "scripts": {
     "start": "node start.js",
     "deploy": "node deploy-commands.js",
