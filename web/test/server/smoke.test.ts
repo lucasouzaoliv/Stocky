@@ -40,9 +40,9 @@ describe('WEB-001 scaffold', () => {
     }
   });
 
-  it('AC4: sem dependências de Firebase, Discord ou Vercel nesta onda', () => {
+  it('AC4: sem SDK cliente do Firebase, Discord ou Vercel (só firebase-admin, WEB-010)', () => {
     const nomes = Object.keys({ ...pacote.dependencies, ...pacote.devDependencies });
-    expect(nomes.filter((n) => /firebase|discord|vercel/i.test(n))).toEqual([]);
+    expect(nomes.filter((n) => n !== 'firebase-admin' && /firebase|discord|vercel/i.test(n))).toEqual([]);
   });
 
   it('licença MIT declarada e arquivo presente', () => {
