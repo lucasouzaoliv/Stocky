@@ -11,6 +11,7 @@ import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-
 import { USUARIO, logsDe, seedBase } from '../helpers/estado';
 import type { PerfilTeste } from '../helpers/pedidos';
 import { chamarRota } from '../helpers/rotas';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 beforeEach(() => {
@@ -156,8 +157,9 @@ describe('WEB-034 AC3: POST /api/caixa/movimentar', () => {
   });
 
   it('falha do Firestore vira 500 genérico, sem stack nem texto da exceção', async () => {
-    fake.falharProximoCommit(new Error('PERMISSION_DENIED projects/segredo stack at x (/var/task/a.js:1:1)'));
+    const provar = await falharCommitDaOperacao(fake, new Error('PERMISSION_DENIED projects/segredo stack at x (/var/task/a.js:1:1)'));
     const { status, texto, corpo } = await mover(2, corpoOk());
+    provar();
     expect(status).toBe(500);
     expect(corpo.codigo).toBe('INTERNO');
     expect(texto).not.toMatch(/PERMISSION_DENIED|segredo|stack|\/var\/task/);

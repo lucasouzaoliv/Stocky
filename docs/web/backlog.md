@@ -433,7 +433,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Critérios de aceite:**
   1. Dois `adicionar` simultâneos (+5 e +7) resultam em 12; 50 adições paralelas somam corretamente.
   2. Toda escrita acontece com `emTransacao: true`, e o log (usuário, ação, item, quantidade, saldo resultante, data ISO) é gravado na mesma transação: com `falharProximoCommit`, nem estoque nem log mudam (`dump` idêntico).
-  3. Quantidade `0`, `-1`, `1.5`, `"5"`, `100001` → `ErroApp` 400, nada gravado.
+  3. Quantidade `0`, `-1`, `1.5`, `"10abc"`, `"1,5"`, `"1e3"`, `100001` → `ErroApp` 400, nada gravado. (Texto só de dígitos, como `"5"`, é aceito: ADR-14, `parseInteiro`.)
   4. Item ou categoria inexistente no catálogo, ou item que não pertence àquela categoria → 404/400, nada gravado.
   5. Resultado acima de `Number.MAX_SAFE_INTEGER` é recusado.
   6. `versao` do baú aumenta em 1 por operação bem-sucedida e não muda em operação recusada.

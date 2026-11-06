@@ -1,7 +1,7 @@
 import 'server-only';
 import { ErroApp } from '../erros';
 import type { CollectionReference, Db, DocumentReference } from '../firebase';
-import { ehIdSeguro } from '../validacao/item';
+import { ehIdDeFormatoValido } from '../validacao/item';
 import type { AlvoZerar, ChaveMensagem, DocBau, DocSaldo, EscopoLog, TipoBau } from './tipos';
 
 const TIPOS_BAU: readonly string[] = ['membros', 'gerencia'];
@@ -46,15 +46,25 @@ function inteiroNaoNegativo(v: unknown): number {
   return typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : 0;
 }
 
+/** Leitura segura de `itens[categoriaId][itemId]`: só chaves próprias, nunca as herdadas de `Object.prototype`. */
+export function mapaDaCategoria(itens: DocBau['itens'], categoriaId: string): Record<string, number> | undefined {
+  return Object.hasOwn(itens, categoriaId) ? itens[categoriaId] : undefined;
+}
+
+export function quantidadeNoBau(itens: DocBau['itens'], categoriaId: string, itemId: string): number {
+  const mapa = mapaDaCategoria(itens, categoriaId);
+  return mapa && Object.hasOwn(mapa, itemId) ? (mapa[itemId] ?? 0) : 0;
+}
+
 export function lerDocBau(dados: unknown): DocBau {
   const base = ehObjeto(dados) ? dados : {};
   const itens: Record<string, Record<string, number>> = {};
   if (ehObjeto(base.itens)) {
     for (const [categoriaId, mapa] of Object.entries(base.itens)) {
-      if (!ehIdSeguro(categoriaId) || !ehObjeto(mapa)) continue;
+      if (!ehIdDeFormatoValido(categoriaId) || !ehObjeto(mapa)) continue;
       const limpo: Record<string, number> = {};
       for (const [itemId, qtd] of Object.entries(mapa)) {
-        if (ehIdSeguro(itemId) && typeof qtd === 'number' && Number.isSafeInteger(qtd) && qtd > 0) limpo[itemId] = qtd;
+        if (ehIdDeFormatoValido(itemId) && typeof qtd === 'number' && Number.isSafeInteger(qtd) && qtd > 0) limpo[itemId] = qtd;
       }
       if (Object.keys(limpo).length > 0) itens[categoriaId] = limpo;
     }

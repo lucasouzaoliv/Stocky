@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createElement } from 'react';
@@ -163,12 +163,5 @@ describe('WEB-027 AC2 varredura do bundle (scripts/verificar-bundle.mjs)', () =>
     writeFileSync(join(dir, 'e.js'), `k="${['-----BEGIN ', 'PRIVATE KEY-----'].join('')}"`);
     const arquivos = new Set(verificador.varrer(dir).map((a) => a.arquivo.split('/').pop()));
     expect([...arquivos].sort()).toEqual(['a.js', 'b.js', 'c.js', 'd.js', 'e.js']);
-  });
-
-  it('se houver um build em .next/static, ele está limpo de segredos reais ou falsos', () => {
-    const estatico = join(RAIZ_WEB, '.next', 'static');
-    if (!existsSync(estatico)) return;
-    const reais = Object.values(ENV_TESTE).concat(Object.values(process.env).filter((v): v is string => !!v && v.length >= 20));
-    expect(verificador.varrer(estatico, reais)).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
 import { garantirCatalogo } from '../catalogo/semente';
 import { lerCatalogoDoc } from '../catalogo/leitura';
-import { exigirTipoBau, lerDocBau, refBau, refCatalogo } from '../dominio/refs';
+import { exigirTipoBau, lerDocBau, mapaDaCategoria, refBau, refCatalogo } from '../dominio/refs';
 
 export const NOME_ITEM_REMOVIDO = 'Item removido';
 
@@ -24,7 +24,7 @@ export async function lerBau(tipo: unknown): Promise<BauDTO> {
     versao: bau.versao,
     categorias: catalogo.categorias.map((c) => {
       const nomes = new Map(c.itens.map((i) => [i.id, i.nome]));
-      const itens = Object.entries(bau.itens[c.id] ?? {})
+      const itens = Object.entries(mapaDaCategoria(bau.itens, c.id) ?? {})
         .map(([id, quantidade]) => ({ id, nome: nomes.get(id) ?? NOME_ITEM_REMOVIDO, quantidade }))
         .sort(porNome);
       return { id: c.id, nome: c.nome, emoji: c.emoji, itens };

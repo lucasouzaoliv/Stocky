@@ -18,6 +18,7 @@ import { respostaJson, type RespostaFake } from '../helpers/fake-fetch';
 import { comoDb, criarFakeFirestore, type Dados, type FakeFirestore } from '../helpers/fake-firestore';
 import { USUARIO, seedBase } from '../helpers/estado';
 import { chamarRota, type RespostaRota } from '../helpers/rotas';
+import { falharCommitDaOperacao } from './commit-falho';
 
 type Tarefa = () => Promise<void>;
 let fake: FakeFirestore;
@@ -307,9 +308,10 @@ describe('WEB-051 AC4: webhook só depois do commit', () => {
   for (const c of cenarios) {
     it(`${c.nome}: commit que falha → 500, nada agendado e nada enviado`, async () => {
       const d = discord();
-      fake.falharProximoCommit(new Error('commit falhou'));
+      const provar = await falharCommitDaOperacao(fake, new Error('commit falhou'));
       const r = await c.chamar();
       expect(r.status).toBe(500);
+      provar();
       expect(tarefas).toHaveLength(0);
       await executar();
       expect(d.chamadas).toHaveLength(0);

@@ -8,6 +8,7 @@ import { ErroApp } from '@/server/erros';
 import { resetDb, setDb } from '@/server/firebase';
 import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-firestore';
 import { DONO, OUTRO_USUARIO, USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers/estado';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 function abrir(membros: ItensBau = { armas: { colt: 3 }, medicamentos: { bandagem: 10 } }, versao = 4) {
@@ -167,8 +168,9 @@ describe('WEB-041 confirmarAjuste', () => {
 
   it('AC5: falharProximoCommit → nada muda', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('falha'));
+    const provar = await falharCommitDaOperacao(fake, new Error('falha'));
     await expect(confirmarAjuste('membros', 4, [linha('armas', 'colt', 5)], USUARIO)).rejects.toThrow();
+    provar();
     expect(fake.dump()).toEqual(antes);
   });
 

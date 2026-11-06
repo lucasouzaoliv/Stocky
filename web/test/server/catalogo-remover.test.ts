@@ -7,6 +7,7 @@ import { ErroApp } from '@/server/erros';
 import { resetDb, setDb } from '@/server/firebase';
 import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-firestore';
 import { DONO, GERENTE, USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers/estado';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 function abrir(o: { membros?: ItensBau; gerencia?: ItensBau; versao?: number } = {}) {
@@ -67,8 +68,9 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('AC2: falha injetada no commit → dump idêntico e zero auditorias', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('falha'));
+    const provar = await falharCommitDaOperacao(fake, new Error('falha'));
     await expect(removerItemDoCatalogo('medicamentos', 'bandagem', DONO)).rejects.toThrow();
+    provar();
     expect(fake.dump()).toEqual(antes);
     expect(auditorias(fake.dump())).toHaveLength(0);
   });

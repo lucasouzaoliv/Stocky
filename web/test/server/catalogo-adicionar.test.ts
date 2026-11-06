@@ -6,6 +6,7 @@ import { ErroApp } from '@/server/erros';
 import { resetDb, setDb } from '@/server/firebase';
 import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-firestore';
 import { USUARIO, auditorias, seedBase } from '../helpers/estado';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 function abrir(seed: Parameters<typeof seedBase>[0] = {}) {
@@ -123,8 +124,9 @@ describe('WEB-035 adicionarItemAoCatalogo', () => {
 
   it('falha de commit → catálogo idêntico e zero auditorias', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('falha'));
+    const provar = await falharCommitDaOperacao(fake, new Error('falha'));
     await expect(adicionarItemAoCatalogo('armas', 'Faca', USUARIO)).rejects.toThrow();
+    provar();
     expect(fake.dump()).toEqual(antes);
   });
 

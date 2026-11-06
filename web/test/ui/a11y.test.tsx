@@ -165,7 +165,7 @@ describe('WEB-065 AC1: axe sem violações em cada tela e estado', () => {
     const { default: Inicio } = await import('@/app/page');
     const { default: NaoEncontrada } = await import('@/app/not-found');
     const { default: Erro } = await import('@/app/error');
-    const { default: CarregandoRota } = await import('@/app/loading');
+    const { default: CarregandoRota } = await import('@/app/(protegido)/loading');
     for (const [el, opcoes] of [
       [<Inicio key="i" />, {}],
       [<NaoEncontrada key="n" />, {}],

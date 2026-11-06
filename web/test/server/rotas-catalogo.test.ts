@@ -11,6 +11,7 @@ import { USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers
 import type { PerfilTeste } from '../helpers/pedidos';
 import { chamarRota } from '../helpers/rotas';
 import type { CategoriaCatalogo } from '@/server/dominio/tipos';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 beforeEach(() => {
@@ -101,8 +102,9 @@ describe('WEB-037 POST /api/catalogo/itens (nível 2)', () => {
   });
 
   it('falha do Firestore não vaza detalhe', async () => {
-    fake.falharProximoCommit(new Error('PERMISSION_DENIED projects/segredo stack at x (/var/task/y.js:1:1)'));
+    const provar = await falharCommitDaOperacao(fake, new Error('PERMISSION_DENIED projects/segredo stack at x (/var/task/y.js:1:1)'));
     const r = await adicionar(2, { categoriaId: 'armas', nome: 'Faca' });
+    provar();
     expect([r.status, r.corpo.codigo]).toEqual([500, 'INTERNO']);
     expect(r.texto).not.toMatch(/PERMISSION_DENIED|segredo|\/var\/task/);
   });
@@ -183,8 +185,9 @@ describe('WEB-037 DELETE /api/catalogo/itens/[categoriaId]/[itemId] (nível 3, s
 
   it('falha no commit → 500 genérico e catálogo, baús e auditoria intactos', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('falha secreta'));
+    const provar = await falharCommitDaOperacao(fake, new Error('falha secreta'));
     const r = await remover(3);
+    provar();
     expect([r.status, r.corpo.codigo]).toEqual([500, 'INTERNO']);
     expect(fake.dump()).toEqual(antes);
     expect(r.texto).not.toMatch(/secreta/);

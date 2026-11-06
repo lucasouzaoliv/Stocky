@@ -7,7 +7,7 @@ import { ErroApp, type DetalhesErro } from '../erros';
 import { getDb } from '../firebase';
 import { lerCatalogoDoc, lerCatalogoTx } from '../catalogo/leitura';
 import { garantirCatalogo } from '../catalogo/semente';
-import { exigirTipoBau, lerDocBau, refBau, refCatalogo } from '../dominio/refs';
+import { exigirTipoBau, lerDocBau, mapaDaCategoria, quantidadeNoBau, refBau, refCatalogo } from '../dominio/refs';
 import type { DocBau, DocCatalogo, UsuarioRef } from '../dominio/tipos';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento } from '../webhooks/eventos';
@@ -108,7 +108,7 @@ export async function preverAjuste(tipoBruto: unknown, linhas: unknown): Promise
     categoriaId: l.categoriaId,
     itemId: l.itemId,
     nome: nomeDoItem(catalogo, l.categoriaId, l.itemId),
-    antes: bau.itens[l.categoriaId]?.[l.itemId] ?? 0,
+    antes: quantidadeNoBau(bau.itens, l.categoriaId, l.itemId),
     depois: l.quantidade,
   }));
   return { tipo, versao: bau.versao, alterados: resultado.filter((l) => l.antes !== l.depois).length, linhas: resultado };
@@ -126,10 +126,13 @@ function aplicar(bau: DocBau, mudancas: LinhaValida[]): DocBau['itens'] {
   for (const [categoriaId, mapa] of Object.entries(bau.itens)) itens[categoriaId] = { ...mapa };
   for (const m of mudancas) {
     if (m.quantidade === 0) {
-      delete itens[m.categoriaId]?.[m.itemId];
-      if (itens[m.categoriaId] && Object.keys(itens[m.categoriaId]!).length === 0) delete itens[m.categoriaId];
+      const mapa = mapaDaCategoria(itens, m.categoriaId);
+      if (mapa) {
+        delete mapa[m.itemId];
+        if (Object.keys(mapa).length === 0) delete itens[m.categoriaId];
+      }
     } else {
-      itens[m.categoriaId] = { ...(itens[m.categoriaId] ?? {}), [m.itemId]: m.quantidade };
+      itens[m.categoriaId] = { ...(mapaDaCategoria(itens, m.categoriaId) ?? {}), [m.itemId]: m.quantidade };
     }
   }
   return itens;
@@ -166,14 +169,16 @@ export async function confirmarAjusteComEvento(
     }
     const pedidas = analisarLinhas(linhas, catalogo);
 
-    const mudancas = pedidas.filter((l) => (bau.itens[l.categoriaId]?.[l.itemId] ?? 0) !== l.quantidade);
+    const mudancas = pedidas.filter((l) => (quantidadeNoBau(bau.itens, l.categoriaId, l.itemId)) !== l.quantidade);
     if (mudancas.length === 0) return { dto: { alterados: 0, versao: bau.versao, auditoriaId: null }, eventos: [] };
 
     const antes: Record<string, Record<string, number>> = {};
     const depois: Record<string, Record<string, number>> = {};
     for (const m of mudancas) {
-      (antes[m.categoriaId] ??= {})[m.itemId] = bau.itens[m.categoriaId]?.[m.itemId] ?? 0;
-      (depois[m.categoriaId] ??= {})[m.itemId] = m.quantidade;
+      const a = mapaDaCategoria(antes, m.categoriaId) ?? (antes[m.categoriaId] = {});
+      a[m.itemId] = quantidadeNoBau(bau.itens, m.categoriaId, m.itemId);
+      const d = mapaDaCategoria(depois, m.categoriaId) ?? (depois[m.categoriaId] = {});
+      d[m.itemId] = m.quantidade;
     }
     const novaVersao = bau.versao + 1;
     tx.set(refBau(db, tipo), {

@@ -134,6 +134,7 @@ Abra http://localhost:3000. O Redirect URI local precisa estar cadastrado no Dis
 | `npm run typecheck` | verificação de tipos (`tsc --noEmit`) |
 | `npm test` | testes (Vitest); usam Firestore falso, nunca o banco real |
 | `npm run verificar:bundle` | confere que nenhum segredo foi parar no código enviado ao navegador |
+| `npm run verificar:build` | constrói sem nenhuma variável de ambiente (sem `warn`/`Failed`), sobe `npm run start` e confere `/login` 200, `/api/caixa` 401 e os cabeçalhos de segurança; encerra o servidor ao fim |
 
 Os testes e o build usam apenas valores falsos; nenhum precisa de credencial real.
 
@@ -143,6 +144,12 @@ Os testes e o build usam apenas valores falsos; nenhum precisa de credencial rea
 - O Firestore nega todo acesso de cliente; só o servidor acessa.
 - Sessão em cookie `httpOnly`, `Secure`, `SameSite=Lax`, assinada; proteção contra CSRF nas rotas que alteram dados.
 - Só produção (`APP_URL`) e `localhost` fazem login.
+- Ids de item que coincidem com chaves de `Object.prototype` (como `constructor`) são recusados ao criar o item, e toda leitura de estoque por id usa só chaves próprias.
+
+### Riscos aceitos
+
+- **State do OAuth sem uso único no servidor.** O state é um JWT assinado, de 10 minutos, no cookie `httpOnly` `stocky_oauth` (`Path=/api/auth`), e o callback sempre o apaga. Reapresentar o mesmo cookie e o mesmo `state` dentro dessa janela passa a checagem, mas o código de autorização do Discord só vale uma vez, então o login não se repete. Invalidar o state exigiria gravar cada uso no Firestore (uma escrita extra por login, mais limpeza), custo maior que o risco: quem tem o cookie `httpOnly` já controla o navegador da vítima.
+- **Dependências de produção com 6 avisos moderados** (`glob`/`minimatch` via `rimraf`, `gaxios`, `google-gax` dentro do `firebase-admin`). O `npm audit fix` não altera nada (a correção exige `google-gax` 6, versão major, que o `firebase-admin` fixado ainda não aceita). O site nunca chama `glob` com entrada do usuário. Reavaliar a cada atualização do `firebase-admin`.
 
 ## Licença
 

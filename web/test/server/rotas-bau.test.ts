@@ -12,6 +12,7 @@ import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-
 import { USUARIO, logsDe, seedBase, type ItensBau } from '../helpers/estado';
 import type { PerfilTeste } from '../helpers/pedidos';
 import { chamarRota } from '../helpers/rotas';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 beforeEach(() => {
@@ -266,8 +267,9 @@ describe('WEB-031 AC5: nenhuma resposta vaza stack nem texto de exceção', () =
     const r = await chamar(ROTAS[1], 'membros', 1, corpoOk());
     expect(r.status).toBe(200);
     for (const rota of [ROTAS[1], ROTAS[2]]) {
-      fake.falharProximoCommit(new Error(VAZAMENTO));
+      const provar = await falharCommitDaOperacao(fake, new Error(VAZAMENTO));
       const { status, texto, corpo } = await chamar(rota, 'membros', 1, corpoOk({ quantidade: 1 }));
+      provar();
       expect(status).toBe(500);
       expect(corpo.codigo).toBe('INTERNO');
       expect(texto).not.toMatch(/PERMISSION_DENIED|segredo|stack|\/var\/task|at Object/);

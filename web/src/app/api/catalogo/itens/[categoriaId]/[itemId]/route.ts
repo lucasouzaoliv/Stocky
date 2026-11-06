@@ -2,7 +2,7 @@ import { comAutorizacao } from '@/server/auth/autorizacao';
 import { removerItemDoCatalogoComEvento } from '@/server/catalogo/operacoes';
 import { ErroApp } from '@/server/erros';
 import { responderOk } from '@/server/http';
-import { ehIdSeguro } from '@/server/validacao/item';
+import { ehIdDeFormatoValido } from '@/server/validacao/item';
 import { publicarEventos } from '@/server/webhooks/eventos';
 
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ export const DELETE = comAutorizacao<{ categoriaId: string; itemId: string }>(
   { nivel: 3 },
   async ({ params, usuario }) => {
     if (!usuario) throw new ErroApp('SEM_SESSAO');
-    if (!ehIdSeguro(params.categoriaId) || !ehIdSeguro(params.itemId)) throw new ErroApp('VALIDACAO', 'Item inválido.');
+    if (!ehIdDeFormatoValido(params.categoriaId) || !ehIdDeFormatoValido(params.itemId)) throw new ErroApp('VALIDACAO', 'Item inválido.');
     const r = await removerItemDoCatalogoComEvento(params.categoriaId, params.itemId, usuario);
     publicarEventos(r.eventos);
     return responderOk(r.dto);

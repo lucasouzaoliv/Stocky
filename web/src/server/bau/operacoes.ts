@@ -7,7 +7,7 @@ import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
 import { garantirCatalogo } from '../catalogo/semente';
 import { lerCatalogoTx } from '../catalogo/leitura';
-import { exigirTipoBau, lerDocBau, refBau } from '../dominio/refs';
+import { exigirTipoBau, lerDocBau, mapaDaCategoria, quantidadeNoBau, refBau } from '../dominio/refs';
 import type { TipoBau, UsuarioRef } from '../dominio/tipos';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento } from '../webhooks/eventos';
@@ -43,7 +43,7 @@ async function movimentar(sentido: Sentido, p: PedidoMovimentoBau, usuario: Usua
     if (!item) throw new ErroApp('NAO_ENCONTRADO', 'Item não encontrado nesta categoria.');
 
     const bau = lerDocBau(snap.data());
-    const atual = bau.itens[categoriaId]?.[itemId] ?? 0;
+    const atual = quantidadeNoBau(bau.itens, categoriaId, itemId);
     let novo: number;
     if (sentido === 'adicionar') {
       novo = atual + q.valor;
@@ -58,7 +58,7 @@ async function movimentar(sentido: Sentido, p: PedidoMovimentoBau, usuario: Usua
       novo = atual - q.valor;
     }
 
-    const categoriaItens = { ...(bau.itens[categoriaId] ?? {}) };
+    const categoriaItens = { ...(mapaDaCategoria(bau.itens, categoriaId) ?? {}) };
     if (novo === 0) delete categoriaItens[itemId];
     else categoriaItens[itemId] = novo;
     const itens = { ...bau.itens };

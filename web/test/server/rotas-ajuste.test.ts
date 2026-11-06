@@ -13,6 +13,7 @@ import { USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers
 import type { PerfilTeste } from '../helpers/pedidos';
 import { chamarRota } from '../helpers/rotas';
 import { CATALOGO_PADRAO } from '@/server/catalogo/padrao';
+import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
 function abrir() {
@@ -232,8 +233,9 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/confirmar', () => {
 
   it('falha no commit → 500 genérico e baú intacto', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('PERMISSION_DENIED segredo'));
+    const provar = await falharCommitDaOperacao(fake, new Error('PERMISSION_DENIED segredo'));
     const r = await confirmar('membros', 2);
+    provar();
     expect([r.status, r.corpo.codigo]).toEqual([500, 'INTERNO']);
     expect(r.texto).not.toMatch(/PERMISSION_DENIED|segredo/);
     expect(fake.dump()).toEqual(antes);

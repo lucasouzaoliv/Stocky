@@ -7,7 +7,7 @@ const yaml = ler(join(RAIZ_REPO, '.github', 'workflows', 'web.yml'));
 describe('WEB-007 CI', () => {
   it('AC1: roda os passos na ordem, em web/', () => {
     const comandos = [...yaml.matchAll(/^\s*run:[ \t]+(\S.*)$/gm)].map((m) => (m[1] ?? '').trim());
-    expect(comandos).toEqual(['npm ci', 'npm run lint', 'npm run typecheck', 'npm test', 'npm run build', 'npm run verificar:bundle']);
+    expect(comandos).toEqual(['npm ci', 'npm run lint', 'npm run typecheck', 'npm test', 'npm run build', 'npm run verificar:bundle', 'npm run verificar:build']);
     expect(yaml).toMatch(/working-directory:\s*web\b/);
   });
 

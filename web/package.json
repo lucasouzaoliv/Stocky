@@ -15,7 +15,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "verificar:bundle": "node scripts/verificar-bundle.mjs"
+    "verificar:bundle": "node scripts/verificar-bundle.mjs",
+    "verificar:build": "node scripts/verificar-build.mjs"
   },
   "dependencies": {
     "firebase-admin": "14.5.0",

@@ -4,11 +4,11 @@ import { LIMITES } from '@/compartilhado/limites';
 import { registrarAuditoriaTx } from '../auditoria/registrar';
 import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
-import { lerDocBau, refBau, refCatalogo } from '../dominio/refs';
+import { lerDocBau, mapaDaCategoria, quantidadeNoBau, refBau, refCatalogo } from '../dominio/refs';
 import type { DocBau, TipoBau, UsuarioRef, UsuarioSessao } from '../dominio/tipos';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento, EventoDominio } from '../webhooks/eventos';
-import { ehIdSeguro, gerarIdItem, validarNomeItem } from '../validacao/item';
+import { ehIdDeFormatoValido, ehIdSeguro, gerarIdItem, validarNomeItem } from '../validacao/item';
 import { lerCatalogoTx } from './leitura';
 import { garantirCatalogo } from './semente';
 
@@ -64,7 +64,7 @@ export async function adicionarItemAoCatalogo(
 
 function semItem(bau: DocBau, categoriaId: string, itemId: string): DocBau['itens'] {
   const itens = { ...bau.itens };
-  const categoria = { ...(itens[categoriaId] ?? {}) };
+  const categoria = { ...(mapaDaCategoria(itens, categoriaId) ?? {}) };
   delete categoria[itemId];
   if (Object.keys(categoria).length === 0) delete itens[categoriaId];
   else itens[categoriaId] = categoria;
@@ -84,7 +84,7 @@ export async function removerItemDoCatalogoComEvento(
 ): Promise<ComEvento<ResultadoRemocao>> {
   const quem = refUsuario(usuario);
   if (usuario.nivel !== 3) throw new ErroApp('SEM_PERMISSAO');
-  if (!ehIdSeguro(categoriaId) || !ehIdSeguro(itemId)) throw new ErroApp('VALIDACAO', 'Item inválido.');
+  if (!ehIdDeFormatoValido(categoriaId) || !ehIdDeFormatoValido(itemId)) throw new ErroApp('VALIDACAO', 'Item inválido.');
 
   await garantirCatalogo();
   const db = getDb();
@@ -101,8 +101,8 @@ export async function removerItemDoCatalogoComEvento(
 
     const agora = new Date().toISOString();
     const removidoDe = {
-      membros: baus.membros.itens[categoriaId]?.[itemId] ?? 0,
-      gerencia: baus.gerencia.itens[categoriaId]?.[itemId] ?? 0,
+      membros: quantidadeNoBau(baus.membros.itens, categoriaId, itemId),
+      gerencia: quantidadeNoBau(baus.gerencia.itens, categoriaId, itemId),
     };
     const categorias = catalogo.categorias.map((c) =>
       c.id === categoriaId ? { ...c, itens: c.itens.filter((i) => i.id !== itemId) } : c,

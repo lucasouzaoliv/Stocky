@@ -9,6 +9,7 @@ import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-
 import { USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers/estado';
 import type { PerfilTeste } from '../helpers/pedidos';
 import { chamarRota } from '../helpers/rotas';
+import { falharCommitDaOperacao } from './commit-falho';
 
 const MEMBROS: ItensBau = { medicamentos: { bandagem: 10 }, armas: { colt: 2 } };
 const GERENCIA: ItensBau = { armas: { usp: 4 } };
@@ -119,8 +120,9 @@ describe('WEB-039 POST /api/bau/zerar (nível 3, só o dono)', () => {
 
   it('falha no commit → 500 genérico, baús e auditoria intactos', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('PERMISSION_DENIED segredo'));
+    const provar = await falharCommitDaOperacao(fake, new Error('PERMISSION_DENIED segredo'));
     const r = await zerar(3);
+    provar();
     expect([r.status, r.corpo.codigo]).toEqual([500, 'INTERNO']);
     expect(r.texto).not.toMatch(/PERMISSION_DENIED|segredo/);
     expect(fake.dump()).toEqual(antes);

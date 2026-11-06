@@ -34,3 +34,5 @@ jobs:
         run: npm run build
       - name: Verificar bundle
         run: npm run verificar:bundle
+      - name: Verificar build e servidor
+        run: npm run verificar:build

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import Erro from '@/app/error';
-import CarregandoRota from '@/app/loading';
+import CarregandoRota from '@/app/(protegido)/loading';
 import NaoEncontrada from '@/app/not-found';
 import { Carregando, ErroTela, Vazio } from '@/components/Estados';
 

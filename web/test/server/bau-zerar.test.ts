@@ -5,6 +5,7 @@ import { ErroApp } from '@/server/erros';
 import { resetDb, setDb } from '@/server/firebase';
 import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-firestore';
 import { DONO, GERENTE, USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers/estado';
+import { falharCommitDaOperacao } from './commit-falho';
 
 const MEMBROS: ItensBau = { medicamentos: { bandagem: 10, gaze: 2 }, armas: { colt: 1 } };
 const GERENCIA: ItensBau = { armas: { usp: 4 } };
@@ -71,8 +72,9 @@ describe('WEB-038 zerarBau', () => {
 
   it('AC3: falha de commit → dump idêntico e zero auditorias', async () => {
     const antes = fake.dump();
-    fake.falharProximoCommit(new Error('falha'));
+    const provar = await falharCommitDaOperacao(fake, new Error('falha'));
     await expect(zerarBau('ambos', DONO)).rejects.toThrow();
+    provar();
     expect(fake.dump()).toEqual(antes);
     expect(auditorias(fake.dump())).toHaveLength(0);
   });
