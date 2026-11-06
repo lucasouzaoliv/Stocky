@@ -125,9 +125,8 @@ describe('barra inferior e menu "Mais" no celular', () => {
   });
 
   it('mostra a marca configurável em um só arquivo', async () => {
-    const { NOME_FACCAO, SUBTITULO_FACCAO } = await import('@/compartilhado/marca');
+    const { NOME_FACCAO } = await import('@/compartilhado/marca');
     render(<Navegacao nivel={1} csrf="tok" />);
     expect(screen.getByText(NOME_FACCAO)).toBeInTheDocument();
-    expect(screen.getByText(SUBTITULO_FACCAO)).toBeInTheDocument();
   });
 });

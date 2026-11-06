@@ -15,8 +15,8 @@ export function TelaLogin({ erro }: { erro?: unknown }) {
     <main id="conteudo" tabIndex={-1} className="conteudo login">
       <section className="login__cartao" aria-labelledby="login-titulo">
         <span className="login__logo" aria-hidden="true" />
-        <h1 id="login-titulo">Stocky</h1>
-        <p className="login__texto">Gestão de baús e caixa da facção. Entre com a sua conta do Discord.</p>
+        <h1 id="login-titulo" className="sr-only">Stocky</h1>
+        <p className="login__texto">Entre com a sua conta do Discord.</p>
         {mensagem ? (
           <p className="login__erro" role="alert">
             {mensagem}

@@ -30,7 +30,7 @@ export default function ErroGlobal({ reset }: { error: Error & { digest?: string
               padding: '0 1rem',
               border: 0,
               borderRadius: '0.5rem',
-              background: '#7c3aed',
+              background: '#9000c0',
               color: '#ffffff',
               font: 'inherit',
               fontWeight: 600,

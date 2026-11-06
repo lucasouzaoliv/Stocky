@@ -8,7 +8,6 @@ export default function Inicio() {
   return (
     <main id="conteudo" tabIndex={-1} className="conteudo">
       <h1>Stocky</h1>
-      <p>Gestão de baús e caixa da facção.</p>
       <div className="bau__acoes">
         <Link className="botao" href="/bau/membros">
           Abrir o Baú dos Membros

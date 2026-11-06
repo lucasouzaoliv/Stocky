@@ -497,7 +497,7 @@ describe('WEB-069 front: título por página, favicon, 404 e login', () => {
   it('favicon simples roxo e preto em src/app/icon.svg', () => {
     const svg = readFileSync(join(RAIZ, 'src/app/icon.svg'), 'utf8');
     expect(svg).toMatch(/#0b0a10/i);
-    expect(svg).toMatch(/#7c3aed/i);
+    expect(svg).toMatch(/#9000c0/i);
     expect(svg).not.toMatch(/<script|href=|url\(/i);
   });
 

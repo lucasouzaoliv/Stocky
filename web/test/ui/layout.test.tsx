@@ -99,7 +99,7 @@ describe('WEB-053 tokens e acessibilidade visual', () => {
   it('paleta escura é a base: roxo, preto e branco', () => {
     expect(escuro['cor-fundo']).toBe('#0b0a10');
     expect(escuro['cor-texto']).toBe('#ffffff');
-    expect(escuro['cor-botao']).toBe('#7c3aed');
+    expect(escuro['cor-botao']).toBe('#9000c0');
   });
   it('foco visível de 2 px com a cor de destaque e movimento reduzido respeitado', () => {
     expect(bloco(':focus-visible')).toMatch(/outline:\s*2px solid var\(--cor-destaque\)/);

@@ -14,7 +14,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
-import { NOME_FACCAO, SUBTITULO_FACCAO } from '@/compartilhado/marca';
+import { NOME_FACCAO } from '@/compartilhado/marca';
 import { api } from '@/components/api';
 
 export type NivelNavegacao = 1 | 2 | 3;
@@ -102,8 +102,7 @@ export function Navegacao({ nivel, csrf }: { nivel: NivelNavegacao; csrf: string
     <nav className="navegacao" aria-label="Principal">
       <div className="navegacao__marca">
         <span className="navegacao__logo" aria-hidden="true" />
-        <p className="navegacao__nome">{NOME_FACCAO}</p>
-        <p className="navegacao__subtitulo">{SUBTITULO_FACCAO}</p>
+        <p className="sr-only">{NOME_FACCAO}</p>
       </div>
       <ul className="navegacao__lista">{principais.map(link)}</ul>
       <button
