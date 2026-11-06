@@ -1,4 +1,5 @@
 import { resetEnv } from '@/server/env';
+import { resetLimitadores } from '@/server/seguranca/limite';
 
 const CHAVE_FALSA = ['-----BEGIN ', 'PRIVATE KEY-----', '\\nFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE\\n', '-----END ', 'PRIVATE KEY-----\\n'].join('');
 
@@ -34,12 +35,14 @@ const NODE_ENV_ORIGINAL = process.env.NODE_ENV;
 
 export function aplicarEnvTeste(sobrescrever: Record<string, string | undefined> = {}): void {
   limparEnvTeste();
+  resetLimitadores();
   const env = process.env as Record<string, string | undefined>;
   for (const [k, v] of Object.entries({ ...ENV_TESTE, ...sobrescrever })) {
     if (v === undefined) delete env[k];
     else env[k] = v;
   }
   resetEnv();
+  resetLimitadores();
 }
 
 export function limparEnvTeste(): void {
@@ -48,4 +51,5 @@ export function limparEnvTeste(): void {
   if (NODE_ENV_ORIGINAL === undefined) delete env.NODE_ENV;
   else env.NODE_ENV = NODE_ENV_ORIGINAL;
   resetEnv();
+  resetLimitadores();
 }

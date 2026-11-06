@@ -1,3 +1,14 @@
+/**
+ * OAuth2 do Discord (WEB-016, WEB-019).
+ *
+ * Fallback fora do contrato (acrescentado na onda 2, mantido): o login usa `prompt=none`; se o usuário
+ * ainda não autorizou o app, o Discord devolve `consent_required` (ou `interaction_required` /
+ * `login_required`) ao callback. Em vez de falhar, o callback redireciona para
+ * `/api/auth/login?consentimento=1&volta=...`, e `iniciarLogin(volta, { consentir: true })` refaz o
+ * authorize com `prompt=consent`. O state é revalidado normalmente antes (o redirecionamento só ocorre
+ * com state válido). Com `prompt=consent` o Discord sempre mostra a tela, então não há laço; ainda assim
+ * cada passo conta no limite por IP de `rotaPublica` (10/min por caminho).
+ */
 import 'server-only';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { SignJWT, jwtVerify } from 'jose';

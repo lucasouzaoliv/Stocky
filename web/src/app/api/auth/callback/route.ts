@@ -1,3 +1,4 @@
+import { rotaPublica } from '@/server/auth/autorizacao';
 import { anexarCookie, lerCookie } from '@/server/auth/cookies';
 import { NOME_COOKIE_STATE, concluirLogin, cookieApagarState, type ResultadoLogin } from '@/server/auth/oauth';
 import { cookieApagarSessao, cookieSessao, lerSessao, nomeCookieSessao } from '@/server/auth/sessao';
@@ -19,7 +20,7 @@ function destino(r: ResultadoLogin): string {
   return `/login?erro=${r.erro}`;
 }
 
-export async function GET(req: Request): Promise<Response> {
+export const GET = rotaPublica(async (req) => {
   let resultado: ResultadoLogin;
   try {
     const sessaoAtual = await lerSessao(lerCookie(req, nomeCookieSessao()));
@@ -32,4 +33,4 @@ export async function GET(req: Request): Promise<Response> {
   if (resultado.ok) anexarCookie(res, cookieSessao(resultado.token));
   else if (resultado.encerrarSessao) anexarCookie(res, cookieApagarSessao());
   return res;
-}
+});
