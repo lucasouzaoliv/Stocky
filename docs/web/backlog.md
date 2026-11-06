@@ -984,7 +984,7 @@ Dois agentes nunca editam o mesmo arquivo na mesma onda; o architect valida a di
 (só o que depende de você; cada uma com o padrão que será usado se não houver resposta)
 
 1. **Q1 Nome de exibição:** qual nome aparece no site e no título (ex.: "Stocky", "Stocky Marabunta")? Padrão: "Stocky".
-2. **Q2 Identidade visual:** cores principais e se há logo/brasão da facção. Padrão: tema escuro neutro com um destaque em vermelho, sem logo.
+2. **Q2 Identidade visual:** cores principais e se há logo/brasão da facção. **RESPONDIDO pelo usuário:** paleta roxo, preto e branco (roxo como destaque, fundo preto, texto branco). Logo: sem logo por enquanto.
 3. **Q3 Modo escuro/claro:** só escuro, só claro, ou os dois seguindo o aparelho? Padrão: os dois, seguindo a preferência do sistema (escuro como base).
 4. **Q4 Textos:** o tom das mensagens (formal ou na linguagem da galera) e os nomes das telas (ex.: "Baú dos Membros", "Baú da Gerência", "Caixa da gangue", "Painel da gerência"). Padrão: nomes do bot, tom direto e neutro.
 5. **Q5 Limites:** servem 100.000 por operação de item, US$ 1 bilhão por operação de caixa, nome com 50 caracteres e anotação com 100? Padrão: esses valores.
