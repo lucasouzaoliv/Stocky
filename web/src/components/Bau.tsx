@@ -10,6 +10,7 @@ import { api as apiPadrao, type ClienteApi } from '@/components/api';
 import { Aviso, useAviso } from '@/components/Aviso';
 import { Carregando, ErroTela, Vazio } from '@/components/Estados';
 import { iconeDaCategoria, iconeDoItem } from '@/components/icones';
+import { imagemDoItem } from '@/components/imagens';
 import { useSessaoOpcional } from '@/components/SessaoProvider';
 
 export interface BauProps {
@@ -287,14 +288,20 @@ function ConteudoBau({
                     {g.itens.map((i) => {
                       const chave = `${g.id}/${i.id}`;
                       const Icone = iconeDoItem(g.nome, i.nome);
+                      const foto = imagemDoItem(i.id);
                       const erro = erroCampo?.chave === chave ? erroCampo.mensagem : null;
                       const idErro = `${idGrupos}-${g.id}-${i.id}-erro`;
                       return (
                         <li key={i.id} className={`bau__item${i.quantidade === 0 ? ' bau__item--zerado' : ''}`}>
                           <div className="bau__item-topo">
-                            <span className="bau__item-icone" aria-hidden="true">
-                              <Icone focusable="false" />
-                            </span>
+                            {foto ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- imagem pequena e estática de /public
+                              <img className="bau__item-foto" src={foto} alt="" width={40} height={40} loading="lazy" decoding="async" />
+                            ) : (
+                              <span className="bau__item-icone" aria-hidden="true">
+                                <Icone focusable="false" />
+                              </span>
+                            )}
                             <p className="bau__item-nome">{i.nome}</p>
                             <p className="bau__item-qtd">
                               <span key={pulso === chave ? bau.versao : 'fixo'} className={pulso === chave ? 'bau__item-numero bau__item-numero--pulso' : 'bau__item-numero'}>

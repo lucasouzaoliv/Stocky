@@ -861,9 +861,9 @@ body:has(.login) {
   flex: none;
   display: grid;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
   background: rgb(144 0 192 / 0.22);
   color: var(--cor-destaque);
 }
@@ -1878,4 +1878,19 @@ a.botao {
 
 .ajuste__entrada {
   min-height: 2.25rem;
+}
+
+/* Foto do item (recorte do jogo com moldura branca fina). */
+.bau__item-foto {
+  flex: none;
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  box-shadow: 0 0 14px -6px rgb(181 46 232 / 0.7);
+}
+
+.bau__item--zerado .bau__item-foto {
+  opacity: 0.55;
+  filter: grayscale(0.6);
 }

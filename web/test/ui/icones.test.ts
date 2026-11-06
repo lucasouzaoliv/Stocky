@@ -21,3 +21,18 @@ describe('ícones por categoria e item', () => {
     expect(iconeDaCategoria('Zzz')).toBe(Box);
   });
 });
+
+describe('imagens dos itens', () => {
+  it('só aponta para arquivos que existem em public/itens e o colete danificado usa o do colete', async () => {
+    const { existsSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const { imagemDoItem } = await import('@/components/imagens');
+    for (const id of ['gaze', 'adrenalina', 'usp', 'desert', 'colete', 'muni_9mm', 'meta', 'notas_marcadas']) {
+      const url = imagemDoItem(id);
+      expect(url).toBe(`/itens/${id}.webp`);
+      expect(existsSync(resolve(process.cwd(), 'public', url!.slice(1)))).toBe(true);
+    }
+    expect(imagemDoItem('colete_danificado')).toBe('/itens/colete.webp');
+    expect(imagemDoItem('ak_47')).toBeNull();
+  });
+});
