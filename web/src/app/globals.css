@@ -999,3 +999,20 @@ table {
   overflow-wrap: anywhere;
   font-size: var(--texto-pequeno);
 }
+
+/* QA-W12: texto digitado por usuários (nomes, anotações, autores) é isolado para que
+   caracteres de direção (RLO, RLE, RLI…) não invertam o restante da linha. */
+.bau__item-nome,
+.caixa__mov-nota,
+.caixa__mov-meta,
+.logs__texto,
+.logs__meta,
+.logs__acao,
+.auditoria__linha dt,
+.auditoria__grupo-titulo,
+.ajuste__tabela th,
+.ajuste__tabela td,
+.bau__categoria-titulo,
+bdi {
+  unicode-bidi: isolate;
+}

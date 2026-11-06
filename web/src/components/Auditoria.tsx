@@ -105,7 +105,7 @@ function ItemAuditoria({
       </p>
       <p className="logs__texto">{registro.resumo}</p>
       <p className="logs__meta">
-        {registro.usuario.nome}, <time dateTime={registro.data}>{formatarData(registro.data)}</time>
+        <bdi>{registro.usuario.nome}</bdi>, <time dateTime={registro.data}>{formatarData(registro.data)}</time>
       </p>
       <button type="button" className="botao botao--secundario" aria-expanded={aberto} aria-controls={idDetalhe} onClick={alternar}>
         {aberto ? 'Ocultar detalhes' : 'Ver detalhes'}

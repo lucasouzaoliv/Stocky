@@ -1,8 +1,9 @@
 import 'server-only';
 import { LIMITES } from '@/compartilhado/limites';
+import { sanearTexto, temCaractereVisivel } from './texto';
 
 export function gerarIdItem(nome: string): string {
-  return String(nome ?? '')
+  return sanearTexto(String(nome ?? ''))
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -17,8 +18,8 @@ export type ResultadoNomeItem = { ok: true; nome: string; id: string } | { ok: f
 
 export function validarNomeItem(nome: unknown): ResultadoNomeItem {
   if (typeof nome !== 'string') return { ok: false, erro: 'Informe o nome do item.' };
-  const limpo = nome.trim().replace(/\s+/g, ' ');
-  if (!limpo) return { ok: false, erro: 'Informe o nome do item.' };
+  const limpo = sanearTexto(nome);
+  if (!limpo || !temCaractereVisivel(limpo)) return { ok: false, erro: 'Informe o nome do item.' };
   if (Array.from(limpo).length > LIMITES.NOME_ITEM_MAX) {
     return { ok: false, erro: `O nome do item pode ter no máximo ${LIMITES.NOME_ITEM_MAX} caracteres.` };
   }

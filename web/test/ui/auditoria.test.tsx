@@ -38,7 +38,7 @@ describe('WEB-064 AC1: lista', () => {
     for (const t of ['Item removido do catálogo', 'Baú zerado', 'Ajuste em massa', 'Item adicionado ao catálogo']) {
       expect(screen.getAllByText(t).length).toBeGreaterThan(0);
     }
-    expect(screen.getAllByText(/Dono,/)).toHaveLength(4);
+    expect(screen.getAllByText('Dono')).toHaveLength(4);
     expect(screen.getAllByText('04/11/2026 23:30')[0]).toHaveAttribute('datetime', '2026-11-05T02:30:00.000Z');
   });
 

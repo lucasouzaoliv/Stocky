@@ -161,7 +161,7 @@ export function Caixa({ cliente = apiPadrao }: CaixaProps) {
                     </div>
                     <p className="caixa__mov-nota">{m.anotacao}</p>
                     <p className="caixa__mov-meta">
-                      {m.usuario.nome}, <time dateTime={m.data}>{formatarData(m.data)}</time>. Saldo depois: {formatarDinheiro(m.saldoResultante)}
+                      <bdi>{m.usuario.nome}</bdi>, <time dateTime={m.data}>{formatarData(m.data)}</time>. Saldo depois: {formatarDinheiro(m.saldoResultante)}
                     </p>
                   </li>
                 ))}

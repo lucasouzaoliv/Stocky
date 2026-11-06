@@ -68,7 +68,11 @@ describe('WEB-015 sessão', () => {
   it('AC2: um byte alterado na assinatura ou no payload é rejeitado', async () => {
     const token = await criarTokenSessao(dados);
     const [h, p, s] = token.split('.') as [string, string, string];
-    const troca = (x: string) => x.slice(0, -1) + (x.endsWith('A') ? 'B' : 'A');
+    // troca um caractere do MEIO: o último base64url tem bits de preenchimento e 'A'/'B' podem decodificar igual
+    const troca = (x: string) => {
+      const i = Math.floor(x.length / 2);
+      return x.slice(0, i) + (x[i] === 'A' ? 'B' : 'A') + x.slice(i + 1);
+    };
     expect(await lerSessao([h, p, troca(s)].join('.'))).toBeNull();
     expect(await lerSessao([h, troca(p), s].join('.'))).toBeNull();
   });

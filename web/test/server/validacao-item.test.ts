@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LIMITES } from '@/compartilhado/limites';
 import { ehIdDocumento, ehIdSeguro, gerarIdItem, validarNomeItem } from '@/server/validacao/item';
-import { normalizarAnotacao } from '@/server/validacao/texto';
+import { chaveDeNome, normalizarAnotacao, sanearTexto, temCaractereVisivel } from '@/server/validacao/texto';
 import { ErroApp } from '@/server/erros';
 
 describe('WEB-009 validarNomeItem', () => {
@@ -118,5 +118,49 @@ describe('normalizarAnotacao', () => {
         expect((e as ErroApp).status).toBe(400);
       }
     }
+  });
+});
+
+describe('QA-W10 saneamento único de texto (nome do item e anotação)', () => {
+  const INVISIVEIS = ['\u200B', '\u200C', '\u200D', '\u2060', '\u200E', '\u200F', '\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069', '\uFEFF', '\u00AD', '\u{E0041}', '\u{E007F}', '\uFE0F', '\uFE00', '\u{E0100}', '\u034F', '\u115F', '\u1160', '\u3164', '\uFFA0', '\u2800', '\u0007', '\u001B', '\u007F', '\u180E', '\u2062'];
+
+  it.each(INVISIVEIS)('remove %j do meio do texto', (c) => {
+    expect(sanearTexto(`Co${c}lt`)).toBe('Colt');
+    expect(gerarIdItem(`Co${c}lt`)).toBe('colt');
+    expect(validarNomeItem(`Co${c}lt`)).toEqual({ ok: true, nome: 'Colt', id: 'colt' });
+  });
+
+  it.each(INVISIVEIS)('nome e anotação só com %j são recusados', (c) => {
+    expect(validarNomeItem(`${c}${c}`)).toMatchObject({ ok: false });
+    expect(validarNomeItem(` ${c} `)).toMatchObject({ ok: false });
+    expect(() => normalizarAnotacao(`${c} ${c}`)).toThrow(expect.objectContaining({ codigo: 'VALIDACAO' }));
+  });
+
+  it('espaços exóticos viram um espaço comum e colapsam', () => {
+    expect(sanearTexto('a\u00A0\u2003\u3000b\u2028c\u2029d\ne\tf')).toBe('a b c d e f');
+  });
+
+  it('normaliza para NFC', () => {
+    expect(sanearTexto('Muni\u0063\u0327a\u0303o')).toBe('Munição'.normalize('NFC'));
+    expect(sanearTexto('Munição'.normalize('NFD'))).toBe('Munição'.normalize('NFC'));
+  });
+
+  it('exige caractere visível: marcas combinantes soltas não bastam', () => {
+    expect(temCaractereVisivel('\u0301\u0301')).toBe(false);
+    expect(validarNomeItem('\u0301')).toMatchObject({ ok: false });
+    expect(() => normalizarAnotacao('\u0301')).toThrow(ErroApp);
+    expect(temCaractereVisivel('🔫')).toBe(true);
+  });
+
+  it('emojis com ZWJ ou seletor de variação: decisão documentada, os invisíveis são removidos', () => {
+    expect(sanearTexto('👨\u200D👩\u200D👧')).toBe('👨👩👧');
+    expect(sanearTexto('❤\uFE0F')).toBe('❤');
+    expect(normalizarAnotacao('pagou ❤\uFE0F')).toBe('pagou ❤');
+  });
+
+  it('chaveDeNome iguala caixa, diacríticos, NFD e largura total', () => {
+    const chaves = ['Colt', 'COLT', 'ćolt', 'Ｃolt', 'Co\u200Blt', ' colt '].map(chaveDeNome);
+    expect(new Set(chaves)).toEqual(new Set(['colt']));
+    expect(chaveDeNome('Colt 45')).not.toBe(chaveDeNome('Colt'));
   });
 });

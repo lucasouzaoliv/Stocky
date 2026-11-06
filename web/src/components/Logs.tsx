@@ -130,7 +130,7 @@ function ListaLog({ escopo, rotulo, url, cliente }: { escopo: EscopoLog; rotulo:
 function Meta({ nome, data }: { nome: string; data: string }) {
   return (
     <p className="logs__meta">
-      {nome}, <time dateTime={data}>{formatarData(data)}</time>
+      <bdi>{nome}</bdi>, <time dateTime={data}>{formatarData(data)}</time>
     </p>
   );
 }

@@ -93,7 +93,7 @@ describe('WEB-023 CSRF completo nas mutações (via comAutorizacao)', () => {
     const certo = tokenCsrf(s.sid);
     const req = (t: string) =>
       criarRequisicao(`${APP}/api/x`, { metodo: 'POST', headers: { origin: APP, 'x-csrf-token': t }, corpo: {} });
-    expect(() => verificarMutacao(req(certo.slice(0, -1) + (certo.endsWith('A') ? 'B' : 'A')), s)).toThrow(expect.objectContaining({ codigo: 'CSRF' }));
+    expect(() => verificarMutacao(req(certo.slice(0, 5) + (certo[5] === 'A' ? 'B' : 'A') + certo.slice(6)), s)).toThrow(expect.objectContaining({ codigo: 'CSRF' }));
     expect(() => verificarMutacao(req(certo + 'x'), s)).toThrow(expect.objectContaining({ codigo: 'CSRF' }));
     expect(() => verificarMutacao(req(''), s)).toThrow(expect.objectContaining({ codigo: 'CSRF' }));
   });

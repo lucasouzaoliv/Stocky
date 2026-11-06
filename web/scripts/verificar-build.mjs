@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // WEB-069: prova AC1 (build sem variáveis de ambiente passa, sem aviso nem falha), AC3 (`npm run start` responde
-// 200 em /login e 401 em /api/caixa sem sessão) e AC4 (cabeçalhos de segurança na resposta real).
+// 200 em /login, 401 em /api/caixa e 307 para /login nas páginas protegidas, sem sessão) e AC4 (cabeçalhos de segurança na resposta real).
 // Uso: `node scripts/verificar-build.mjs`   constrói SEM variáveis do site, sobe `npm run start` com valores falsos,
 //                                           confere as respostas e encerra o servidor pelo PID (grupo do processo).
 // O build sobrescreve .next, como `npm run build`.
@@ -20,6 +20,9 @@ export const CABECALHOS_ESPERADOS = {
   'cross-origin-opener-policy': 'same-origin',
   'x-frame-options': 'DENY',
 };
+
+/** Páginas que exigem sessão: sem cookie, o servidor responde 307 para /login (QA-W14). */
+export const PAGINAS_PROTEGIDAS = ['/caixa', '/painel', '/bau/membros', '/bau/gerencia', '/logs', '/auditoria', '/ajuste/membros'];
 
 const PADRAO_PROBLEMA = /(^|\s)(⚠|warn(ing)?\b|failed\b|error\b)/i;
 
@@ -152,6 +155,14 @@ export async function verificarServidor(raiz, envBase = process.env) {
     if (corpo?.codigo !== 'SEM_SESSAO') falhas.push('GET /api/caixa sem sessão: corpo sem codigo SEM_SESSAO');
     if (!/no-store/.test(caixa.headers.get('cache-control') ?? '')) falhas.push('GET /api/caixa sem Cache-Control: no-store');
     for (const f of falhasDeCabecalhos(caixa.headers)) falhas.push(`/api/caixa ${f}`);
+
+    for (const caminho of PAGINAS_PROTEGIDAS) {
+      const r = await fetch(`${base}${caminho}`, { redirect: 'manual' });
+      if (r.status !== 307) falhas.push(`GET ${caminho} sem sessão: esperado 307, veio ${r.status}`);
+      else if (new URL(r.headers.get('location') ?? '', base).pathname !== '/login') {
+        falhas.push(`GET ${caminho} sem sessão: Location esperado /login, veio ${r.headers.get('location')}`);
+      }
+    }
   } finally {
     await encerrar(filho);
   }
@@ -177,7 +188,7 @@ async function principal() {
     for (const f of falhas) console.error(`SERVIDOR: ${f}`);
     process.exit(1);
   }
-  console.log('Build limpo sem variáveis; /login 200, /api/caixa 401 e cabeçalhos de segurança conferidos; servidor encerrado.');
+  console.log('Build limpo sem variáveis; /login 200, /api/caixa 401, páginas protegidas 307 e cabeçalhos de segurança conferidos; servidor encerrado.');
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

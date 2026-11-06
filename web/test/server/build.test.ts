@@ -77,10 +77,15 @@ describe('WEB-069 AC1, AC3 e AC4 no build e no servidor reais', () => {
     expect(build.problemasDaSaidaDoBuild(resultadoBuild.saida)).toEqual([]);
   });
 
-  it('AC3 e AC4: `npm run start` responde 200 em /login, 401 em /api/caixa, com cabeçalhos; encerra o servidor', async () => {
+  it('AC3 e AC4: `npm run start` responde 200 em /login, 401 em /api/caixa, 307 nas páginas protegidas, com cabeçalhos; encerra o servidor', async () => {
     expect(resultadoBuild.status).toBe(0);
     expect(await build.verificarServidor(RAIZ_WEB)).toEqual([]);
   }, 120_000);
+
+  it('QA-W14: as páginas protegidas sem sessão respondem 307 para /login (a verificação com servidor real está no script)', () => {
+    expect(build.PAGINAS_PROTEGIDAS).toEqual(expect.arrayContaining(['/caixa', '/painel', '/bau/membros', '/bau/gerencia', '/logs', '/auditoria', '/ajuste/membros']));
+    expect(ler(join(RAIZ_WEB, 'scripts', 'verificar-build.mjs'))).toMatch(/!== 307/);
+  });
 
   it('o bundle do build recém-feito não tem segredo nenhum', () => {
     const estatico = join(RAIZ_WEB, '.next', 'static');

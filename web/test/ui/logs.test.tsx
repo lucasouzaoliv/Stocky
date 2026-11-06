@@ -86,7 +86,7 @@ describe('WEB-063 AC2: datas em São Paulo', () => {
     montar(1, () => ok({ itens: [bau(1)], proximoCursor: null }));
     await screen.findByText(/Pistola/);
     expect(screen.getByText('04/11/2026 23:30')).toHaveAttribute('datetime', '2026-11-05T02:30:00.000Z');
-    expect(screen.getByText(/Ana,/)).toBeInTheDocument();
+    expect(screen.getByText('Ana')).toBeInTheDocument();
     expect(screen.getByText('Adicionou')).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('WEB-063 AC2: datas em São Paulo', () => {
     expect(screen.getByText('$2.500')).toBeInTheDocument();
     expect(screen.getByText('Saída:')).toBeInTheDocument();
     expect(screen.getByText('Dinheiro sujo')).toBeInTheDocument();
-    expect(screen.getByText(/Bia,/)).toBeInTheDocument();
+    expect(screen.getByText('Bia')).toBeInTheDocument();
   });
 });
 

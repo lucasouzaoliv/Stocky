@@ -8,6 +8,7 @@ import { lerDocBau, mapaDaCategoria, quantidadeNoBau, refBau, refCatalogo } from
 import type { DocBau, TipoBau, UsuarioRef, UsuarioSessao } from '../dominio/tipos';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento, EventoDominio } from '../webhooks/eventos';
+import { chaveDeNome } from '../validacao/texto';
 import { ehIdDeFormatoValido, ehIdSeguro, gerarIdItem, validarNomeItem } from '../validacao/item';
 import { lerCatalogoTx } from './leitura';
 import { garantirCatalogo } from './semente';
@@ -40,7 +41,7 @@ export async function adicionarItemAoCatalogo(
     const catalogo = await lerCatalogoTx(tx, db);
     const categoria = catalogo.categorias.find((c) => c.id === categoriaId);
     if (!categoria) throw new ErroApp('NAO_ENCONTRADO', 'Categoria não encontrada.');
-    if (categoria.itens.some((i) => i.id === item.id || gerarIdItem(i.nome) === item.id)) {
+    if (categoria.itens.some((i) => i.id === item.id || gerarIdItem(i.nome) === item.id || chaveDeNome(i.nome) === chaveDeNome(item.nome))) {
       throw new ErroApp('DUPLICADO', 'Já existe um item com esse nome nesta categoria.');
     }
     if (categoria.itens.length >= LIMITES.ITENS_POR_CATEGORIA_MAX) {

@@ -146,8 +146,15 @@ Os testes e o build usam apenas valores falsos; nenhum precisa de credencial rea
 - Só produção (`APP_URL`) e `localhost` fazem login.
 - Ids de item que coincidem com chaves de `Object.prototype` (como `constructor`) são recusados ao criar o item, e toda leitura de estoque por id usa só chaves próprias.
 
+### Texto livre (nome do item e anotação do caixa)
+
+Os dois passam por uma única função, `sanearTexto` (`src/server/validacao/texto.ts`): NFC, espaços exóticos (`\p{Zs}`, `\p{Zl}`, `\p{Zp}`, tabulação, quebras) viram um espaço comum, e são **removidos** controles (`\p{Cc}`), caracteres de formato (`\p{Cf}`: ZWSP, ZWNJ, ZWJ, LRM/RLM, LRE/RLE/PDF/LRO/RLO, isolates, BOM, soft hyphen, tag chars), seletores de variação, CGJ, preenchedores do hangul e o braille em branco. O texto precisa ter ao menos uma letra, número, pontuação ou símbolo, senão a resposta é 400. Duplicados no catálogo comparam o id gerado **e** o nome normalizado (NFKC, sem diacríticos, minúsculas), então "Colt" não tem gêmeo visual.
+
+Decisão sobre emojis: como ZWJ e seletor de variação são removidos, sequências como 👨‍👩‍👧 viram três emojis separados e ❤️ vira ❤ (sem estilo emoji). Perde-se um pouco de estética em troca de nenhum jeito de esconder ou inverter conteúdo. Está coberto em `test/server/validacao-item.test.ts`.
+
 ### Riscos aceitos
 
+- **Logout não revoga o JWT no servidor.** A sessão é assinada e sem estado: `POST /api/auth/logout` apaga o cookie do navegador, mas um cookie copiado antes continua válido até expirar (no máximo 7 dias). O risco é limitado pela revalidação de cargos a cada 15 minutos (quem perde o cargo perde o acesso) e pelo `httpOnly`/`Secure` do cookie. Revogar exigiria ler uma lista de sessões revogadas no Firestore a cada requisição, custo maior que o risco para este site.
 - **State do OAuth sem uso único no servidor.** O state é um JWT assinado, de 10 minutos, no cookie `httpOnly` `stocky_oauth` (`Path=/api/auth`), e o callback sempre o apaga. Reapresentar o mesmo cookie e o mesmo `state` dentro dessa janela passa a checagem, mas o código de autorização do Discord só vale uma vez, então o login não se repete. Invalidar o state exigiria gravar cada uso no Firestore (uma escrita extra por login, mais limpeza), custo maior que o risco: quem tem o cookie `httpOnly` já controla o navegador da vítima.
 - **Dependências de produção com 6 avisos moderados** (`glob`/`minimatch` via `rimraf`, `gaxios`, `google-gax` dentro do `firebase-admin`). O `npm audit fix` não altera nada (a correção exige `google-gax` 6, versão major, que o `firebase-admin` fixado ainda não aceita). O site nunca chama `glob` com entrada do usuário. Reavaliar a cada atualização do `firebase-admin`.
 
