@@ -29,7 +29,7 @@ export const MANIFESTO: readonly EntradaManifesto[] = [
     metodo: 'DELETE',
     caminho: '/api/catalogo/itens/[categoriaId]/[itemId]',
     nivel: 3,
-    params: { categoriaId: 'medicamentos', itemId: 'bandagem' },
+    params: { categoriaId: 'medicamentos', itemId: 'analgesico' },
     onda: 5,
   },
   { metodo: 'GET', caminho: '/api/bau/[tipo]', nivel: 1, nivelPorTipo: BAU, params: TIPO, onda: 4 },

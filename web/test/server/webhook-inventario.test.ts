@@ -19,7 +19,7 @@ const abrir = (seed: Record<string, Dados>) => {
 };
 const tokenDe = (nomeEnv: string) => ENV_TESTE[nomeEnv]!.split('/').pop()!;
 const doc = (chave: string) => fake.dump()[`webhook_mensagens/${chave}`] as { mensagemId: string | null; reservadoAte: string | null } | undefined;
-const BANDAGEM: ItensBau = { medicamentos: { bandagem: 5 } };
+const BANDAGEM: ItensBau = { medicamentos: { analgesico: 5 } };
 
 beforeEach(() => {
   aplicarEnvTeste();
@@ -64,10 +64,10 @@ describe('WEB-049 AC1: envia na primeira vez e edita depois', () => {
   it('lê o estado ATUAL do baú no momento do envio (a edição mostra a quantidade nova)', async () => {
     const d = discord();
     await atualizarInventario('membros');
-    await adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 7 }, USUARIO);
+    await adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 7 }, USUARIO);
     await atualizarInventario('membros');
     const msg = [...d.mensagens.values()][0]!;
-    expect(JSON.stringify(msg.payload.embeds)).toContain('Bandagem: **12**');
+    expect(JSON.stringify(msg.payload.embeds)).toContain('Analgésico: **12**');
   });
 
   it('cada baú tem o próprio canal e a própria mensagem', async () => {
@@ -251,7 +251,7 @@ describe('WEB-049 AC6: menções desligadas', () => {
         membros: BANDAGEM,
         extra: {
           'config/catalogo': {
-            categorias: [{ id: 'medicamentos', nome: 'Medicamentos', emoji: '💊', itens: [{ id: 'bandagem', nome: '@everyone' }] }],
+            categorias: [{ id: 'medicamentos', nome: 'Medicamentos', emoji: '💊', itens: [{ id: 'analgesico', nome: '@everyone' }] }],
             atualizadoEm: 'x',
           },
         },

@@ -11,8 +11,8 @@ const logBau = (extra: Partial<LogBau> = {}): LogBau => ({
   data: DATA,
   versao: 3,
   categoriaId: 'medicamentos',
-  itemId: 'bandagem',
-  nomeItem: 'Bandagem',
+  itemId: 'analgesico',
+  nomeItem: 'Analgésico',
   nomeCategoria: 'Medicamentos',
   quantidade: 1500,
   saldoResultante: 25000,
@@ -59,7 +59,7 @@ describe('WEB-047 conteúdo (quem, o quê, quanto, saldo)', () => {
     const e = embedMovimentoBau(logBau(), 'membros');
     expect(e.description).toContain('Fulano');
     expect(e.description).toContain('adicionou');
-    expect(e.description).toContain('1.500x Bandagem');
+    expect(e.description).toContain('1.500x Analgésico');
     expect(e.fields).toContainEqual({ name: 'Baú', value: 'Baú dos Membros', inline: true });
     expect(e.fields).toContainEqual({ name: 'Estoque agora', value: '25.000', inline: true });
     expect(e.color).toBe(COR.entrada);

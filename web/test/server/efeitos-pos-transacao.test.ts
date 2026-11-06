@@ -27,8 +27,8 @@ let saidas: string[];
 
 const SEED = () =>
   seedBase({
-    membros: { medicamentos: { bandagem: 10 }, armas: { colt: 2 } },
-    gerencia: { medicamentos: { bandagem: 5 } },
+    membros: { medicamentos: { analgesico: 10 }, armas: { colt: 2 } },
+    gerencia: { medicamentos: { analgesico: 5 } },
     saldo: { sujo: 1000, limpo: 500 },
   });
 
@@ -80,13 +80,13 @@ const cenarios: Cenario[] = [
   {
     nome: 'adicionar no baú dos membros',
     chamar: (perfil = 1) =>
-      chamarRota(ADICIONAR_BAU, { metodo: 'POST', caminho: '/api/bau/membros/adicionar', params: { tipo: 'membros' }, perfil, corpo: { categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 3 } }),
+      chamarRota(ADICIONAR_BAU, { metodo: 'POST', caminho: '/api/bau/membros/adicionar', params: { tipo: 'membros' }, perfil, corpo: { categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 3 } }),
     canais: ['WEBHOOK_LOG_MEMBROS', 'WEBHOOK_INVENTARIO_MEMBROS'],
   },
   {
     nome: 'remover do baú da gerência',
     chamar: (perfil = 2) =>
-      chamarRota(REMOVER_BAU, { metodo: 'POST', caminho: '/api/bau/gerencia/remover', params: { tipo: 'gerencia' }, perfil, corpo: { categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 2 } }),
+      chamarRota(REMOVER_BAU, { metodo: 'POST', caminho: '/api/bau/gerencia/remover', params: { tipo: 'gerencia' }, perfil, corpo: { categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 2 } }),
     canais: ['WEBHOOK_LOG_GERENCIA', 'WEBHOOK_INVENTARIO_GERENCIA'],
   },
   {
@@ -98,7 +98,7 @@ const cenarios: Cenario[] = [
   {
     nome: 'remover item do catálogo (com estoque nos dois baús)',
     chamar: (perfil = 3) =>
-      chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho: '/api/catalogo/itens/medicamentos/bandagem', params: { categoriaId: 'medicamentos', itemId: 'bandagem' }, perfil }),
+      chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho: '/api/catalogo/itens/medicamentos/analgesico', params: { categoriaId: 'medicamentos', itemId: 'analgesico' }, perfil }),
     canais: ['WEBHOOK_LOG_MEMBROS', 'WEBHOOK_LOG_GERENCIA', 'WEBHOOK_INVENTARIO_MEMBROS', 'WEBHOOK_INVENTARIO_GERENCIA'],
   },
   {
@@ -110,7 +110,7 @@ const cenarios: Cenario[] = [
   {
     nome: 'confirmar ajuste em massa',
     chamar: (perfil = 2) =>
-      chamarRota(AJUSTE_CONFIRMAR, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/confirmar', params: { tipo: 'membros' }, perfil, corpo: { versao: 0, linhas: [{ categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 4 }] } }),
+      chamarRota(AJUSTE_CONFIRMAR, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/confirmar', params: { tipo: 'membros' }, perfil, corpo: { versao: 0, linhas: [{ categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 4 }] } }),
     canais: ['WEBHOOK_LOG_MEMBROS', 'WEBHOOK_INVENTARIO_MEMBROS'],
   },
 ];
@@ -166,12 +166,12 @@ describe('WEB-051 AC1: mapa de eventos pelas rotas', () => {
 
   it('ajuste sem diferença (0 alterados), adicionar item ao catálogo e prévia não agendam nada', async () => {
     const d = discord();
-    const r1 = await chamarRota(AJUSTE_CONFIRMAR, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/confirmar', params: { tipo: 'membros' }, perfil: 2, corpo: { versao: 0, linhas: [{ categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 10 }] } });
+    const r1 = await chamarRota(AJUSTE_CONFIRMAR, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/confirmar', params: { tipo: 'membros' }, perfil: 2, corpo: { versao: 0, linhas: [{ categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 10 }] } });
     expect(r1.status).toBe(200);
     expect(r1.corpo.dados).toMatchObject({ alterados: 0 });
     const r2 = await chamarRota(CATALOGO_ADICIONAR, { metodo: 'POST', caminho: '/api/catalogo/itens', perfil: 2, corpo: { categoriaId: 'armas', nome: 'Faca' } });
     expect(r2.status).toBe(201);
-    const r3 = await chamarRota(AJUSTE_PREVIA, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/previa', params: { tipo: 'membros' }, perfil: 2, corpo: { linhas: [{ categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 1 }] } });
+    const r3 = await chamarRota(AJUSTE_PREVIA, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/previa', params: { tipo: 'membros' }, perfil: 2, corpo: { linhas: [{ categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 1 }] } });
     expect(r3.status).toBe(200);
     expect(tarefas).toHaveLength(0);
     expect(d.chamadas).toHaveLength(0);
@@ -184,9 +184,9 @@ describe('WEB-051 AC1: mapa de eventos pelas rotas', () => {
     const logMembros = d.chamadas.find((c) => c.url.includes(token('WEBHOOK_LOG_MEMBROS')))!;
     const embed = JSON.parse(logMembros.corpo).embeds[0];
     expect(embed.description).toContain(USUARIO.nome);
-    expect(embed.description).toContain('3x Bandagem');
+    expect(embed.description).toContain('3x Analgésico');
     const inv = [...d.mensagens.values()].find((m) => m.canalToken === token('WEBHOOK_INVENTARIO_MEMBROS'))!;
-    expect(JSON.stringify(inv.payload.embeds)).toContain('Bandagem: **13**');
+    expect(JSON.stringify(inv.payload.embeds)).toContain('Analgésico: **13**');
   });
 });
 
@@ -244,7 +244,7 @@ describe('WEB-051 AC2: webhook rejeitando, lançando ou lento não muda a respos
       await vi.advanceTimersByTimeAsync(500);
     }
     expect(pronto).toBe(true);
-    expect((fake.dump()['baus/membros'] as { itens: { medicamentos: { bandagem: number } } }).itens.medicamentos.bandagem).toBe(13);
+    expect((fake.dump()['baus/membros'] as { itens: { medicamentos: { analgesico: number } } }).itens.medicamentos.analgesico).toBe(13);
   });
 
   it('um erro na montagem/envio de um aviso não impede os outros (tarefas isoladas)', async () => {
@@ -301,7 +301,7 @@ describe('WEB-051 AC4: webhook só depois do commit', () => {
     expect(d.chamadas).toHaveLength(0);
     await executar();
     expect(vistoNoEnvio).not.toBeNull();
-    expect((vistoNoEnvio!['baus/membros'] as { itens: { medicamentos: { bandagem: number } } }).itens.medicamentos.bandagem).toBe(13);
+    expect((vistoNoEnvio!['baus/membros'] as { itens: { medicamentos: { analgesico: number } } }).itens.medicamentos.analgesico).toBe(13);
     expect(Object.keys(vistoNoEnvio!).some((c) => c.startsWith('logs/membros/entradas/'))).toBe(true);
   });
 
@@ -321,10 +321,10 @@ describe('WEB-051 AC4: webhook só depois do commit', () => {
   it('recusas de regra (estoque insuficiente, saldo insuficiente, versão antiga, validação) não agendam nada', async () => {
     const d = discord();
     const rs = await Promise.all([
-      chamarRota(REMOVER_BAU, { metodo: 'POST', caminho: '/api/bau/membros/remover', params: { tipo: 'membros' }, perfil: 1, corpo: { categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 999 } }),
+      chamarRota(REMOVER_BAU, { metodo: 'POST', caminho: '/api/bau/membros/remover', params: { tipo: 'membros' }, perfil: 1, corpo: { categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 999 } }),
       chamarRota(MOVIMENTAR, { metodo: 'POST', caminho: '/api/caixa/movimentar', perfil: 2, corpo: { tipo: 'sujo', acao: 'saida', valor: 999999, anotacao: 'x' } }),
-      chamarRota(AJUSTE_CONFIRMAR, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/confirmar', params: { tipo: 'membros' }, perfil: 2, corpo: { versao: 99, linhas: [{ categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 1 }] } }),
-      chamarRota(ADICIONAR_BAU, { metodo: 'POST', caminho: '/api/bau/membros/adicionar', params: { tipo: 'membros' }, perfil: 1, corpo: { categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 0 } }),
+      chamarRota(AJUSTE_CONFIRMAR, { metodo: 'POST', caminho: '/api/bau/membros/ajuste/confirmar', params: { tipo: 'membros' }, perfil: 2, corpo: { versao: 99, linhas: [{ categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 1 }] } }),
+      chamarRota(ADICIONAR_BAU, { metodo: 'POST', caminho: '/api/bau/membros/adicionar', params: { tipo: 'membros' }, perfil: 1, corpo: { categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 0 } }),
     ]);
     expect(rs.map((r) => r.status)).toEqual([409, 409, 409, 400]);
     expect(tarefas).toHaveLength(0);
@@ -391,8 +391,8 @@ describe('WEB-051 AC5: a resposta não espera o Discord', () => {
       data: '2026-11-05T12:00:00.000Z',
       versao: 1,
       categoriaId: 'medicamentos',
-      itemId: 'bandagem',
-      nomeItem: 'Bandagem',
+      itemId: 'analgesico',
+      nomeItem: 'Analgésico',
       nomeCategoria: 'Medicamentos',
       quantidade: 1,
       saldoResultante: 1,

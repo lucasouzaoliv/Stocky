@@ -7,7 +7,7 @@ import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-
 import { DONO, GERENTE, USUARIO, auditorias, logsDe, seedBase, type ItensBau } from '../helpers/estado';
 import { falharCommitDaOperacao } from './commit-falho';
 
-const MEMBROS: ItensBau = { medicamentos: { bandagem: 10, gaze: 2 }, armas: { colt: 1 } };
+const MEMBROS: ItensBau = { medicamentos: { analgesico: 10, gaze: 2 }, armas: { colt: 1 } };
 const GERENCIA: ItensBau = { armas: { usp: 4 } };
 
 let fake: FakeFirestore;

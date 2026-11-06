@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { runInNewContext } from 'node:vm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CATALOGO_PADRAO } from '@/server/catalogo/padrao';
 import { adicionarItemAoCatalogo } from '@/server/catalogo/operacoes';
@@ -8,7 +5,6 @@ import { garantirCatalogo, resetSemente } from '@/server/catalogo/semente';
 import { lerCatalogo, lerCatalogoTx } from '@/server/catalogo/leitura';
 import { getDb, resetDb, setDb } from '@/server/firebase';
 import { gerarIdItem, ehIdSeguro } from '@/server/validacao/item';
-import { RAIZ_REPO } from '../helpers/arquivos';
 import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-firestore';
 
 let fake: FakeFirestore;
@@ -31,7 +27,7 @@ describe('WEB-014 semente do catálogo', () => {
     expect(Object.keys(d).sort()).toEqual(['baus/gerencia', 'baus/membros', 'caixa/saldo', 'config/catalogo']);
     const categorias = (d['config/catalogo'] as { categorias: Array<{ itens: unknown[] }> }).categorias;
     expect(categorias).toHaveLength(6);
-    expect(categorias.reduce((n, c) => n + c.itens.length, 0)).toBe(34);
+    expect(categorias.reduce((n, c) => n + c.itens.length, 0)).toBe(52);
     expect(d['baus/membros']).toMatchObject({ versao: 0, itens: {} });
     expect(d['baus/gerencia']).toMatchObject({ versao: 0, itens: {} });
     expect(d['caixa/saldo']).toMatchObject({ sujo: 0, limpo: 0, versao: 0 });
@@ -105,7 +101,7 @@ describe('WEB-014 semente do catálogo', () => {
   it('lerCatalogo semeia e devolve o DTO com total por categoria', async () => {
     const dto = await lerCatalogo();
     expect(dto.categorias.map((c) => c.id)).toEqual(CATALOGO_PADRAO.map((c) => c.id));
-    expect(dto.categorias.find((c) => c.id === 'materiais')?.total).toBe(12);
+    expect(dto.categorias.find((c) => c.id === 'materiais')?.total).toBe(13);
   });
 
   it('AC5: no máximo 25 itens por categoria; ids seguros, únicos e sem colisão com gerarIdItem', () => {
@@ -129,23 +125,19 @@ describe('WEB-014 semente do catálogo', () => {
     }).toThrow();
   });
 
-  it('cópia fiel: 6 categorias e 34 itens iguais, na mesma ordem, ao utils/db.js do bot', () => {
-    const fonte = readFileSync(join(RAIZ_REPO, 'utils', 'db.js'), 'utf8');
-    const inicio = fonte.indexOf('const CATALOGO_PADRAO = ');
-    const fim = fonte.indexOf('\n};', inicio);
-    expect(inicio).toBeGreaterThanOrEqual(0);
-    const bot = runInNewContext(`(${fonte.slice(inicio + 'const CATALOGO_PADRAO = '.length, fim + 2)})`) as Record<
-      string,
-      { nome: string; emoji: string; items: Array<{ id: string; nome: string }> }
-    >;
-    const esperado = Object.entries(bot).map(([id, c]) => ({
-      id,
-      nome: c.nome,
-      emoji: c.emoji,
-      itens: c.items.map((i) => ({ id: i.id, nome: i.nome })),
-    }));
-    expect(CATALOGO_PADRAO).toEqual(esperado);
+  it('catálogo padrão: 6 categorias, 52 itens, ids válidos e únicos, no máximo 25 por categoria', () => {
     expect(CATALOGO_PADRAO).toHaveLength(6);
-    expect(CATALOGO_PADRAO.reduce((n, c) => n + c.itens.length, 0)).toBe(34);
+    expect(CATALOGO_PADRAO.reduce((n, c) => n + c.itens.length, 0)).toBe(52);
+    for (const c of CATALOGO_PADRAO) {
+      expect(c.itens.length, c.nome).toBeLessThanOrEqual(25);
+      const ids = c.itens.map((i) => i.id);
+      expect(new Set(ids).size, c.nome).toBe(ids.length);
+      for (const id of ids) expect(id, id).toMatch(/^[a-z0-9]+(_[a-z0-9]+)*$/);
+    }
+    // itens de temporadas passadas não voltam
+    const todos = CATALOGO_PADRAO.flatMap((c) => c.itens.map((i) => i.id));
+    for (const id of ['bandagem', 'ak_47', 'fichas_cassino', 'alcool_gel', 'kit_eletronico', 'caixa_polvora', 'sabonete', 'cobre', 'aluminio', 'sulfato_bario', 'borracha']) {
+      expect(todos).not.toContain(id);
+    }
   });
 });

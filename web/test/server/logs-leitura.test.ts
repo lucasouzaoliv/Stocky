@@ -27,8 +27,8 @@ const logBau = (i: number, extra: Dados = {}): Dados => ({
   data: dataDe(i),
   versao: i,
   categoriaId: 'medicamentos',
-  itemId: 'bandagem',
-  nomeItem: 'Bandagem',
+  itemId: 'analgesico',
+  nomeItem: 'Analgésico',
   nomeCategoria: 'Medicamentos',
   quantidade: i,
   saldoResultante: i * 2,
@@ -112,13 +112,13 @@ describe('WEB-043 AC3: nome gravado no log, não o do catálogo atual', () => {
 
   it('renomear o catálogo depois não muda o log já gravado', async () => {
     abrir(seedBase({ membros: {} }));
-    await adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 3 }, USUARIO);
+    await adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 3 }, USUARIO);
     const dump = fake.dump();
     const catalogo = dump['config/catalogo'] as { categorias: Array<{ itens: Array<{ id: string; nome: string }> }> };
     catalogo.categorias[0]!.itens[0]!.nome = 'Nome Novo';
     abrir(dump);
     const [log] = (await lerLogs('membros', pag())).itens;
-    expect(log).toMatchObject({ nomeItem: 'Bandagem' });
+    expect(log).toMatchObject({ nomeItem: 'Analgésico' });
   });
 });
 
@@ -133,8 +133,8 @@ describe('WEB-043 AC4: campos de cada entrada', () => {
       data: dataDe(1),
       versao: 1,
       categoriaId: 'medicamentos',
-      itemId: 'bandagem',
-      nomeItem: 'Bandagem',
+      itemId: 'analgesico',
+      nomeItem: 'Analgésico',
       nomeCategoria: 'Medicamentos',
       quantidade: 1,
       saldoResultante: 2,

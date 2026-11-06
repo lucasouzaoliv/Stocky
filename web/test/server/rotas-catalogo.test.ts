@@ -17,7 +17,7 @@ let fake: FakeFirestore;
 beforeEach(() => {
   aplicarEnvTeste();
   resetSemente();
-  fake = criarFakeFirestore({ seed: seedBase({ membros: { medicamentos: { bandagem: 10 } }, gerencia: { medicamentos: { bandagem: 5 } } }) });
+  fake = criarFakeFirestore({ seed: seedBase({ membros: { medicamentos: { analgesico: 10 } }, gerencia: { medicamentos: { analgesico: 5 } } }) });
   setDb(comoDb(fake));
 });
 afterEach(() => {
@@ -34,7 +34,7 @@ const escritas = () => fake.chamadas.filter((c) => c.op !== 'get');
 
 const adicionar = (perfil: PerfilTeste, corpo?: unknown, extra: Record<string, unknown> = {}) =>
   chamarRota(ADICIONAR, { metodo: 'POST', caminho: '/api/catalogo/itens', perfil, corpo, ...extra });
-const remover = (perfil: PerfilTeste, categoriaId = 'medicamentos', itemId = 'bandagem', extra: Record<string, unknown> = {}) =>
+const remover = (perfil: PerfilTeste, categoriaId = 'medicamentos', itemId = 'analgesico', extra: Record<string, unknown> = {}) =>
   chamarRota(REMOVER, { metodo: 'DELETE', caminho: `/api/catalogo/itens/${categoriaId}/${itemId}`, params: { categoriaId, itemId }, perfil, corpo: undefined, ...extra });
 
 describe('WEB-037 POST /api/catalogo/itens (nível 2)', () => {
@@ -84,7 +84,7 @@ describe('WEB-037 POST /api/catalogo/itens (nível 2)', () => {
     expect((await adicionar(2, { categoriaId: 'nada', nome: 'Faca' })).status).toBe(404);
     const dup = await adicionar(2, { categoriaId: 'medicamentos', nome: 'GAZE' });
     expect([dup.status, dup.corpo.codigo]).toEqual([409, 'DUPLICADO']);
-    for (let i = 0; i < 22; i++) expect((await adicionar(2, { categoriaId: 'drogas', nome: `D${i}` })).status).toBe(201);
+    for (let i = 0; i < 21; i++) expect((await adicionar(2, { categoriaId: 'drogas', nome: `D${i}` })).status).toBe(201);
     const lim = await adicionar(2, { categoriaId: 'drogas', nome: 'D-extra' });
     expect([lim.status, lim.corpo.codigo]).toEqual([409, 'LIMITE_CATEGORIA']);
     expect(itens('drogas')).toHaveLength(25);
@@ -120,22 +120,22 @@ describe('WEB-037 DELETE /api/catalogo/itens/[categoriaId]/[itemId] (nível 3, s
       expect(fake.chamadas, String(perfil)).toHaveLength(0);
     }
     expect(fake.dump()).toEqual(antes);
-    expect(itens('medicamentos').some((i) => i.id === 'bandagem')).toBe(true);
-    expect(estoque('membros').medicamentos!.bandagem).toBe(10);
+    expect(itens('medicamentos').some((i) => i.id === 'analgesico')).toBe(true);
+    expect(estoque('membros').medicamentos!.analgesico).toBe(10);
     expect(auditorias(fake.dump())).toHaveLength(0);
   });
 
   it('AC1a: o corpo do 403 da gerência é genérico (SEM_PERMISSAO) e não revela o item', async () => {
     const r = await remover(2);
     expect(r.corpo).toMatchObject({ ok: false, codigo: 'SEM_PERMISSAO' });
-    expect(r.texto).not.toMatch(/bandagem/i);
+    expect(r.texto).not.toMatch(/analgesico/i);
   });
 
   it('AC1a: o dono (nível 3) com CSRF correto remove → 200 com { item, removidoDe, auditoriaId }', async () => {
     const r = await remover(3);
     expect(r.status).toBe(200);
-    expect(r.corpo.dados).toMatchObject({ item: { id: 'bandagem', nome: 'Bandagem' }, removidoDe: { membros: 10, gerencia: 5 } });
-    expect(itens('medicamentos').some((i) => i.id === 'bandagem')).toBe(false);
+    expect(r.corpo.dados).toMatchObject({ item: { id: 'analgesico', nome: 'Analgésico' }, removidoDe: { membros: 10, gerencia: 5 } });
+    expect(itens('medicamentos').some((i) => i.id === 'analgesico')).toBe(false);
     expect(estoque('membros')).toEqual({});
     expect(estoque('gerencia')).toEqual({});
     const [a] = auditorias(fake.dump());
@@ -146,7 +146,7 @@ describe('WEB-037 DELETE /api/catalogo/itens/[categoriaId]/[itemId] (nível 3, s
   it('AC1: dono sem CSRF ou com token errado → 403 CSRF e nada gravado', async () => {
     const antes = fake.dump();
     for (const csrf of ['ausente', 'errado'] as const) {
-      const r = await remover(3, 'medicamentos', 'bandagem', { csrf });
+      const r = await remover(3, 'medicamentos', 'analgesico', { csrf });
       expect([r.status, r.corpo.codigo]).toEqual([403, 'CSRF']);
     }
     expect(fake.dump()).toEqual(antes);
@@ -154,13 +154,13 @@ describe('WEB-037 DELETE /api/catalogo/itens/[categoriaId]/[itemId] (nível 3, s
   });
 
   it('AC1: dono sem Origin → 403', async () => {
-    const r = await remover(3, 'medicamentos', 'bandagem', { origin: null });
+    const r = await remover(3, 'medicamentos', 'analgesico', { origin: null });
     expect(r.status).toBe(403);
     expect(escritas()).toEqual([]);
   });
 
   it('AC2: item ou categoria inexistente → 404 e nada gravado', async () => {
-    for (const [c, i] of [['medicamentos', 'nao_existe'], ['nada', 'bandagem']] as const) {
+    for (const [c, i] of [['medicamentos', 'nao_existe'], ['nada', 'analgesico']] as const) {
       expect((await remover(3, c, i)).status).toBe(404);
     }
     expect(escritas()).toEqual([]);
@@ -168,8 +168,8 @@ describe('WEB-037 DELETE /api/catalogo/itens/[categoriaId]/[itemId] (nível 3, s
 
   it('AC3: parâmetros de caminho com formato inseguro (.., %2F, __proto__, maiúsculas, longo) → 400 sem escrita', async () => {
     for (const [c, i] of [
-      ['..', 'bandagem'], ['medicamentos', '..'], ['medicamentos', '%2F'], ['medicamentos', 'a/b'], ['medicamentos', '../bandagem'],
-      ['__proto__', 'x'], ['medicamentos', '__proto__'], ['Medicamentos', 'bandagem'], ['medicamentos', 'a'.repeat(51)], ['medicamentos', 'a%2Fb'],
+      ['..', 'analgesico'], ['medicamentos', '..'], ['medicamentos', '%2F'], ['medicamentos', 'a/b'], ['medicamentos', '../analgesico'],
+      ['__proto__', 'x'], ['medicamentos', '__proto__'], ['Medicamentos', 'analgesico'], ['medicamentos', 'a'.repeat(51)], ['medicamentos', 'a%2Fb'],
     ] as const) {
       const r = await remover(3, c, i, {});
       expect([r.status, r.corpo.codigo], `${c}/${i}`).toEqual([400, 'VALIDACAO']);

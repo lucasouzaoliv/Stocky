@@ -18,7 +18,7 @@ let fake: FakeFirestore;
 beforeEach(() => {
   aplicarEnvTeste();
   resetSemente();
-  fake = criarFakeFirestore({ seed: seedBase({ membros: { medicamentos: { bandagem: 10 } }, gerencia: { armas: { colt: 2 }, medicamentos: { bandagem: 5 } } }) });
+  fake = criarFakeFirestore({ seed: seedBase({ membros: { medicamentos: { analgesico: 10 } }, gerencia: { armas: { colt: 2 }, medicamentos: { analgesico: 5 } } }) });
   setDb(comoDb(fake));
 });
 afterEach(() => {
@@ -29,7 +29,7 @@ afterEach(() => {
   limparEnvTeste();
 });
 
-const corpoOk = (extra: Record<string, unknown> = {}) => ({ categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 3, ...extra });
+const corpoOk = (extra: Record<string, unknown> = {}) => ({ categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 3, ...extra });
 const itens = (tipo: string) => (fake.dump()[`baus/${tipo}`] as { itens: ItensBau }).itens;
 const escritas = () => fake.chamadas.filter((c) => c.op !== 'get');
 
@@ -94,7 +94,7 @@ describe('WEB-031 GET /api/bau/[tipo]', () => {
     expect(corpo.ok).toBe(true);
     const dados = corpo.dados as { tipo: string; versao: number; categorias: Array<{ id: string; itens: unknown[] }> };
     expect(dados.tipo).toBe('membros');
-    expect(dados.categorias.find((c) => c.id === 'medicamentos')!.itens).toEqual([{ id: 'bandagem', nome: 'Bandagem', quantidade: 10 }]);
+    expect(dados.categorias.find((c) => c.id === 'medicamentos')!.itens).toEqual([{ id: 'analgesico', nome: 'Analgésico', quantidade: 10 }]);
     expect(escritas()).toEqual([]);
   });
 
@@ -119,9 +119,9 @@ describe('WEB-031 AC2: corpo inválido → 400 em português', () => {
   const invalidos: Array<[string, unknown]> = [
     ['campo extra', corpoOk({ usuario: 'outro' })],
     ['campo extra de nível', corpoOk({ nivel: 3 })],
-    ['sem quantidade', { categoriaId: 'medicamentos', itemId: 'bandagem' }],
+    ['sem quantidade', { categoriaId: 'medicamentos', itemId: 'analgesico' }],
     ['sem itemId', { categoriaId: 'medicamentos', quantidade: 1 }],
-    ['sem categoriaId', { itemId: 'bandagem', quantidade: 1 }],
+    ['sem categoriaId', { itemId: 'analgesico', quantidade: 1 }],
     ['categoriaId numérico', corpoOk({ categoriaId: 5 })],
     ['itemId nulo', corpoOk({ itemId: null })],
     ['itemId perigoso', corpoOk({ itemId: '__proto__' })],
@@ -189,8 +189,8 @@ describe('WEB-031 AC3: sucesso e erros de regra', () => {
   it('adicionar devolve { quantidade, versao } resultantes (mais ids) e grava log com o usuário da sessão', async () => {
     const { status, corpo } = await chamar(ROTAS[1], 'membros', 1, corpoOk({ quantidade: 5 }));
     expect(status).toBe(200);
-    expect(corpo).toEqual({ ok: true, dados: { categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 15, versao: 1 } });
-    expect(itens('membros').medicamentos!.bandagem).toBe(15);
+    expect(corpo).toEqual({ ok: true, dados: { categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 15, versao: 1 } });
+    expect(itens('membros').medicamentos!.analgesico).toBe(15);
     const [log] = logsDe(fake.dump(), 'membros');
     expect(log!.usuario).toEqual({ id: USUARIO.id, nome: 'Teste' });
   });
@@ -220,7 +220,7 @@ describe('WEB-031 AC3: sucesso e erros de regra', () => {
     const { status, corpo } = await chamar(ROTAS[2], 'membros', 1, corpoOk({ quantidade: 11 }));
     expect(status).toBe(409);
     expect(corpo).toMatchObject({ ok: false, codigo: 'ESTOQUE_INSUFICIENTE', erro: 'Estoque insuficiente. Disponível: 10.' });
-    expect(itens('membros').medicamentos!.bandagem).toBe(10);
+    expect(itens('membros').medicamentos!.analgesico).toBe(10);
   });
 
   it('item que não está no baú → 404; item fora do catálogo → 404', async () => {
@@ -239,13 +239,13 @@ describe('WEB-031 AC3: sucesso e erros de regra', () => {
       chamar(ROTAS[2], 'membros', 2, corpoOk({ quantidade: 6 })),
     ]);
     expect(r.map((x) => x.status).sort()).toEqual([200, 409]);
-    expect(itens('membros').medicamentos!.bandagem).toBe(4);
+    expect(itens('membros').medicamentos!.analgesico).toBe(4);
   });
 
   it('o baú da gerência é independente do dos membros', async () => {
     await chamar(ROTAS[1], 'gerencia', 2, corpoOk({ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }));
-    expect(itens('gerencia')).toEqual({ armas: { colt: 3 }, medicamentos: { bandagem: 5 } });
-    expect(itens('membros')).toEqual({ medicamentos: { bandagem: 10 } });
+    expect(itens('gerencia')).toEqual({ armas: { colt: 3 }, medicamentos: { analgesico: 5 } });
+    expect(itens('membros')).toEqual({ medicamentos: { analgesico: 10 } });
   });
 });
 

@@ -23,8 +23,8 @@ const logBau = (escopo: string, i: number): Dados => ({
   data: dataDe(i),
   versao: i,
   categoriaId: 'medicamentos',
-  itemId: 'bandagem',
-  nomeItem: `Bandagem ${escopo}`,
+  itemId: 'analgesico',
+  nomeItem: `Analgésico ${escopo}`,
   nomeCategoria: 'Medicamentos',
   quantidade: i,
   saldoResultante: i,
@@ -46,7 +46,7 @@ const aud = (i: number, acao = 'bau.zerar'): Dados => ({
   data: dataDe(i),
   alvo: { alvos: ['membros'] },
   resumo: `Resumo ${i}`,
-  antes: { membros: { medicamentos: { bandagem: i } } },
+  antes: { membros: { medicamentos: { analgesico: i } } },
   depois: {},
 });
 
@@ -105,7 +105,7 @@ describe('WEB-045 AC1: nível por rota', () => {
     const ok = await logsBau('membros', 1, '?limite=100');
     const itens = (ok.corpo.dados as { itens: Array<{ nomeItem: string }> }).itens;
     expect(itens).toHaveLength(25);
-    expect(itens.every((l) => l.nomeItem === 'Bandagem membros')).toBe(true);
+    expect(itens.every((l) => l.nomeItem === 'Analgésico membros')).toBe(true);
     for (const r of [await logsBau('gerencia', 1), await logsCaixa(1), await auditoria(1), await auditoriaId('aud001', 1)]) {
       expect(r.status).toBe(403);
       expect(r.corpo.codigo).toBe('SEM_PERMISSAO');

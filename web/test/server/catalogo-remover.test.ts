@@ -15,7 +15,7 @@ function abrir(o: { membros?: ItensBau; gerencia?: ItensBau; versao?: number } =
   fake = criarFakeFirestore({ seed: seedBase(o) });
   setDb(comoDb(fake));
 }
-beforeEach(() => abrir({ membros: { medicamentos: { bandagem: 10, gaze: 2 } }, gerencia: { medicamentos: { bandagem: 5 }, armas: { colt: 1 } } }));
+beforeEach(() => abrir({ membros: { medicamentos: { analgesico: 10, gaze: 2 } }, gerencia: { medicamentos: { analgesico: 5 }, armas: { colt: 1 } } }));
 afterEach(() => {
   resetDb();
   resetSemente();
@@ -33,8 +33,8 @@ async function recusa(p: Promise<unknown>): Promise<ErroApp> {
 
 describe('WEB-036 removerItemDoCatalogo', () => {
   it('AC1: remove do catálogo e dos dois baús, devolve quantidades e grava auditoria completa', async () => {
-    const r = await removerItemDoCatalogo('medicamentos', 'bandagem', DONO);
-    expect(r.item).toEqual({ id: 'bandagem', nome: 'Bandagem' });
+    const r = await removerItemDoCatalogo('medicamentos', 'analgesico', DONO);
+    expect(r.item).toEqual({ id: 'analgesico', nome: 'Analgésico' });
     expect(r.removidoDe).toEqual({ membros: 10, gerencia: 5 });
     expect(itensCat('medicamentos').map((i) => i.id)).toEqual(['gaze', 'adrenalina']);
     expect(bau('membros').itens).toEqual({ medicamentos: { gaze: 2 } });
@@ -43,7 +43,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
     expect(a).toMatchObject({
       acao: 'catalogo.remover_item',
       usuario: { id: USUARIO.id, nome: USUARIO.nome },
-      alvo: { categoriaId: 'medicamentos', itemId: 'bandagem', nomeItem: 'Bandagem' },
+      alvo: { categoriaId: 'medicamentos', itemId: 'analgesico', nomeItem: 'Analgésico' },
       antes: { membros: 10, gerencia: 5 },
       depois: null,
     });
@@ -60,7 +60,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
   });
 
   it('AC1/AC4: toda a remoção é feita em transação e a versão dos dois baús sobe 1', async () => {
-    await removerItemDoCatalogo('medicamentos', 'bandagem', DONO);
+    await removerItemDoCatalogo('medicamentos', 'analgesico', DONO);
     expect(escritas().every((c) => c.emTransacao)).toBe(true);
     expect(bau('membros').versao).toBe(1);
     expect(bau('gerencia').versao).toBe(1);
@@ -69,7 +69,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
   it('AC2: falha injetada no commit → dump idêntico e zero auditorias', async () => {
     const antes = fake.dump();
     const provar = await falharCommitDaOperacao(fake, new Error('falha'));
-    await expect(removerItemDoCatalogo('medicamentos', 'bandagem', DONO)).rejects.toThrow();
+    await expect(removerItemDoCatalogo('medicamentos', 'analgesico', DONO)).rejects.toThrow();
     provar();
     expect(fake.dump()).toEqual(antes);
     expect(auditorias(fake.dump())).toHaveLength(0);
@@ -77,17 +77,17 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('AC2: falha em qualquer escrita da transação (catálogo, baú ou auditoria) não deixa nada pela metade', async () => {
     for (const alvo of [/^config\/catalogo$/, /^baus\/gerencia$/, /^auditoria\//]) {
-      abrir({ membros: { medicamentos: { bandagem: 10 } }, gerencia: { medicamentos: { bandagem: 5 } } });
+      abrir({ membros: { medicamentos: { analgesico: 10 } }, gerencia: { medicamentos: { analgesico: 5 } } });
       await removerItemDoCatalogo('medicamentos', 'gaze', DONO).catch(() => undefined);
       const antes = fake.dump();
       fake.falharEm('set', alvo, new Error('falha injetada'));
-      await expect(removerItemDoCatalogo('medicamentos', 'bandagem', DONO), String(alvo)).rejects.toThrow();
+      await expect(removerItemDoCatalogo('medicamentos', 'analgesico', DONO), String(alvo)).rejects.toThrow();
       expect(fake.dump(), String(alvo)).toEqual(antes);
     }
   });
 
   it('AC3: item ou categoria inexistente → 404 e nada gravado', async () => {
-    for (const [c, i] of [['medicamentos', 'nao_existe'], ['nada', 'bandagem']] as const) {
+    for (const [c, i] of [['medicamentos', 'nao_existe'], ['nada', 'analgesico']] as const) {
       const e = await recusa(removerItemDoCatalogo(c, i, DONO));
       expect([e.status, e.codigo]).toEqual([404, 'NAO_ENCONTRADO']);
     }
@@ -95,9 +95,9 @@ describe('WEB-036 removerItemDoCatalogo', () => {
   });
 
   it('AC3: ids inseguros → 400; usuário ausente → erro; nada gravado', async () => {
-    expect((await recusa(removerItemDoCatalogo('../x', 'bandagem', DONO))).status).toBe(400);
+    expect((await recusa(removerItemDoCatalogo('../x', 'analgesico', DONO))).status).toBe(400);
     expect((await recusa(removerItemDoCatalogo('medicamentos', '__proto__', DONO))).status).toBe(400);
-    expect((await recusa(removerItemDoCatalogo('medicamentos', 'bandagem', undefined as never))).codigo).toBe('INTERNO');
+    expect((await recusa(removerItemDoCatalogo('medicamentos', 'analgesico', undefined as never))).codigo).toBe('INTERNO');
     expect(escritas()).toEqual([]);
   });
 
@@ -112,11 +112,11 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('AC6: função exclusiva do dono: gerência (nível 2) e nível 1 → SEM_PERMISSAO, nada gravado', async () => {
     for (const nivel of [1, 2] as const) {
-      const e = await recusa(removerItemDoCatalogo('medicamentos', 'bandagem', { ...USUARIO, nivel } as never));
+      const e = await recusa(removerItemDoCatalogo('medicamentos', 'analgesico', { ...USUARIO, nivel } as never));
       expect([e.status, e.codigo]).toEqual([403, 'SEM_PERMISSAO']);
     }
-    expect((await recusa(removerItemDoCatalogo('medicamentos', 'bandagem', GERENTE))).status).toBe(403);
-    expect((await recusa(removerItemDoCatalogo('medicamentos', 'bandagem', USUARIO as never))).status).toBe(403);
+    expect((await recusa(removerItemDoCatalogo('medicamentos', 'analgesico', GERENTE))).status).toBe(403);
+    expect((await recusa(removerItemDoCatalogo('medicamentos', 'analgesico', USUARIO as never))).status).toBe(403);
     expect(escritas()).toEqual([]);
   });
 
@@ -127,14 +127,14 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('concorrência: remover o item com estoque em baú e um depósito simultâneo nunca deixam estoque órfão', async () => {
     const r = await Promise.allSettled([
-      removerItemDoCatalogo('medicamentos', 'bandagem', DONO),
-      adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 7 }, USUARIO),
-      adicionarAoBau({ tipo: 'gerencia', categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 7 }, USUARIO),
+      removerItemDoCatalogo('medicamentos', 'analgesico', DONO),
+      adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 7 }, USUARIO),
+      adicionarAoBau({ tipo: 'gerencia', categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 7 }, USUARIO),
     ]);
     expect(r[0]!.status).toBe('fulfilled');
-    expect(itensCat('medicamentos').some((i) => i.id === 'bandagem')).toBe(false);
+    expect(itensCat('medicamentos').some((i) => i.id === 'analgesico')).toBe(false);
     // o depósito que veio depois da remoção é recusado (item fora do catálogo); o que veio antes foi levado junto
-    for (const t of ['membros', 'gerencia']) expect(bau(t).itens.medicamentos?.bandagem).toBeUndefined();
+    for (const t of ['membros', 'gerencia']) expect(bau(t).itens.medicamentos?.analgesico).toBeUndefined();
     const [a] = auditorias(fake.dump());
     const removido = (a!.antes as { membros: number; gerencia: number });
     expect(removido.membros + removido.gerencia).toBeGreaterThanOrEqual(15);
@@ -142,12 +142,12 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('concorrência: depósito que entra antes da remoção é levado junto e aparece na auditoria', async () => {
     const r = await Promise.allSettled([
-      adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'bandagem', quantidade: 7 }, USUARIO),
-      removerItemDoCatalogo('medicamentos', 'bandagem', DONO),
+      adicionarAoBau({ tipo: 'membros', categoriaId: 'medicamentos', itemId: 'analgesico', quantidade: 7 }, USUARIO),
+      removerItemDoCatalogo('medicamentos', 'analgesico', DONO),
     ]);
     expect(r.map((x) => x.status)).toEqual(['fulfilled', 'fulfilled']);
     expect(auditorias(fake.dump())[0]!.antes).toEqual({ membros: 17, gerencia: 5 });
-    expect(bau('membros').itens.medicamentos?.bandagem).toBeUndefined();
+    expect(bau('membros').itens.medicamentos?.analgesico).toBeUndefined();
     expect(bau('membros').versao).toBe(2);
   });
 
