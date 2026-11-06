@@ -120,7 +120,7 @@ describe('WEB-054 layout: sessão e navegação', () => {
   it('nível 1 não vê itens de gerência no menu', async () => {
     await renderizar();
     expect(screen.queryByRole('link', { name: 'Caixa' })).toBeNull();
-    expect(screen.getByRole('link', { name: 'Logs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Movimentações' })).toBeInTheDocument();
   });
 
   it('useSessao fora do provider falha de forma clara', () => {

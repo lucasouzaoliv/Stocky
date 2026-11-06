@@ -32,7 +32,7 @@ afterEach(() => {
 
 /** Nenhum elemento além dos que o componente cria: sem img/script/b/i/svg/iframe vindos do texto. */
 function semElementosInjetados(container: HTMLElement) {
-  expect(container.querySelector('img, script, b, i, svg, iframe, style, a[href^="javascript"]')).toBeNull();
+  expect(container.querySelector('img, script, b, i, svg:not([aria-hidden="true"]), iframe, style, a[href^="javascript"]')).toBeNull();
   expect((window as unknown as { __xss?: number }).__xss).toBeUndefined();
 }
 

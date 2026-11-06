@@ -90,7 +90,10 @@ describe('WEB-058 AC3: estados', () => {
   it('vazio', async () => {
     simularFetch({ bau: () => json({ ok: true, dados: { tipo: 'membros', versao: 1, categorias: [] } }) });
     await abrir('membros');
-    expect(await screen.findByText('Nenhum item')).toBeInTheDocument();
+    // baú sem estoque: o resumo zera e todo item do catálogo aparece sem quantidade
+    const resumo = await screen.findByLabelText('Resumo do baú');
+    expect(resumo.querySelector('dd')).toHaveTextContent('0');
+    expect(screen.queryAllByRole('button', { name: /^Retirar / }).every((b) => (b as HTMLButtonElement).disabled)).toBe(true);
   });
 
   it('erro', async () => {

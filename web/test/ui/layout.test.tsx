@@ -58,30 +58,43 @@ describe('WEB-053 toque e largura (AC4)', () => {
     expect(bloco('body')).toMatch(/overflow-x:\s*hidden/);
     expect(bloco('body')).toMatch(/max-width:\s*100%/);
     expect(css).toMatch(/\.navegacao__lista li\s*\{[^}]*min-width:\s*0/);
-    expect(bloco('.navegacao__lista')).toMatch(/repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
+    expect(css).toMatch(/\.navegacao__lista li\s*\{[^}]*flex:\s*1 1 0/);
     expect(css).toMatch(/\.navegacao__item,\s*\.navegacao__sair\s*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(bloco('.bau__grade')).toMatch(/repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
   });
-  it('navegação inferior no celular e lateral a partir de 768 px', () => {
+  it('navegação inferior no celular, lateral a partir de 768 px e moldura de tablet a partir de 1024 px', () => {
     expect(bloco('.navegacao')).toMatch(/position:\s*fixed/);
     expect(css).toMatch(/@media \(min-width: 768px\)[\s\S]*\.casca\s*\{[^}]*grid-template-columns:\s*15rem/);
+    const moldura = css.slice(css.indexOf('@media (min-width: 1024px)'));
+    expect(moldura).toMatch(/\.casca\s*\{[^}]*border-radius:\s*2\.25rem/);
+    expect(moldura).toMatch(/\.casca\s*\{[^}]*contain:\s*layout/);
+  });
+  it('movimento reduzido desliga animações e transições novas', () => {
+    const bloco = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(bloco).toMatch(/\.aviso__cartao[\s\S]*animation:\s*none/);
+    expect(bloco).toMatch(/transition:\s*none/);
   });
 });
 
 describe('WEB-053 tokens e acessibilidade visual', () => {
-  const escuro = tokens(css.slice(0, css.indexOf('@media (prefers-color-scheme: light)')));
-  const claro = { ...escuro, ...tokens(css.slice(css.indexOf('@media (prefers-color-scheme: light)'), css.indexOf('*,'))) };
+  const escuro = tokens(css.slice(0, css.indexOf('*,')));
 
-  it.each([
-    ['escuro', escuro],
-    ['claro', claro],
-  ] as const)('contrastes mínimos no tema %s', (_nome, t) => {
-    expect(contraste(t['cor-texto']!, t['cor-fundo']!)).toBeGreaterThanOrEqual(7);
-    expect(contraste(t['cor-texto-suave']!, t['cor-superficie']!)).toBeGreaterThanOrEqual(4.5);
-    expect(contraste(t['cor-destaque']!, t['cor-superficie']!)).toBeGreaterThanOrEqual(4.5);
-    expect(contraste(t['cor-botao-texto']!, t['cor-botao']!)).toBeGreaterThanOrEqual(4.5);
-    for (const c of ['cor-erro', 'cor-sucesso', 'cor-aviso']) {
-      expect(contraste(t[c]!, t['cor-superficie']!)).toBeGreaterThanOrEqual(4.5);
+  it('contrastes mínimos no tema escuro (único tema)', () => {
+    const t = escuro;
+    for (const fundo of ['cor-superficie', 'cor-superficie-2', 'cor-grafite']) {
+      expect(contraste(t['cor-texto']!, t[fundo]!)).toBeGreaterThanOrEqual(7);
+      expect(contraste(t['cor-texto-suave']!, t[fundo]!)).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(t['cor-destaque']!, t[fundo]!)).toBeGreaterThanOrEqual(4.5);
+      for (const c of ['cor-erro', 'cor-sucesso', 'cor-aviso']) {
+        expect(contraste(t[c]!, t[fundo]!), `${c} sobre ${fundo}`).toBeGreaterThanOrEqual(4.5);
+      }
     }
+    expect(contraste(t['cor-texto']!, t['cor-fundo']!)).toBeGreaterThanOrEqual(7);
+    expect(contraste(t['cor-botao-texto']!, t['cor-botao']!)).toBeGreaterThanOrEqual(4.5);
+    expect(contraste(t['cor-borda-campo']!, t['cor-fundo']!)).toBeGreaterThanOrEqual(3);
+  });
+  it('só tema escuro: sem override de tema claro', () => {
+    expect(css).not.toMatch(/prefers-color-scheme:\s*light/);
   });
   it('paleta escura é a base: roxo, preto e branco', () => {
     expect(escuro['cor-fundo']).toBe('#0b0a10');

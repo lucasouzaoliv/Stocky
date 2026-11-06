@@ -418,7 +418,7 @@ describe('WEB-065 AC5: mensagens de sucesso e erro anunciadas', () => {
       </SessaoProvider>,
     );
     await carregou();
-    const aviso = document.querySelector('.bau__aviso')!;
+    const aviso = document.querySelector('.aviso [role="status"]')!;
     expect(aviso).toHaveAttribute('role', 'status');
     expect(aviso).toHaveAttribute('aria-live', 'polite');
     expect(aviso).toBeEmptyDOMElement();
@@ -479,7 +479,7 @@ describe('WEB-065 AC4: contraste dos tokens calculado a partir de globals.css', 
 
   it('campos e opções de escolha usam a borda de campo, não a borda decorativa', () => {
     expect(/\.campo__entrada\s*\{[^}]*border:\s*1px solid var\(--cor-borda-campo\)/.test(css)).toBe(true);
-    expect(/\.escolha__opcao\s*\{[^}]*border:\s*1px solid var\(--cor-borda-campo\)/.test(css)).toBe(true);
+    expect(/\.escolha__opcoes\s*\{[^}]*border:\s*1px solid var\(--cor-borda-campo\)/.test(css)).toBe(true);
   });
 });
 

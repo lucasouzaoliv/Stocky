@@ -90,15 +90,13 @@ describe('WEB-059 AC1: saldos formatados', () => {
 });
 
 describe('WEB-059 AC2: formulário', () => {
-  it('tem tipo e ação rotulados e envia o corpo certo', async () => {
+  it('tem tipo rotulado, botões Adicionar e Retirar e envia o corpo certo', async () => {
     const chamadas = montar({ post: () => ok({ sujo: 1500, limpo: 2500500 }) });
     await screen.findByLabelText('Valor');
     expect(screen.getByRole('group', { name: 'Tipo de dinheiro' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Ação' })).toBeInTheDocument();
-    await preencher('500', 'Venda de munição');
+        await preencher('500', 'Venda de munição');
     await u.click(screen.getByLabelText('Sujo'));
-    await u.click(screen.getByLabelText('Saída'));
-    await u.click(screen.getByRole('button', { name: 'Registrar' }));
+    await u.click(screen.getByRole('button', { name: 'Retirar' }));
     await waitFor(() => expect(chamadas.find((c) => c.metodo === 'POST')).toBeTruthy());
     expect(chamadas.find((c) => c.metodo === 'POST')).toMatchObject({
       url: '/api/caixa/movimentar',
@@ -110,7 +108,7 @@ describe('WEB-059 AC2: formulário', () => {
     const chamadas = montar();
     await screen.findByLabelText('Valor');
     await preencher(v, 'ok');
-    await u.click(screen.getByRole('button', { name: 'Registrar' }));
+    await u.click(screen.getByRole('button', { name: 'Adicionar' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByLabelText('Valor')).toHaveAttribute('aria-invalid', 'true');
     expect(chamadas.some((c) => c.metodo === 'POST')).toBe(false);
@@ -120,7 +118,7 @@ describe('WEB-059 AC2: formulário', () => {
     const chamadas = montar({ post: () => ok({ sujo: 0, limpo: 0 }) });
     await screen.findByLabelText('Valor');
     await preencher('1000000000', 'teto');
-    await u.click(screen.getByRole('button', { name: 'Registrar' }));
+    await u.click(screen.getByRole('button', { name: 'Adicionar' }));
     await waitFor(() => expect(chamadas.some((c) => c.metodo === 'POST')).toBe(true));
   });
 
@@ -128,7 +126,7 @@ describe('WEB-059 AC2: formulário', () => {
     const chamadas = montar();
     await screen.findByLabelText('Valor');
     await preencher('100', '   ');
-    await u.click(screen.getByRole('button', { name: 'Registrar' }));
+    await u.click(screen.getByRole('button', { name: 'Adicionar' }));
     expect(await screen.findByText('Escreva uma anotação para registrar a movimentação.')).toBeInTheDocument();
     expect(screen.getByLabelText('Anotação')).toHaveAttribute('aria-invalid', 'true');
     expect(chamadas.some((c) => c.metodo === 'POST')).toBe(false);
@@ -140,8 +138,7 @@ describe('WEB-059 AC3: erro do servidor', () => {
     montar({ post: () => falha(409, 'SALDO_INSUFICIENTE', 'Saldo insuficiente. Disponível: $1.500.') });
     await screen.findByLabelText('Valor');
     await preencher('9000', 'pagamento');
-    await u.click(screen.getByLabelText('Saída'));
-    await u.click(screen.getByRole('button', { name: 'Registrar' }));
+    await u.click(screen.getByRole('button', { name: 'Retirar' }));
     expect(await screen.findByText('Saldo insuficiente. Disponível: $1.500.')).toBeInTheDocument();
     expect(screen.getByLabelText('Valor')).toHaveValue('9000');
   });
@@ -210,14 +207,14 @@ describe('WEB-059 AC5: sem duplo clique e saldos atualizados', () => {
     const chamadas = montar({ post: () => new Promise<Response>((r) => (liberar = r)) });
     await screen.findByLabelText('Valor');
     await preencher('100', 'teste');
-    const botao = screen.getByRole('button', { name: 'Registrar' });
+    const botao = screen.getByRole('button', { name: 'Adicionar' });
     fireEvent.click(botao);
     fireEvent.click(botao);
-    fireEvent.submit(botao.closest('form')!);
     await waitFor(() => expect(screen.getByRole('button', { name: 'Registrando…' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Retirar' })).toBeDisabled();
     expect(chamadas.filter((c) => c.metodo === 'POST')).toHaveLength(1);
     liberar(ok({ sujo: 1500, limpo: 2500100 }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Registrar' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Adicionar' })).toBeEnabled());
   });
 
   it('após sucesso atualiza saldos, histórico, aviso e limpa o formulário', async () => {
@@ -231,12 +228,45 @@ describe('WEB-059 AC5: sem duplo clique e saldos atualizados', () => {
     });
     await screen.findByLabelText('Valor');
     await preencher('100', 'nova');
-    await u.click(screen.getByRole('button', { name: 'Registrar' }));
+    await u.click(screen.getByRole('button', { name: 'Adicionar' }));
     expect(await screen.findByText('nova', { selector: '.caixa__mov-nota' })).toBeInTheDocument();
     const lista = screen.getByLabelText('Saldos do caixa');
     expect(within(lista).getByText('Dinheiro limpo').nextSibling).toHaveTextContent('$2.500.100');
-    expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Entrada registrada: $100');
+    expect(screen.getByText('Entrada registrada: $100 em dinheiro limpo.').closest('[role="status"]')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByLabelText('Valor')).toHaveValue('');
     expect(screen.getByLabelText('Anotação')).toHaveValue('');
+  });
+});
+
+describe('visual novo do caixa', () => {
+  it('Adicionar envia entrada e o tipo escolhido destaca o saldo correspondente', async () => {
+    const chamadas = montar({ post: () => ok({ sujo: 1500, limpo: 2500100 }) });
+    const saldos = await screen.findByLabelText('Saldos do caixa');
+    const cartaoLimpo = within(saldos).getByText('Dinheiro limpo').closest('div')!;
+    const cartaoSujo = within(saldos).getByText('Dinheiro sujo').closest('div')!;
+    expect(cartaoLimpo).toHaveClass('caixa__saldo--ativo');
+    await u.click(screen.getByLabelText('Sujo'));
+    expect(cartaoSujo).toHaveClass('caixa__saldo--ativo');
+    expect(cartaoLimpo).not.toHaveClass('caixa__saldo--ativo');
+    await preencher('10', 'x');
+    await u.click(screen.getByRole('button', { name: 'Adicionar' }));
+    await waitFor(() => expect(chamadas.find((c) => c.metodo === 'POST')).toBeTruthy());
+    expect(chamadas.find((c) => c.metodo === 'POST')!.corpo).toMatchObject({ tipo: 'sujo', acao: 'entrada', valor: 10 });
+  });
+
+  it('erro do servidor aparece como alerta fechável', async () => {
+    montar({ post: () => falha(409, 'SALDO_INSUFICIENTE', 'Saldo insuficiente.') });
+    await screen.findByLabelText('Valor');
+    await preencher('5', 'x');
+    await u.click(screen.getByRole('button', { name: 'Retirar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saldo insuficiente.');
+    await u.click(screen.getByRole('button', { name: 'Fechar aviso' }));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('o histórico marca entrada e saída com setas decorativas (o texto continua dizendo Entrada/Saída)', async () => {
+    montar({ historico: () => ok({ itens: [mov(1), mov(2, { acao: 'saida' })], proximoCursor: null }) });
+    await screen.findByText('nota 1');
+    expect(document.querySelectorAll('.caixa__mov-seta[aria-hidden="true"]')).toHaveLength(2);
   });
 });

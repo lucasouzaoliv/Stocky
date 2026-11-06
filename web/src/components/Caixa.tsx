@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { ArrowDownLeft, ArrowUpRight, Landmark, ShieldAlert } from 'lucide-react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { AcaoCaixa, LogCaixa, LogDTO, Pagina, SaldoDTO, TipoCaixa } from '@/compartilhado/api-tipos';
 import { formatarData, formatarDinheiro } from '@/compartilhado/formatacao';
 import { LIMITES } from '@/compartilhado/limites';
 import { parseInteiro } from '@/compartilhado/numero';
 import { api as apiPadrao, type ClienteApi } from '@/components/api';
+import { Aviso, useAviso } from '@/components/Aviso';
 import { CampoQuantidade } from '@/components/CampoQuantidade';
 import { Carregando, ErroTela, Vazio } from '@/components/Estados';
 import { useSessaoOpcional } from '@/components/SessaoProvider';
@@ -36,6 +38,7 @@ export function Caixa({ cliente = apiPadrao }: CaixaProps) {
   const [erroHistorico, setErroHistorico] = useState<string | null>(null);
   const [carregandoMais, setCarregandoMais] = useState(false);
   const [tentativa, setTentativa] = useState(0);
+  const [tipo, setTipo] = useState<TipoCaixa>('limpo');
 
   const urlHistorico = (cursor: string | null) =>
     `/api/caixa/historico?limite=${TAMANHO_PAGINA}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
@@ -117,7 +120,7 @@ export function Caixa({ cliente = apiPadrao }: CaixaProps) {
 
   return (
     <section className="caixa" aria-labelledby={idTitulo}>
-      <h1 id={idTitulo}>Caixa</h1>
+      <h1 id={idTitulo} className="bau__titulo">Caixa</h1>
 
       {falhaTotal ? (
         <ErroTela mensagem={erroSaldo} aoTentarNovamente={tentarDeNovo} />
@@ -126,20 +129,26 @@ export function Caixa({ cliente = apiPadrao }: CaixaProps) {
       ) : (
         <>
           <dl className="caixa__saldos" aria-label="Saldos do caixa">
-            <div className="caixa__saldo caixa__saldo--sujo">
-              <dt>Dinheiro sujo</dt>
-              <dd>{formatarDinheiro(saldo.sujo ?? 0)}</dd>
-            </div>
-            <div className="caixa__saldo caixa__saldo--limpo">
-              <dt>Dinheiro limpo</dt>
+            <div className={`caixa__saldo caixa__saldo--limpo${tipo === 'limpo' ? ' caixa__saldo--ativo' : ''}`}>
+              <dt>
+                <Landmark aria-hidden="true" focusable="false" />
+                Dinheiro limpo
+              </dt>
               <dd>{formatarDinheiro(saldo.limpo ?? 0)}</dd>
+            </div>
+            <div className={`caixa__saldo caixa__saldo--sujo${tipo === 'sujo' ? ' caixa__saldo--ativo' : ''}`}>
+              <dt>
+                <ShieldAlert aria-hidden="true" focusable="false" />
+                Dinheiro sujo
+              </dt>
+              <dd>{formatarDinheiro(saldo.sujo ?? 0)}</dd>
             </div>
           </dl>
 
-          <FormularioCaixa cliente={cliente} csrf={csrf} aoRegistrar={aoRegistrar} />
+          <FormularioCaixa cliente={cliente} csrf={csrf} tipo={tipo} aoMudarTipo={setTipo} aoRegistrar={aoRegistrar} />
 
           <section className="caixa__historico" aria-labelledby={`${idTitulo}-hist`}>
-            <h2 id={`${idTitulo}-hist`} className="bau__form-titulo">Histórico</h2>
+            <h2 id={`${idTitulo}-hist`} className="caixa__form-titulo">Movimentações recentes</h2>
             {historico === null && erroHistorico === null ? <Carregando mensagem="Carregando o histórico…" /> : null}
             {erroHistorico !== null ? (
               <ErroTela titulo="Não foi possível carregar o histórico" mensagem={erroHistorico} aoTentarNovamente={proximo || historico ? undefined : tentarDeNovo} />
@@ -152,6 +161,9 @@ export function Caixa({ cliente = apiPadrao }: CaixaProps) {
                 {historico.map((m) => (
                   <li key={m.id} className={`caixa__mov caixa__mov--${m.acao}`}>
                     <div className="caixa__mov-topo">
+                      <span className="caixa__mov-seta" aria-hidden="true">
+                        {m.acao === 'entrada' ? <ArrowDownLeft focusable="false" /> : <ArrowUpRight focusable="false" />}
+                      </span>
                       <span className="caixa__mov-valor">
                         <span aria-hidden="true">{m.acao === 'entrada' ? '+' : '−'}</span>
                         <span className="sr-only">{ROTULO_ACAO[m.acao]}: </span>
@@ -182,31 +194,29 @@ export function Caixa({ cliente = apiPadrao }: CaixaProps) {
 function FormularioCaixa({
   cliente,
   csrf,
+  tipo,
+  aoMudarTipo,
   aoRegistrar,
 }: {
   cliente: ClienteApi;
   csrf: string | undefined;
+  tipo: TipoCaixa;
+  aoMudarTipo: (t: TipoCaixa) => void;
   aoRegistrar: (saldo: SaldoDTO) => Promise<void>;
 }) {
-  const [tipo, setTipo] = useState<TipoCaixa>('limpo');
-  const [acao, setAcao] = useState<AcaoCaixa>('entrada');
   const [valor, setValor] = useState('');
   const [anotacao, setAnotacao] = useState('');
   const [erroValor, setErroValor] = useState<string | null>(null);
   const [erroAnotacao, setErroAnotacao] = useState<string | null>(null);
-  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
-  const [aviso, setAviso] = useState('');
-  const [enviando, setEnviando] = useState(false);
+  const [enviando, setEnviando] = useState<AcaoCaixa | null>(null);
+  const { aviso, mostrar, fechar } = useAviso();
   const trava = useRef(false);
 
   const idForm = useId();
   const idAnotacao = useId();
 
-  async function aoSubmeter(e: FormEvent) {
-    e.preventDefault();
+  async function registrar(acao: AcaoCaixa) {
     if (trava.current) return;
-    setAviso('');
-    setErroEnvio(null);
     const parse = parseInteiro(valor, { min: LIMITES.VALOR_CAIXA_MIN, max: LIMITES.VALOR_CAIXA_MAX });
     const nota = anotacao.trim();
     setErroValor(parse.ok ? null : parse.erro);
@@ -214,54 +224,59 @@ function FormularioCaixa({
     if (!parse.ok || !nota) return;
 
     trava.current = true;
-    setEnviando(true);
+    setEnviando(acao);
     try {
       const r = await cliente.post<SaldoDTO>('/api/caixa/movimentar', { tipo, acao, valor: parse.valor, anotacao: nota }, csrf ? { csrf } : undefined);
       if (!r.ok) {
-        setErroEnvio(r.mensagem);
+        mostrar({ tipo: 'erro', texto: r.mensagem });
         return;
       }
       await aoRegistrar(r.dados);
       setValor('');
       setAnotacao('');
-      setAviso(`${ROTULO_ACAO[acao]} registrada: ${formatarDinheiro(parse.valor)} em ${ROTULO_TIPO[tipo].toLowerCase()}.`);
+      mostrar({ tipo: 'sucesso', texto: `${ROTULO_ACAO[acao]} registrada: ${formatarDinheiro(parse.valor)} em ${ROTULO_TIPO[tipo].toLowerCase()}.` });
     } finally {
       trava.current = false;
-      setEnviando(false);
+      setEnviando(null);
     }
   }
 
   return (
-    <form className="bau__form caixa__form" onSubmit={(e) => void aoSubmeter(e)} noValidate aria-labelledby={idForm}>
-      <h2 id={idForm} className="bau__form-titulo">Registrar movimentação</h2>
-      <Escolha<TipoCaixa> legenda="Tipo de dinheiro" nome="tipo" valor={tipo} aoMudar={setTipo} desabilitado={enviando} opcoes={[['limpo', 'Limpo'], ['sujo', 'Sujo']]} />
-      <Escolha<AcaoCaixa> legenda="Ação" nome="acao" valor={acao} aoMudar={setAcao} desabilitado={enviando} opcoes={[['entrada', 'Entrada'], ['saida', 'Saída']]} />
-      <CampoQuantidade rotulo="Valor" valor={valor} aoMudar={setValor} erro={erroValor} desabilitado={enviando} />
-      <div className="campo">
-        <label className="campo__rotulo" htmlFor={idAnotacao}>Anotação</label>
-        <input
-          id={idAnotacao}
-          className="campo__entrada"
-          type="text"
-          maxLength={LIMITES.ANOTACAO_MAX}
-          autoComplete="off"
-          value={anotacao}
-          disabled={enviando}
-          aria-invalid={erroAnotacao ? true : undefined}
-          aria-describedby={erroAnotacao ? `${idAnotacao}-erro` : undefined}
-          onChange={(e) => setAnotacao(e.target.value)}
-        />
-        {erroAnotacao ? (
-          <p id={`${idAnotacao}-erro`} className="campo__erro" role="alert">{erroAnotacao}</p>
-        ) : null}
+    <form className="caixa__form" onSubmit={(e) => e.preventDefault()} noValidate aria-labelledby={idForm}>
+      <h2 id={idForm} className="caixa__form-titulo">Registrar movimentação</h2>
+      <Escolha<TipoCaixa> legenda="Tipo de dinheiro" nome="tipo" valor={tipo} aoMudar={aoMudarTipo} desabilitado={enviando !== null} opcoes={[['limpo', 'Limpo'], ['sujo', 'Sujo']]} />
+      <div className="caixa__campos">
+        <CampoQuantidade rotulo="Valor" valor={valor} aoMudar={setValor} erro={erroValor} desabilitado={enviando !== null} />
+        <div className="campo">
+          <label className="campo__rotulo" htmlFor={idAnotacao}>Anotação</label>
+          <input
+            id={idAnotacao}
+            className="campo__entrada"
+            type="text"
+            maxLength={LIMITES.ANOTACAO_MAX}
+            autoComplete="off"
+            value={anotacao}
+            disabled={enviando !== null}
+            aria-invalid={erroAnotacao ? true : undefined}
+            aria-describedby={erroAnotacao ? `${idAnotacao}-erro` : undefined}
+            onChange={(e) => setAnotacao(e.target.value)}
+          />
+          {erroAnotacao ? (
+            <p id={`${idAnotacao}-erro`} className="campo__erro" role="alert">{erroAnotacao}</p>
+          ) : null}
+        </div>
       </div>
-      <div className="bau__acoes">
-        <button type="submit" className="botao" disabled={enviando}>
-          {enviando ? 'Registrando…' : 'Registrar'}
+      <div className="caixa__acoes">
+        <button type="button" className="botao botao--entrada" disabled={enviando !== null} onClick={() => void registrar('entrada')}>
+          <ArrowDownLeft aria-hidden="true" focusable="false" />
+          {enviando === 'entrada' ? 'Registrando…' : 'Adicionar'}
+        </button>
+        <button type="button" className="botao botao--saida" disabled={enviando !== null} onClick={() => void registrar('saida')}>
+          <ArrowUpRight aria-hidden="true" focusable="false" />
+          {enviando === 'saida' ? 'Registrando…' : 'Retirar'}
         </button>
       </div>
-      <p className="bau__aviso" role="status" aria-live="polite">{aviso}</p>
-      {erroEnvio ? <p className="bau__erro" role="alert">{erroEnvio}</p> : null}
+      <Aviso aviso={aviso} aoFechar={fechar} />
     </form>
   );
 }

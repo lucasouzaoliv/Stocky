@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Minus, Plus, Search } from 'lucide-react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { BauDTO, CatalogoDTO, MovimentoBauDTO, TipoBau } from '@/compartilhado/api-tipos';
 import { formatarNumero } from '@/compartilhado/formatacao';
 import { LIMITES } from '@/compartilhado/limites';
 import { parseInteiro } from '@/compartilhado/numero';
 import { api as apiPadrao, type ClienteApi } from '@/components/api';
-import { CampoQuantidade } from '@/components/CampoQuantidade';
+import { Aviso, useAviso } from '@/components/Aviso';
 import { Carregando, ErroTela, Vazio } from '@/components/Estados';
+import { iconeDaCategoria, iconeDoItem } from '@/components/icones';
 import { useSessaoOpcional } from '@/components/SessaoProvider';
 
 export interface BauProps {
@@ -61,7 +63,7 @@ export function Bau({ tipo, titulo, cliente = apiPadrao }: BauProps) {
   const idTitulo = useId();
   return (
     <section className="bau" aria-labelledby={idTitulo}>
-      <h1 id={idTitulo}>{titulo}</h1>
+      <h1 id={idTitulo} className="bau__titulo">{titulo}</h1>
       {estado.tag === 'carregando' ? <Carregando mensagem="Carregando o baú…" /> : null}
       {estado.tag === 'erro' ? (
         <ErroTela mensagem={estado.mensagem} aoTentarNovamente={() => {
@@ -87,6 +89,45 @@ export function Bau({ tipo, titulo, cliente = apiPadrao }: BauProps) {
   );
 }
 
+interface ItemGrade {
+  id: string;
+  nome: string;
+  quantidade: number;
+}
+interface GrupoGrade {
+  id: string;
+  nome: string;
+  itens: ItemGrade[];
+}
+
+const PADRAO_PENDENTE = '1';
+
+function semAcento(texto: string): string {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+/** O catálogo manda na lista (itens zerados também aparecem); o que está no baú e saiu do catálogo continua visível. */
+function montarGrupos(bau: BauDTO, catalogo: CatalogoDTO): GrupoGrade[] {
+  const noBau = new Map<string, number>();
+  for (const c of bau.categorias) for (const i of c.itens) noBau.set(`${c.id}/${i.id}`, i.quantidade);
+  const grupos: GrupoGrade[] = catalogo.categorias.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+    itens: c.itens.map((i) => ({ id: i.id, nome: i.nome, quantidade: noBau.get(`${c.id}/${i.id}`) ?? 0 })),
+  }));
+  for (const c of bau.categorias) {
+    let grupo = grupos.find((g) => g.id === c.id);
+    if (!grupo) {
+      grupo = { id: c.id, nome: c.nome, itens: [] };
+      grupos.push(grupo);
+    }
+    for (const i of c.itens) {
+      if (!grupo.itens.some((x) => x.id === i.id)) grupo.itens.push({ id: i.id, nome: i.nome, quantidade: i.quantidade });
+    }
+  }
+  return grupos;
+}
+
 function ConteudoBau({
   tipo,
   bau,
@@ -102,34 +143,48 @@ function ConteudoBau({
   csrf: string | undefined;
   recarregar: () => Promise<boolean>;
 }) {
-  const [categoriaId, setCategoriaId] = useState(catalogo.categorias[0]?.id ?? '');
-  const categoria = catalogo.categorias.find((c) => c.id === categoriaId) ?? catalogo.categorias[0];
-  const itens = categoria?.itens ?? [];
-  const [itemEscolhido, setItemEscolhido] = useState('');
-  const itemId = itens.some((i) => i.id === itemEscolhido) ? itemEscolhido : (itens[0]?.id ?? '');
-
-  const [quantidade, setQuantidade] = useState('');
-  const [erroCampo, setErroCampo] = useState<string | null>(null);
-  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
-  const [aviso, setAviso] = useState('');
+  const grupos = useMemo(() => montarGrupos(bau, catalogo), [bau, catalogo]);
+  const [filtro, setFiltro] = useState('todos');
+  const [busca, setBusca] = useState('');
+  // Quantidade pendente de cada item: só o clique em Adicionar/Retirar chama a API.
+  const [pendente, setPendente] = useState<Record<string, string>>({});
+  const [erroCampo, setErroCampo] = useState<{ chave: string; mensagem: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [pulso, setPulso] = useState<string | null>(null);
   const trava = useRef(false);
+  const { aviso, mostrar, fechar } = useAviso();
 
-  const estoque = useMemo(() => {
-    const mapa = new Map<string, number>();
-    for (const c of bau.categorias) for (const i of c.itens) mapa.set(`${c.id}/${i.id}`, i.quantidade);
-    return mapa;
-  }, [bau]);
-  const noBau = estoque.get(`${categoria?.id}/${itemId}`) ?? 0;
-  const categoriasComItens = bau.categorias.filter((c) => c.itens.some((i) => i.quantidade > 0));
+  const total = grupos.reduce((soma, g) => soma + g.itens.reduce((s, i) => s + i.quantidade, 0), 0);
+  const tiposComEstoque = grupos.reduce((soma, g) => soma + g.itens.filter((i) => i.quantidade > 0).length, 0);
+  const totalItensCatalogo = grupos.reduce((soma, g) => soma + g.itens.length, 0);
 
-  async function enviar(acao: Acao) {
-    if (trava.current || !categoria || !itemId) return;
-    const parse = parseInteiro(quantidade, { min: LIMITES.QUANTIDADE_MIN, max: LIMITES.QUANTIDADE_MAX });
-    setAviso('');
-    setErroEnvio(null);
+  const filtroAtual = grupos.some((g) => g.id === filtro) ? filtro : 'todos';
+  const termo = semAcento(busca.trim());
+  const visiveis = grupos
+    .filter((g) => filtroAtual === 'todos' || g.id === filtroAtual)
+    .map((g) => ({ ...g, itens: g.itens.filter((i) => !termo || semAcento(i.nome).includes(termo)) }))
+    .filter((g) => g.itens.length > 0);
+
+  function valorPendente(chave: string): string {
+    return pendente[chave] ?? PADRAO_PENDENTE;
+  }
+  function definir(chave: string, valor: string) {
+    setPendente((p) => ({ ...p, [chave]: valor }));
+    setErroCampo((e) => (e?.chave === chave ? null : e));
+  }
+  function passo(chave: string, delta: 1 | -1) {
+    const atual = parseInteiro(valorPendente(chave), { min: LIMITES.QUANTIDADE_MIN, max: LIMITES.QUANTIDADE_MAX });
+    const base = atual.ok ? atual.valor : LIMITES.QUANTIDADE_MIN;
+    const proximo = Math.min(LIMITES.QUANTIDADE_MAX, Math.max(LIMITES.QUANTIDADE_MIN, atual.ok ? base + delta : base));
+    definir(chave, String(proximo));
+  }
+
+  async function confirmar(acao: Acao, categoria: GrupoGrade, item: ItemGrade) {
+    if (trava.current) return;
+    const chave = `${categoria.id}/${item.id}`;
+    const parse = parseInteiro(valorPendente(chave), { min: LIMITES.QUANTIDADE_MIN, max: LIMITES.QUANTIDADE_MAX });
     if (!parse.ok) {
-      setErroCampo(parse.erro);
+      setErroCampo({ chave, mensagem: parse.erro });
       return;
     }
     setErroCampo(null);
@@ -138,20 +193,20 @@ function ConteudoBau({
     try {
       const resultado = await cliente.post<MovimentoBauDTO>(
         `/api/bau/${tipo}/${acao}`,
-        { categoriaId: categoria.id, itemId, quantidade: parse.valor },
+        { categoriaId: categoria.id, itemId: item.id, quantidade: parse.valor },
         csrf ? { csrf } : undefined,
       );
       if (!resultado.ok) {
-        setErroEnvio(resultado.mensagem);
+        mostrar({ tipo: 'erro', texto: resultado.mensagem });
         return;
       }
-      const nome = itens.find((i) => i.id === itemId)?.nome ?? 'item';
       const atualizou = await recarregar();
-      setQuantidade('');
+      setPendente((p) => ({ ...p, [chave]: PADRAO_PENDENTE }));
       if (atualizou) {
-        setAviso(`${acao === 'adicionar' ? 'Adicionado' : 'Removido'}: ${formatarNumero(parse.valor)} × ${nome}.`);
+        setPulso(chave);
+        mostrar({ tipo: 'sucesso', texto: `${acao === 'adicionar' ? 'Adicionado' : 'Removido'}: ${formatarNumero(parse.valor)} × ${item.nome}.` });
       } else {
-        setErroEnvio(MENSAGEM_ATUALIZAR);
+        mostrar({ tipo: 'erro', texto: MENSAGEM_ATUALIZAR });
       }
     } finally {
       trava.current = false;
@@ -159,108 +214,157 @@ function ConteudoBau({
     }
   }
 
-  function aoSubmeter(e: FormEvent) {
-    e.preventDefault();
-    void enviar('adicionar');
-  }
-
-  const idCategoria = useId();
-  const idItem = useId();
-  const idForm = useId();
+  const idGrupos = useId();
+  const idBusca = useId();
 
   return (
     <>
-      {categoriasComItens.length === 0 ? (
-        <Vazio titulo="Nenhum item" descricao="Este baú está vazio. Adicione itens pelo formulário abaixo." />
-      ) : (
-        <div className="bau__lista">
-          {categoriasComItens.map((c) => (
-            <section key={c.id} className="bau__categoria" aria-labelledby={`${idCategoria}-${c.id}`}>
-              <h2 id={`${idCategoria}-${c.id}`} className="bau__categoria-titulo">
-                <span aria-hidden="true">{c.emoji} </span>
-                {c.nome}
-              </h2>
-              <ul className="bau__itens">
-                {c.itens
-                  .filter((i) => i.quantidade > 0)
-                  .map((i) => (
-                    <li key={i.id} className="bau__item">
-                      <span className="bau__item-nome">{i.nome}</span>
-                      <span className="bau__item-qtd" aria-label={`${formatarNumero(i.quantidade)} unidades`}>
-                        {formatarNumero(i.quantidade)}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
-            </section>
-          ))}
+      <dl className="bau__resumo" aria-label="Resumo do baú">
+        <div className="bau__resumo-item">
+          <dt>Itens no baú</dt>
+          <dd>{formatarNumero(total)}</dd>
         </div>
-      )}
+        <div className="bau__resumo-item">
+          <dt>Tipos com estoque</dt>
+          <dd>
+            {formatarNumero(tiposComEstoque)}
+            <span className="bau__resumo-de"> de {formatarNumero(totalItensCatalogo)}</span>
+          </dd>
+        </div>
+        <div className="bau__resumo-item">
+          <dt>Categorias</dt>
+          <dd>{formatarNumero(grupos.length)}</dd>
+        </div>
+      </dl>
 
-      <form className="bau__form" onSubmit={aoSubmeter} noValidate aria-labelledby={idForm}>
-        <h2 id={idForm} className="bau__form-titulo">Adicionar ou remover</h2>
-        {!categoria ? (
-          <p className="estado__texto">O catálogo ainda não tem itens.</p>
-        ) : (
-          <>
-            <div className="campo">
-              <label className="campo__rotulo" htmlFor={`${idCategoria}-sel`}>
-                Categoria
+      {grupos.length === 0 ? (
+        <Vazio titulo="Catálogo vazio" descricao="O catálogo ainda não tem itens. Cadastre os itens no Painel para movimentar o baú." />
+      ) : (
+        <>
+          <div className="bau__ferramentas">
+            <div className="bau__busca">
+              <Search aria-hidden="true" focusable="false" />
+              <label className="sr-only" htmlFor={idBusca}>
+                Buscar item
               </label>
-              <select
-                id={`${idCategoria}-sel`}
-                className="campo__entrada"
-                value={categoria?.id ?? ''}
-                disabled={enviando}
-                onChange={(e) => setCategoriaId(e.target.value)}
-              >
-                {catalogo.categorias.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
+              <input
+                id={idBusca}
+                type="search"
+                className="bau__busca-campo"
+                placeholder="Buscar item"
+                autoComplete="off"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
             </div>
-            <div className="campo">
-              <label className="campo__rotulo" htmlFor={idItem}>
-                Item
-              </label>
-              <select
-                id={idItem}
-                className="campo__entrada"
-                value={itemId}
-                disabled={enviando || itens.length === 0}
-                onChange={(e) => setItemEscolhido(e.target.value)}
-              >
-                {itens.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.nome} (no baú: {formatarNumero(estoque.get(`${categoria?.id}/${i.id}`) ?? 0)})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <CampoQuantidade rotulo="Quantidade" valor={quantidade} aoMudar={setQuantidade} erro={erroCampo} desabilitado={enviando} />
-            <div className="bau__acoes">
-              <button type="submit" className="botao" disabled={enviando || !itemId}>
-                Adicionar
+            <div className="bau__chips" role="group" aria-label="Filtrar por categoria">
+              <button type="button" className="chip" aria-pressed={filtroAtual === 'todos'} onClick={() => setFiltro('todos')}>
+                Todos
               </button>
-              {noBau > 0 ? (
-                <button type="button" className="botao botao--secundario" disabled={enviando} onClick={() => void enviar('remover')}>
-                  Remover
-                </button>
-              ) : null}
+              {grupos.map((g) => {
+                const Icone = iconeDaCategoria(g.nome);
+                return (
+                  <button key={g.id} type="button" className="chip" aria-pressed={filtroAtual === g.id} onClick={() => setFiltro(g.id)}>
+                    <Icone aria-hidden="true" focusable="false" />
+                    <span>{g.nome}</span>
+                  </button>
+                );
+              })}
             </div>
-          </>
-        )}
-        <p className="bau__aviso" role="status" aria-live="polite">
-          {aviso}
-        </p>
-        {erroEnvio ? (
-          <p className="bau__erro" role="alert">
-            {erroEnvio}
-          </p>
-        ) : null}
-      </form>
+          </div>
+
+          {visiveis.length === 0 ? (
+            <Vazio titulo="Nenhum item encontrado" descricao="Nada combina com a busca nesta categoria. Limpe a busca ou escolha outra categoria." />
+          ) : (
+            <div className="bau__lista">
+              {visiveis.map((g) => (
+                <section key={g.id} className="bau__categoria" aria-labelledby={`${idGrupos}-${g.id}`}>
+                  <h2 id={`${idGrupos}-${g.id}`} className="bau__categoria-titulo">
+                    {g.nome}
+                    <span className="bau__categoria-contagem">{g.itens.length}</span>
+                  </h2>
+                  <ul className="bau__grade">
+                    {g.itens.map((i) => {
+                      const chave = `${g.id}/${i.id}`;
+                      const Icone = iconeDoItem(g.nome, i.nome);
+                      const erro = erroCampo?.chave === chave ? erroCampo.mensagem : null;
+                      const idErro = `${idGrupos}-${g.id}-${i.id}-erro`;
+                      return (
+                        <li key={i.id} className={`bau__item${i.quantidade === 0 ? ' bau__item--zerado' : ''}`}>
+                          <div className="bau__item-topo">
+                            <span className="bau__item-icone" aria-hidden="true">
+                              <Icone focusable="false" />
+                            </span>
+                            <p className="bau__item-qtd">
+                              <span key={pulso === chave ? bau.versao : 'fixo'} className={pulso === chave ? 'bau__item-numero bau__item-numero--pulso' : 'bau__item-numero'}>
+                                {formatarNumero(i.quantidade)}
+                              </span>
+                              <span className="sr-only"> no baú</span>
+                            </p>
+                          </div>
+                          <p className="bau__item-nome">{i.nome}</p>
+                          <div className="passo" role="group" aria-label={`Quantidade de ${i.nome}`}>
+                            <button
+                              type="button"
+                              className="passo__botao"
+                              aria-label={`Diminuir quantidade de ${i.nome}`}
+                              disabled={enviando}
+                              onClick={() => passo(chave, -1)}
+                            >
+                              <Minus aria-hidden="true" focusable="false" />
+                            </button>
+                            <input
+                              className="passo__campo"
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="off"
+                              aria-label={`Quantidade de ${i.nome}`}
+                              value={valorPendente(chave)}
+                              disabled={enviando}
+                              aria-invalid={erro ? true : undefined}
+                              aria-describedby={erro ? idErro : undefined}
+                              onChange={(e) => definir(chave, e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className="passo__botao"
+                              aria-label={`Aumentar quantidade de ${i.nome}`}
+                              disabled={enviando}
+                              onClick={() => passo(chave, 1)}
+                            >
+                              <Plus aria-hidden="true" focusable="false" />
+                            </button>
+                          </div>
+                          {erro ? (
+                            <p id={idErro} className="campo__erro" role="alert">
+                              {erro}
+                            </p>
+                          ) : null}
+                          <div className="bau__item-acoes">
+                            <button type="button" className="botao botao--compacto" aria-label={`Adicionar ${i.nome}`} disabled={enviando} onClick={() => void confirmar('adicionar', g, i)}>
+                              Adicionar
+                            </button>
+                            <button
+                              type="button"
+                              className="botao botao--compacto botao--secundario"
+                              aria-label={`Retirar ${i.nome}`}
+                              disabled={enviando || i.quantidade === 0}
+                              onClick={() => void confirmar('remover', g, i)}
+                            >
+                              Retirar
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      <Aviso aviso={aviso} aoFechar={fechar} />
     </>
   );
 }

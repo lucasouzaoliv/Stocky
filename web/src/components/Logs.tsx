@@ -55,7 +55,7 @@ export function Logs({ nivel, cliente = apiPadrao }: LogsProps) {
 
   return (
     <section className="logs" aria-labelledby={`${idBase}-titulo`}>
-      <h1 id={`${idBase}-titulo`}>Logs</h1>
+      <h1 id={`${idBase}-titulo`}>Movimentações</h1>
       <div role="tablist" aria-label="Tipo de log" className="logs__abas">
         {abas.map((a, i) => (
           <button
@@ -106,7 +106,7 @@ function ListaLog({ escopo, rotulo, url, cliente }: { escopo: EscopoLog; rotulo:
   }
   return (
     <>
-      <ul className="logs__lista" aria-label={`Logs: ${rotulo}`}>
+      <ul className="logs__lista" aria-label={`Movimentações: ${rotulo}`}>
         {est.itens.map((l) => (
           <li key={l.id} className="logs__item">
             {escopo === 'caixa' ? <LinhaCaixa log={l as { id: string } & LogCaixa} /> : <LinhaBau log={l as { id: string } & LogBau} />}
