@@ -371,26 +371,19 @@ body:has(.casca) {
 
   .navegacao__marca {
     display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: var(--espaco-3);
-    align-items: center;
-    padding: var(--espaco-2) var(--espaco-2) var(--espaco-6);
+    justify-items: center;
+    text-align: center;
+    row-gap: 0.125rem;
+    padding: var(--espaco-2) var(--espaco-2) var(--espaco-4);
   }
 
+  /* Logo da facção (imagem local em /fundos/logo.webp). */
   .navegacao__logo {
-    grid-row: span 2;
-    display: grid;
-    place-items: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.75rem;
-    background: linear-gradient(145deg, var(--cor-botao), var(--cor-neon));
-    box-shadow: var(--brilho-forte);
-  }
-
-  .navegacao__logo svg {
-    width: 1.375rem;
-    height: 1.375rem;
+    width: 8.5rem;
+    aspect-ratio: 640 / 599;
+    margin-bottom: var(--espaco-2);
+    background: url('/fundos/logo.webp') center / contain no-repeat;
+    filter: drop-shadow(0 0 14px rgb(168 85 247 / 0.45));
   }
 
   .navegacao__nome {
@@ -591,6 +584,17 @@ body:has(.casca) {
   white-space: nowrap;
 }
 
+/* Logo no cartão de login. */
+.login__logo {
+  display: block;
+  width: 11rem;
+  max-width: 70%;
+  aspect-ratio: 640 / 599;
+  margin: 0 auto;
+  background: url('/fundos/logo.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 18px rgb(168 85 247 / 0.5));
+}
+
 /* Tela de login: horizonte noturno com palmeiras. */
 body:has(.login) {
   background:
@@ -606,6 +610,7 @@ body:has(.login) {
 }
 
 .login__cartao {
+  text-align: center;
   width: 100%;
   max-width: 24rem;
   padding: var(--espaco-6);

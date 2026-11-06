@@ -101,9 +101,7 @@ export function Navegacao({ nivel, csrf }: { nivel: NivelNavegacao; csrf: string
   return (
     <nav className="navegacao" aria-label="Principal">
       <div className="navegacao__marca">
-        <span className="navegacao__logo" aria-hidden="true">
-          <Vault />
-        </span>
+        <span className="navegacao__logo" aria-hidden="true" />
         <p className="navegacao__nome">{NOME_FACCAO}</p>
         <p className="navegacao__subtitulo">{SUBTITULO_FACCAO}</p>
       </div>
