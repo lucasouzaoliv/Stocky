@@ -174,6 +174,7 @@ export interface ConsultaFake {
   caminhoColecao: string;
   orderBy(campo: string, direcao?: 'asc' | 'desc'): ConsultaFake;
   limit(n: number): ConsultaFake;
+  startAfter(ancora: SnapshotFake): ConsultaFake;
   get(): Promise<QuerySnapshotFake>;
 }
 
@@ -245,6 +246,7 @@ export function criarFakeFirestore({
     caminhoColecao: string,
     ordem: Array<{ campo: string; direcao: 'asc' | 'desc' }>,
     limite: number | null,
+    apos: string | null = null,
   ): QuerySnapshotFake {
     const prefixo = `${caminhoColecao}/`;
     let caminhos = [...banco.docs.keys()].filter((c) => c.startsWith(prefixo) && !c.slice(prefixo.length).includes('/'));
@@ -252,13 +254,15 @@ export function criarFakeFirestore({
       caminhos.sort();
     } else {
       caminhos = caminhos.filter((c) => ordem.every(({ campo }) => lerCampo(banco.docs.get(c), campo) !== undefined));
-      caminhos.sort((ca, cb) => {
+      const cmp = (ca: string, cb: string): number => {
         for (const { campo, direcao } of ordem) {
           const r = comparar(lerCampo(banco.docs.get(ca), campo), lerCampo(banco.docs.get(cb), campo));
           if (r !== 0) return direcao === 'desc' ? -r : r;
         }
-        return ca < cb ? -1 : 1;
-      });
+        return ca === cb ? 0 : ca < cb ? -1 : 1;
+      };
+      caminhos.sort(cmp);
+      if (apos !== null) caminhos = caminhos.filter((c) => cmp(c, apos) > 0);
     }
     if (limite !== null) caminhos = caminhos.slice(0, limite);
     const docs = caminhos.map(criarSnapshot);
@@ -270,28 +274,34 @@ export function criarFakeFirestore({
       readonly caminhoColecao: string,
       protected readonly ordem: Array<{ campo: string; direcao: 'asc' | 'desc' }> = [],
       protected readonly limite: number | null = null,
+      protected readonly apos: string | null = null,
     ) {}
 
     orderBy(campo: string, direcao: 'asc' | 'desc' = 'asc'): ConsultaFake {
       if (!['asc', 'desc'].includes(direcao)) throw new Error(`Direção inválida em orderBy: ${String(direcao)}`);
-      return new Consulta(this.caminhoColecao, [...this.ordem, { campo, direcao }], this.limite);
+      return new Consulta(this.caminhoColecao, [...this.ordem, { campo, direcao }], this.limite, this.apos);
     }
 
     limit(n: number): ConsultaFake {
-      return new Consulta(this.caminhoColecao, this.ordem, n);
+      return new Consulta(this.caminhoColecao, this.ordem, n, this.apos);
+    }
+
+    startAfter(ancora: SnapshotFake): ConsultaFake {
+      if (this.ordem.length === 0) throw new Error('startAfter exige orderBy antes.');
+      return new Consulta(this.caminhoColecao, this.ordem, this.limite, `${this.caminhoColecao}/${ancora.id}`);
     }
 
     async get(): Promise<QuerySnapshotFake> {
       registrar('get', this.caminhoColecao, false);
       const erro = consumirFalha('get', this.caminhoColecao);
-      const resultado = coletar(this.caminhoColecao, this.ordem, this.limite);
+      const resultado = coletar(this.caminhoColecao, this.ordem, this.limite, this.apos);
       await ceder();
       if (erro) throw erro;
       return resultado;
     }
 
     resultadoSincrono(): QuerySnapshotFake {
-      return coletar(this.caminhoColecao, this.ordem, this.limite);
+      return coletar(this.caminhoColecao, this.ordem, this.limite, this.apos);
     }
   }
 

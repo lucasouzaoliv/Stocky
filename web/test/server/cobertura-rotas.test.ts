@@ -93,10 +93,10 @@ describe('WEB-026 manifesto e varredura', () => {
     expect([...achados].sort()).toEqual([...declarados].sort());
   });
 
-  it('AC1: rota do manifesto ausente só é aceita se for de onda futura (≥ 4); as da onda 3 ou antes existem', () => {
-    for (const e of MANIFESTO.filter((x) => !existe(x))) expect(e.onda, e.caminho).toBeGreaterThanOrEqual(4);
+  it('AC1: rota do manifesto ausente só é aceita se for de onda futura (≥ 5); as das ondas 4 ou antes existem', () => {
+    for (const e of MANIFESTO.filter((x) => !existe(x))) expect(e.onda, e.caminho).toBeGreaterThanOrEqual(5);
     expect(implementadas.map((e) => e.caminho).sort()).toEqual(
-      ['/api/auth/callback', '/api/auth/login', '/api/auth/logout', '/api/csrf'],
+      MANIFESTO.filter((e) => e.onda <= 4).map((e) => e.caminho).sort(),
     );
   });
 

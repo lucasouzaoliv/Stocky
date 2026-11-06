@@ -6,7 +6,7 @@ import { refCatalogo } from '../dominio/refs';
 import type { CategoriaCatalogo, DocCatalogo } from '../dominio/tipos';
 import { garantirCatalogo } from './semente';
 
-function lerDocCatalogo(dados: unknown): DocCatalogo {
+export function lerCatalogoDoc(dados: unknown): DocCatalogo {
   const base = (typeof dados === 'object' && dados !== null ? dados : {}) as Record<string, unknown>;
   if (!Array.isArray(base.categorias)) throw new ErroApp('INTERNO');
   return { categorias: base.categorias as CategoriaCatalogo[], atualizadoEm: String(base.atualizadoEm ?? '') };
@@ -15,14 +15,14 @@ function lerDocCatalogo(dados: unknown): DocCatalogo {
 export async function lerCatalogoTx(tx: Transaction, db: Db): Promise<DocCatalogo> {
   const snap = await tx.get(refCatalogo(db));
   if (!snap.exists) throw new ErroApp('INTERNO');
-  return lerDocCatalogo(snap.data());
+  return lerCatalogoDoc(snap.data());
 }
 
 export async function lerCatalogo(): Promise<CatalogoDTO> {
   await garantirCatalogo();
   const snap = await refCatalogo(getDb()).get();
   if (!snap.exists) throw new ErroApp('INTERNO');
-  const doc = lerDocCatalogo(snap.data());
+  const doc = lerCatalogoDoc(snap.data());
   return {
     categorias: doc.categorias.map((c) => ({
       id: c.id,
