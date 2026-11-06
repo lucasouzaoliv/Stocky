@@ -21,16 +21,16 @@ afterEach(() => vi.unstubAllGlobals());
 const GERENCIA = ['Baú da Gerência', 'Caixa', 'Painel', 'Auditoria'];
 
 describe('WEB-053 navegação por nível (AC2)', () => {
-  it('nível 1 vê Baú dos Membros e Logs, sem itens de gerência', () => {
+  it('nível 1 vê Baú dos Membros e Movimentações, sem itens de gerência', () => {
     render(<Navegacao nivel={1} csrf="tok" />);
     expect(screen.getByRole('link', { name: 'Baú dos Membros' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Logs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Movimentações' })).toBeInTheDocument();
     for (const nome of GERENCIA) expect(screen.queryByRole('link', { name: nome })).toBeNull();
   });
 
   it.each([2, 3] as const)('nível %i vê todos os itens', (nivel) => {
     render(<Navegacao nivel={nivel} csrf="tok" />);
-    for (const nome of ['Baú dos Membros', 'Logs', ...GERENCIA]) {
+    for (const nome of ['Baú dos Membros', 'Movimentações', ...GERENCIA]) {
       expect(screen.getByRole('link', { name: nome })).toBeInTheDocument();
     }
   });
@@ -55,7 +55,7 @@ describe('WEB-053 teclado e item atual (AC3)', () => {
     render(<Navegacao nivel={3} csrf="tok" />);
     const controles = [...screen.getByRole('navigation', { name: 'Principal' }).querySelectorAll('a, button')];
     expect(controles.map((c) => c.textContent)).toEqual([
-      'Baú dos Membros', 'Baú da Gerência', 'Caixa', 'Painel', 'Logs', 'Auditoria', 'Sair',
+      'Baú dos Membros', 'Baú da Gerência', 'Caixa', 'Movimentações', 'Mais', 'Painel', 'Auditoria', 'Sair',
     ]);
     for (const c of controles) expect((c as HTMLElement).tabIndex).toBeGreaterThanOrEqual(0);
     // links são <a href> e o botão é <button>: Enter ativa ambos nativamente
@@ -92,5 +92,41 @@ describe('WEB-053 sair (AC5)', () => {
     render(<Navegacao nivel={1} csrf="tok" />);
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
+});
+
+describe('barra inferior e menu "Mais" no celular', () => {
+  it('Painel, Auditoria e Sair ficam no painel controlado pelo botão Mais', () => {
+    render(<Navegacao nivel={3} csrf="tok" />);
+    const mais = screen.getByRole('button', { name: 'Mais' });
+    const painel = document.getElementById(mais.getAttribute('aria-controls')!)!;
+    expect(mais).toHaveAttribute('aria-expanded', 'false');
+    expect(painel).toHaveAttribute('data-aberto', 'nao');
+    expect([...painel.querySelectorAll('a, button')].map((c) => c.textContent)).toEqual(['Painel', 'Auditoria', 'Sair']);
+    fireEvent.click(mais);
+    expect(mais).toHaveAttribute('aria-expanded', 'true');
+    expect(painel).toHaveAttribute('data-aberto', 'sim');
+  });
+
+  it('Esc fecha o menu e devolve o foco ao botão', () => {
+    render(<Navegacao nivel={3} csrf="tok" />);
+    const mais = screen.getByRole('button', { name: 'Mais' });
+    fireEvent.click(mais);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(mais).toHaveAttribute('aria-expanded', 'false');
+    expect(mais).toHaveFocus();
+  });
+
+  it('nível 1: só o Sair no Mais, sem links de gerência', () => {
+    render(<Navegacao nivel={1} csrf="tok" />);
+    const mais = screen.getByRole('button', { name: 'Mais' });
+    const painel = document.getElementById(mais.getAttribute('aria-controls')!)!;
+    expect([...painel.querySelectorAll('a, button')].map((c) => c.textContent)).toEqual(['Sair']);
+  });
+
+  it('mostra a marca configurável em um só arquivo', async () => {
+    const { NOME_FACCAO } = await import('@/compartilhado/marca');
+    render(<Navegacao nivel={1} csrf="tok" />);
+    expect(screen.getByText(NOME_FACCAO)).toBeInTheDocument();
   });
 });

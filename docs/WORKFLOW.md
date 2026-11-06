@@ -1,5 +1,7 @@
 # Workflow de desenvolvimento do Stocky
 
+> **Fluxo pesado, só para funções grandes.** Para ajustes e mudanças visuais use o fluxo leve: `docs/web/FLUXO-LEVE.md`.
+
 Toda atividade (bug, melhoria, funcionalidade) passa pelos 5 agentes, nesta ordem. Os agentes ficam em `.claude/agents/` e o fluxo é disparado com o comando `/workflow <demanda>`.
 
 ```
