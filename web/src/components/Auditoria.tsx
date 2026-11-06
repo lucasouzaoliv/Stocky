@@ -145,11 +145,11 @@ function Detalhe({ id, cliente }: { id: string; cliente: ClienteApi }) {
   return (
     <div className="auditoria__comparacao">
       <section className="auditoria__lado" aria-label="Antes">
-        <h3 className="auditoria__lado-titulo">Antes</h3>
+        <h2 className="auditoria__lado-titulo">Antes</h2>
         <Valor valor={detalhe.antes} />
       </section>
       <section className="auditoria__lado" aria-label="Depois">
-        <h3 className="auditoria__lado-titulo">Depois</h3>
+        <h2 className="auditoria__lado-titulo">Depois</h2>
         <Valor valor={detalhe.depois} />
       </section>
     </div>
@@ -190,10 +190,10 @@ export function Valor({ valor }: { valor: unknown }) {
       return (
         <>
           {chaves.map((k) => (
-            <section key={k} className="auditoria__grupo" aria-label={ROTULO_BAU[k]}>
-              <h4 className="auditoria__grupo-titulo">{ROTULO_BAU[k]}</h4>
+            <div key={k} role="group" className="auditoria__grupo" aria-label={ROTULO_BAU[k]}>
+              <h3 className="auditoria__grupo-titulo">{ROTULO_BAU[k]}</h3>
               <MapaItens mapa={valor[k] as Mapa} />
-            </section>
+            </div>
           ))}
         </>
       );
@@ -209,14 +209,14 @@ function MapaItens({ mapa }: { mapa: Mapa }) {
   return (
     <>
       {categorias.map((cat) => (
-        <section key={cat} className="auditoria__grupo" aria-label={`Categoria ${cat}`}>
-          <h4 className="auditoria__grupo-titulo">{cat}</h4>
+        <div key={cat} role="group" className="auditoria__grupo" aria-label={`Categoria ${cat}`}>
+          <h3 className="auditoria__grupo-titulo">{cat}</h3>
           <dl className="auditoria__lista">
             {Object.entries(mapa[cat] as Record<string, number>).map(([item, qtd]) => (
               <Linha key={item} rotulo={item} valor={formatarNumero(qtd)} />
             ))}
           </dl>
-        </section>
+        </div>
       ))}
     </>
   );

@@ -119,11 +119,11 @@ describe('WEB-064 AC3: detalhe antes/depois e paginação', () => {
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Ver detalhes' }));
     const antes = await screen.findByRole('region', { name: 'Antes' });
-    const membros = within(antes).getByRole('region', { name: 'Baú dos Membros' });
+    const membros = within(antes).getByRole('group', { name: 'Baú dos Membros' });
     expect(within(membros).getByText('armas')).toBeInTheDocument();
     expect(within(membros).getByText('pistola')).toBeInTheDocument();
     expect(within(membros).getByText('4')).toBeInTheDocument();
-    expect(within(within(antes).getByRole('region', { name: 'Baú da Gerência' })).getByText('cafe')).toBeInTheDocument();
+    expect(within(within(antes).getByRole('group', { name: 'Baú da Gerência' })).getByText('cafe')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Depois' })).getByText('Nada')).toBeInTheDocument();
   });
 
@@ -135,7 +135,7 @@ describe('WEB-064 AC3: detalhe antes/depois e paginação', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Ver detalhes' }));
     const depois = await screen.findByRole('region', { name: 'Depois' });
     expect(within(depois).getByText('10')).toBeInTheDocument();
-    expect(within(depois).getByRole('region', { name: 'Categoria extras' })).toBeInTheDocument();
+    expect(within(depois).getByRole('group', { name: 'Categoria extras' })).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Antes' })).getByText('4')).toBeInTheDocument();
   });
 

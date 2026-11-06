@@ -8,6 +8,7 @@ export default function NaoEncontrada() {
   return (
     <main id="conteudo" tabIndex={-1} className="conteudo">
       <Vazio
+        nivelTitulo={1}
         titulo="Página não encontrada"
         descricao="O endereço não existe ou foi movido."
         acao={

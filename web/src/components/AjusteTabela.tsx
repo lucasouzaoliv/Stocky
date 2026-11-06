@@ -328,7 +328,7 @@ export function AjusteTabela({ tipo, titulo, cliente = apiPadrao }: AjusteTabela
                           onChange={(e) => mudar(linha.chave, e.target.value)}
                         />
                         {erro ? (
-                          <p id={idErro} className="campo__erro">
+                          <p id={idErro} className="campo__erro" aria-live="polite">
                             {erro}
                           </p>
                         ) : null}

@@ -319,7 +319,7 @@ function DialogoRemover({
         Categoria: {categoria.nome}. O item sai do catálogo e o estoque dele sai dos baús. A ação fica registrada na auditoria.
       </p>
       {impacto === null ? <Carregando mensagem="Conferindo o estoque nos baús…" /> : null}
-      {impacto === 'erro' ? <p className="campo__erro">Não foi possível conferir o estoque nos baús.</p> : null}
+      {impacto === 'erro' ? <p className="campo__erro" role="alert">Não foi possível conferir o estoque nos baús.</p> : null}
       {impacto && impacto !== 'erro' ? (
         <ul className="dialogo__impacto" aria-label="Estoque que será removido">
           {BAUS.map(([tipo, rotulo]) => (

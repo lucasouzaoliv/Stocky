@@ -6,6 +6,7 @@ export default function Erro({ reset }: { error: Error & { digest?: string }; re
   return (
     <main id="conteudo" tabIndex={-1} className="conteudo">
       <ErroTela
+        nivelTitulo={1}
         mensagem="Não foi possível carregar esta página. Tente de novo em instantes."
         aoTentarNovamente={reset}
       />
