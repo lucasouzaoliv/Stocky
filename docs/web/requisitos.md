@@ -51,3 +51,7 @@ Definition of Done de `docs/WORKFLOW.md` adaptada ao site: lint e verificação 
 
 ## Atualização: cargos em lista
 `DISCORD_ROLE_MEMBRO/GERENTE/DONO` aceitam lista separada por vírgula (ver `docs/web/config-discord.md`). WEB-018 deve testar lista, espaços, vazio e maior nível vencendo.
+
+
+## Região
+Firestore em southamerica-east1 (São Paulo), confirmado pelo usuário. Função da Vercel fixada em `gru1` (vercel.json, onda 7).
