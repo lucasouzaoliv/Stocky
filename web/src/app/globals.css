@@ -202,15 +202,15 @@ table {
  * Computador (1024 px): o painel aparece dentro de uma moldura de tablet sobre fundo com gradiente.
  */
 body:has(.casca) {
-  background:
-    radial-gradient(60rem 36rem at 15% -10%, rgb(124 58 237 / 0.22), transparent 60%),
-    radial-gradient(50rem 30rem at 100% 110%, rgb(168 85 247 / 0.16), transparent 60%),
-    var(--cor-fundo);
+  background: var(--cor-fundo) url('/fundos/halo.webp') center / cover no-repeat fixed;
 }
 
+/* Textura urbana dentro do painel; a camada escura mantém o texto legível. */
 .casca {
   min-height: 100dvh;
-  background: var(--cor-grafite);
+  background:
+    linear-gradient(rgb(18 17 25 / 0.55), rgb(18 17 25 / 0.55)),
+    var(--cor-grafite) url('/fundos/textura.webp') center / 28rem repeat;
 }
 
 .casca__principal {
@@ -486,7 +486,6 @@ body:has(.casca) {
     overflow: hidden;
     border: 0.625rem solid #050509;
     border-radius: 2.25rem;
-    background: var(--cor-grafite);
     box-shadow:
       0 0 0 1px #2a2640,
       0 0 0 3px #0a0911,
@@ -592,7 +591,13 @@ body:has(.casca) {
   white-space: nowrap;
 }
 
-/* Tela de login */
+/* Tela de login: horizonte noturno com palmeiras. */
+body:has(.login) {
+  background:
+    linear-gradient(rgb(11 10 16 / 0.35), rgb(11 10 16 / 0.35)),
+    var(--cor-fundo) url('/fundos/horizonte.webp') center top / cover no-repeat fixed;
+}
+
 .login {
   display: flex;
   min-height: 100dvh;
@@ -604,7 +609,8 @@ body:has(.casca) {
   width: 100%;
   max-width: 24rem;
   padding: var(--espaco-6);
-  background: var(--cor-superficie);
+  background: rgb(24 23 34 / 0.88);
+  backdrop-filter: blur(6px);
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   display: grid;
