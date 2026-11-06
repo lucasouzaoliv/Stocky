@@ -3,6 +3,8 @@ description: Executa o workflow completo (Jira Manager → Architect → Back/Fr
 argument-hint: <descrição da demanda>
 ---
 
+**Atenção:** este é o fluxo PESADO de 5 agentes, só para funções grandes pedidas pelo dono. Para ajustes do dia a dia use `docs/web/FLUXO-LEVE.md`.
+
 Execute o workflow de `docs/WORKFLOW.md` para esta demanda: $ARGUMENTS
 
 Você é o orquestrador. Rode os agentes **em sequência**, sem pular etapas, passando a cada um o contexto necessário (cada agente começa sem memória):
