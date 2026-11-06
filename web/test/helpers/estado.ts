@@ -2,6 +2,8 @@ import { CATALOGO_PADRAO } from '@/server/catalogo/padrao';
 import type { Dados } from './fake-firestore';
 
 export const USUARIO = Object.freeze({ id: '444444444444444441', nome: 'Teste' });
+export const DONO = Object.freeze({ ...USUARIO, nivel: 3 as const });
+export const GERENTE = Object.freeze({ ...USUARIO, nivel: 2 as const });
 export const OUTRO_USUARIO = Object.freeze({ id: '444444444444444442', nome: 'Outra Pessoa' });
 
 export type ItensBau = Record<string, Record<string, number>>;
@@ -46,3 +48,8 @@ export const VALORES_INVALIDOS: ReadonlyArray<[string, unknown]> = [
   ['lista', [5]],
   ['dígitos não ASCII', '٣'],
 ];
+
+export const auditorias = (dump: Record<string, Dados>): Dados[] =>
+  Object.entries(dump)
+    .filter(([c]) => c.startsWith('auditoria/'))
+    .map(([, d]) => d);

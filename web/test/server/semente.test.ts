@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CATALOGO_PADRAO } from '@/server/catalogo/padrao';
+import { adicionarItemAoCatalogo } from '@/server/catalogo/operacoes';
 import { garantirCatalogo, resetSemente } from '@/server/catalogo/semente';
 import { lerCatalogo, lerCatalogoTx } from '@/server/catalogo/leitura';
 import { getDb, resetDb, setDb } from '@/server/firebase';
@@ -79,21 +80,19 @@ describe('WEB-014 semente do catálogo', () => {
     expect(escritas().map((c) => c.caminho)).toEqual(['baus/gerencia']);
   });
 
-  it('AC4: item adicionado em corrida com a semente nunca é perdido (D6)', async () => {
-    const db = getDb();
-    const adicionarItem = async () => {
-      await garantirCatalogo();
-      await db.runTransaction(async (tx) => {
-        const ref = db.collection('config').doc('catalogo');
-        const doc = (await lerCatalogoTx(tx, db)).categorias;
-        doc.find((c) => c.id === 'armas')?.itens.push({ id: 'faca', nome: 'Faca' });
-        tx.set(ref, { categorias: doc, atualizadoEm: 'novo' });
-      });
-    };
-    await Promise.all([garantirCatalogo(), adicionarItem(), garantirCatalogo(), adicionarItem()]);
+  it('AC4: item adicionado em corrida com a semente nunca é perdido (D6), com adicionarItemAoCatalogo real', async () => {
+    const usuario = { id: '444444444444444441', nome: 'Teste' };
+    const r = await Promise.all([
+      garantirCatalogo(),
+      adicionarItemAoCatalogo('armas', 'Faca', usuario),
+      garantirCatalogo(),
+      adicionarItemAoCatalogo('armas', 'Machado', usuario),
+    ]);
+    expect(r[1]?.item).toEqual({ id: 'faca', nome: 'Faca' });
     const armas = (fake.dump()['config/catalogo'] as { categorias: Array<{ id: string; itens: Array<{ id: string }> }> })
       .categorias.find((c) => c.id === 'armas');
-    expect(armas?.itens.filter((i) => i.id === 'faca')).toHaveLength(2);
+    expect(armas?.itens.filter((i) => i.id === 'faca')).toHaveLength(1);
+    expect(armas?.itens.filter((i) => i.id === 'machado')).toHaveLength(1);
     expect(armas?.itens.some((i) => i.id === 'colt')).toBe(true);
   });
 

@@ -652,3 +652,176 @@ table {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Painel da gerência (onda 5) */
+.painel {
+  display: grid;
+  gap: var(--espaco-8);
+}
+
+.painel__bloco,
+.catalogo,
+.zerar {
+  display: grid;
+  gap: var(--espaco-4);
+  align-content: start;
+}
+
+.painel__titulo {
+  margin: 0;
+  font-size: var(--texto-grande);
+}
+
+.painel__ajuda {
+  margin: 0;
+  color: var(--cor-texto-suave);
+}
+
+.catalogo__lista {
+  display: grid;
+  gap: var(--espaco-4);
+}
+
+.catalogo__contador {
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.catalogo__form {
+  display: grid;
+  gap: var(--espaco-3);
+  margin-top: var(--espaco-4);
+  max-width: 28rem;
+}
+
+.botao--perigo {
+  background: transparent;
+  color: var(--cor-erro);
+  border-color: var(--cor-erro);
+}
+
+/* Diálogo */
+.dialogo__fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--espaco-4);
+  background: rgb(11 10 16 / 0.8);
+}
+
+.dialogo {
+  display: grid;
+  gap: var(--espaco-4);
+  width: min(100%, 30rem);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--espaco-6);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.dialogo > * {
+  margin: 0;
+}
+
+.dialogo__titulo {
+  font-size: var(--texto-grande);
+  overflow-wrap: anywhere;
+}
+
+.dialogo__impacto {
+  padding-left: var(--espaco-6);
+}
+
+/* Ajuste em massa */
+.ajuste {
+  display: grid;
+  gap: var(--espaco-4);
+}
+
+.ajuste__rolagem {
+  overflow-x: auto;
+}
+
+.ajuste__tabela {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ajuste__tabela th,
+.ajuste__tabela td {
+  padding: var(--espaco-2) var(--espaco-3);
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--cor-borda);
+  overflow-wrap: anywhere;
+}
+
+.ajuste__tabela thead th {
+  color: var(--cor-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.ajuste__tabela tbody th {
+  font-weight: 600;
+}
+
+.ajuste__entrada {
+  min-width: 6rem;
+  max-width: 10rem;
+}
+
+.ajuste__linha--alterada {
+  background: var(--cor-superficie);
+  box-shadow: inset 3px 0 0 var(--cor-destaque);
+}
+
+/* Celular: cada linha vira um cartão com rótulos */
+@media (max-width: 40rem) {
+  .ajuste__tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .ajuste__tabela,
+  .ajuste__tabela tbody,
+  .ajuste__tabela tr,
+  .ajuste__tabela th,
+  .ajuste__tabela td {
+    display: block;
+  }
+
+  .ajuste__tabela tr {
+    padding: var(--espaco-3) 0;
+    border-top: 1px solid var(--cor-borda);
+  }
+
+  .ajuste__tabela th,
+  .ajuste__tabela td {
+    border-top: 0;
+    padding: var(--espaco-1) var(--espaco-3);
+  }
+
+  .ajuste__tabela [data-rotulo]::before {
+    content: attr(data-rotulo) ': ';
+    color: var(--cor-texto-suave);
+    font-size: var(--texto-pequeno);
+  }
+
+  .ajuste__tabela td:last-child::before {
+    display: block;
+  }
+
+  .ajuste__entrada {
+    max-width: none;
+  }
+}

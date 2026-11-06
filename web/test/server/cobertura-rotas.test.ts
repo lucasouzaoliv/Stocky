@@ -93,10 +93,10 @@ describe('WEB-026 manifesto e varredura', () => {
     expect([...achados].sort()).toEqual([...declarados].sort());
   });
 
-  it('AC1: rota do manifesto ausente só é aceita se for de onda futura (≥ 5); as das ondas 4 ou antes existem', () => {
-    for (const e of MANIFESTO.filter((x) => !existe(x))) expect(e.onda, e.caminho).toBeGreaterThanOrEqual(5);
+  it('AC1: rota do manifesto ausente só é aceita se for de onda futura (≥ 6); as das ondas 5 ou antes existem', () => {
+    for (const e of MANIFESTO.filter((x) => !existe(x))) expect(e.onda, e.caminho).toBeGreaterThanOrEqual(6);
     expect(implementadas.map((e) => e.caminho).sort()).toEqual(
-      MANIFESTO.filter((e) => e.onda <= 4).map((e) => e.caminho).sort(),
+      MANIFESTO.filter((e) => e.onda <= 5).map((e) => e.caminho).sort(),
     );
   });
 
@@ -185,6 +185,20 @@ describe('WEB-026 AC3 execução com cinco perfis', () => {
 
   it('há ao menos uma rota protegida executada (a varredura não ficou vazia)', () => {
     expect(protegidas.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('onda 5: as 5 rotas de gerência estão implementadas e exigem o nível do manifesto (dono nas destrutivas)', async () => {
+    const onda5 = MANIFESTO.filter((e) => e.onda === 5);
+    expect(onda5).toHaveLength(5);
+    expect(onda5.every(existe)).toBe(true);
+    const niveis = Object.fromEntries(onda5.map((e) => [`${e.metodo} ${e.caminho}`, e.nivel]));
+    expect(niveis).toEqual({
+      'POST /api/catalogo/itens': 2,
+      'DELETE /api/catalogo/itens/[categoriaId]/[itemId]': 3,
+      'POST /api/bau/[tipo]/ajuste/previa': 2,
+      'POST /api/bau/[tipo]/ajuste/confirmar': 2,
+      'POST /api/bau/zerar': 3,
+    });
   });
 });
 

@@ -26,3 +26,33 @@ export const esquemaMovimentoCaixa = z.strictObject({
   valor: numeroOuTexto,
   anotacao: z.string(),
 });
+
+/** Novo item: o nome é validado por `validarNomeItem` no serviço (tamanho, caracteres, id gerado). */
+export const esquemaNovoItem = z.strictObject({
+  categoriaId: idSeguro,
+  nome: z.string(),
+});
+
+export const esquemaZerar = z.strictObject({
+  alvo: z.string(),
+  confirmacao: z.string(),
+});
+
+/**
+ * Cada linha é conferida pelo serviço, que lista TODAS as inválidas em `detalhes.linhas`;
+ * aqui só se exige a forma (objeto com as três chaves e nenhuma a mais).
+ */
+const linhaAjuste = z.strictObject({
+  categoriaId: z.unknown(),
+  itemId: z.unknown(),
+  quantidade: z.unknown(),
+});
+
+export const esquemaPrevia = z.strictObject({
+  linhas: z.array(linhaAjuste),
+});
+
+export const esquemaConfirmar = z.strictObject({
+  versao: z.number(),
+  linhas: z.array(linhaAjuste),
+});
