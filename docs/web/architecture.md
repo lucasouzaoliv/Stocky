@@ -632,13 +632,13 @@ Todas: `runtime = 'nodejs'`, `dynamic = 'force-dynamic'`, resposta `{ ok, dados 
 | `GET /api/csrf` | 1 | — | `{ csrf }` | — |
 | `GET /api/catalogo` | 1 | — | `CatalogoDTO` | — |
 | `POST /api/catalogo/itens` | 2 | `{ categoriaId, nome }` | `{ categoriaId, item }` (201) | 400, 404, 409 DUPLICADO/LIMITE_CATEGORIA |
-| `DELETE /api/catalogo/itens/[categoriaId]/[itemId]` | 2 | ids no caminho (`ehIdSeguro`) | `{ item, removidoDe }` | 400, 404 |
+| `DELETE /api/catalogo/itens/[categoriaId]/[itemId]` | 3 | ids no caminho (`ehIdSeguro`) | `{ item, removidoDe }` | 400, 404 |
 | `GET /api/bau/[tipo]` | membros 1 · gerencia 2 | — | `BauDTO` | 400 tipo |
 | `POST /api/bau/[tipo]/adicionar` | membros 1 · gerencia 2 | `{ categoriaId, itemId, quantidade }` | `MovimentoBauDTO` | 400, 404 |
 | `POST /api/bau/[tipo]/remover` | membros 1 · gerencia 2 | idem | `MovimentoBauDTO` | 400, 404, 409 ESTOQUE_INSUFICIENTE |
 | `POST /api/bau/[tipo]/ajuste/previa` | 2 (os dois tipos) | `{ linhas }` | `PreviaAjusteDTO` | 400 com `detalhes.linhas` |
 | `POST /api/bau/[tipo]/ajuste/confirmar` | 2 | `{ versao, linhas }` | `ConfirmacaoAjusteDTO` | 400, 409 VERSAO_DESATUALIZADA |
-| `POST /api/bau/zerar` | 2 | `{ alvo, confirmacao: 'ZERAR' }` | `ZerarDTO` | 400 (alvo/confirmação) |
+| `POST /api/bau/zerar` | 3 | `{ alvo, confirmacao: 'ZERAR' }` | `ZerarDTO` | 400 (alvo/confirmação) |
 | `GET /api/caixa` | 2 | — | `SaldoDTO` | — |
 | `GET /api/caixa/historico?limite&cursor` | 2 | paginação | `Pagina<LogDTO>` | 400 |
 | `POST /api/caixa/movimentar` | 2 | `{ tipo, acao, valor, anotacao }` | `SaldoDTO` | 400, 409 SALDO_INSUFICIENTE |
@@ -655,7 +655,7 @@ Corpo de 401 `REVALIDAR` inclui `detalhes: {}` e o front navega para `/api/auth/
 
 ## 6. Matriz de permissão
 
-Dono (3) ⊃ Gerência (2) ⊃ Membro (1). Nível 0 (fora do servidor ou sem cargo configurado) não cria sessão. **Não há ação exclusiva de dono** hoje (igual ao bot); ver pontos de decisão.
+Dono (3) ⊃ Gerência (2) ⊃ Membro (1). Nível 0 (fora do servidor ou sem cargo configurado) não cria sessão. **Decisão do usuário (05/11): ações destrutivas são exclusivas do dono** (zerar baú e remover item do catálogo). Gerência faz todo o resto.
 
 | Recurso / ação | 1 Membro | 2 Gerência | 3 Dono |
 |---|:-:|:-:|:-:|
@@ -666,8 +666,9 @@ Dono (3) ⊃ Gerência (2) ⊃ Membro (1). Nível 0 (fora do servidor ou sem car
 | Baú da Gerência: ver, adicionar, remover | ✘ | ✔ | ✔ |
 | Logs do Baú da Gerência | ✘ | ✔ | ✔ |
 | Caixa: saldo, histórico, entrada, saída, logs do caixa | ✘ | ✔ | ✔ |
-| Catálogo: adicionar e remover item | ✘ | ✔ | ✔ |
-| Zerar baú (membros, gerência ou ambos) | ✘ | ✔ | ✔ |
+| Catálogo: adicionar item | ✘ | ✔ | ✔ |
+| Catálogo: remover item | ✘ | ✘ | ✔ |
+| Zerar baú (membros, gerência ou ambos) | ✘ | ✘ | ✔ |
 | Ajuste em massa (qualquer baú) | ✘ | ✔ | ✔ |
 | Auditoria (lista e detalhe) | ✘ | ✔ | ✔ |
 
