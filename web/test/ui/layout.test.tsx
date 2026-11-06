@@ -60,7 +60,7 @@ describe('WEB-053 toque e largura (AC4)', () => {
     expect(css).toMatch(/\.navegacao__lista li\s*\{[^}]*min-width:\s*0/);
     expect(css).toMatch(/\.navegacao__lista li\s*\{[^}]*flex:\s*1 1 0/);
     expect(css).toMatch(/\.navegacao__item,\s*\.navegacao__sair\s*\{[^}]*overflow-wrap:\s*anywhere/);
-    expect(bloco('.bau__grade')).toMatch(/repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+    expect(bloco('.bau__grade')).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   });
   it('navegação inferior no celular, lateral a partir de 768 px e moldura de tablet a partir de 1024 px', () => {
     expect(bloco('.navegacao')).toMatch(/position:\s*fixed/);

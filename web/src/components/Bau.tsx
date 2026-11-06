@@ -295,6 +295,7 @@ function ConteudoBau({
                             <span className="bau__item-icone" aria-hidden="true">
                               <Icone focusable="false" />
                             </span>
+                            <p className="bau__item-nome">{i.nome}</p>
                             <p className="bau__item-qtd">
                               <span key={pulso === chave ? bau.versao : 'fixo'} className={pulso === chave ? 'bau__item-numero bau__item-numero--pulso' : 'bau__item-numero'}>
                                 {formatarNumero(i.quantidade)}
@@ -302,7 +303,7 @@ function ConteudoBau({
                               <span className="sr-only"> no baú</span>
                             </p>
                           </div>
-                          <p className="bau__item-nome">{i.nome}</p>
+                          <div className="bau__item-controles">
                           <div className="passo" role="group" aria-label={`Quantidade de ${i.nome}`}>
                             <button
                               type="button"
@@ -353,6 +354,7 @@ function ConteudoBau({
                             >
                               Retirar
                             </button>
+                          </div>
                           </div>
                         </li>
                       );
