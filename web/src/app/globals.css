@@ -1592,6 +1592,44 @@ body:has(.login) {
   .ajuste__entrada {
     max-width: none;
   }
+
+  /* Linha compacta: item e categoria/atual à esquerda, campo à direita. */
+  .ajuste__tabela tr:has(.ajuste__entrada) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 7.5rem;
+    grid-template-areas: 'item item nova' 'cat atual nova';
+    align-items: center;
+    padding: var(--espaco-2) 0;
+  }
+
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(1) { grid-area: cat; }
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(2) { grid-area: item; }
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(3) { grid-area: atual; }
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(4) { grid-area: nova; }
+
+  .ajuste__tabela tr:has(.ajuste__entrada) > * {
+    padding-inline: var(--espaco-2);
+    font-size: 0.8125rem;
+  }
+
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(2) {
+    font-size: var(--texto-base);
+  }
+
+  .ajuste__tabela tr:has(.ajuste__entrada) .ajuste__entrada {
+    min-width: 0;
+    width: 100%;
+    font-size: var(--texto-base);
+  }
+
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(4)::before {
+    display: none;
+  }
+
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(1)::before,
+  .ajuste__tabela tr:has(.ajuste__entrada) > :nth-child(2)::before {
+    display: none;
+  }
 }
 
 /* Logs e auditoria (onda 6) */
@@ -1774,4 +1812,70 @@ body:has(.login) {
 .bau__categoria-titulo,
 bdi {
   unicode-bidi: isolate;
+}
+
+/* ---- Acabamento das telas de gestão (Painel, Movimentações, Auditoria, Ajuste) ---- */
+a.botao {
+  text-decoration: none;
+}
+
+/* Catálogo: itens em grade compacta, nome à esquerda e "Remover" à direita. */
+.bau__itens {
+  list-style: none;
+  margin: 0 0 var(--espaco-3);
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--espaco-2);
+}
+
+@media (min-width: 40rem) {
+  .bau__itens {
+    grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  }
+}
+
+.bau__itens > .bau__item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.bau__itens .botao {
+  min-height: 2.25rem;
+  padding-inline: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* Movimentações: lista em colunas no computador e cartões mais baixos. */
+.logs__lista {
+  gap: 0.375rem;
+}
+
+.logs__item {
+  padding: var(--espaco-2) var(--espaco-3);
+  gap: 0;
+}
+
+@media (min-width: 64rem) {
+  .logs__lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Auditoria: botão de detalhes discreto. */
+.auditoria .botao--secundario {
+  min-height: 2.25rem;
+  padding-inline: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* Ajuste em massa: linhas mais baixas e alinhadas ao centro. */
+.ajuste__tabela td,
+.ajuste__tabela th {
+  vertical-align: middle;
+  padding-block: 0.375rem;
+}
+
+.ajuste__entrada {
+  min-height: 2.25rem;
 }
