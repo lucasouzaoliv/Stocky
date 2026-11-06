@@ -47,3 +47,7 @@ Multi-facção, aplicativo móvel, notificações push, importação do estoque 
 
 ## Critério de pronto
 Definition of Done de `docs/WORKFLOW.md` adaptada ao site: lint e verificação de tipos sem erro nem aviso, testes passando (incluindo testes de permissão em todas as rotas, concorrência e validação), build de produção sem erro, nenhum segredo no repositório, `npm audit` sem vulnerabilidade crítica ou alta, e veredito PASS do QA.
+
+
+## Atualização: cargos em lista
+`DISCORD_ROLE_MEMBRO/GERENTE/DONO` aceitam lista separada por vírgula (ver `docs/web/config-discord.md`). WEB-018 deve testar lista, espaços, vazio e maior nível vencendo.
