@@ -81,8 +81,8 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 | WEB-063 | Tela de logs de movimentação | front | Medium | 045, 052, 054, 056 |
 | WEB-064 | Tela de auditoria | front | Medium | 045, 052, 054, 056 |
 | WEB-065 | Acessibilidade verificada por teste | front | Medium | 055, 058, 059, 060, 061, 062, 063, 064 |
-| WEB-066 | Testes de ponta a ponta dos fluxos no servidor | ambos | High | 051 |
-| WEB-067 | Teste de ponta a ponta no navegador (opcional) | ambos | Low | 065, 066 |
+| WEB-066 | Testes de ponta a ponta dos fluxos no servidor (dono: qa-engineer) | ambos | High | 051 |
+| WEB-067 | ~~Teste de ponta a ponta no navegador (opcional)~~ **CANCELADO** (sem Playwright) | ambos | Low | 065, 066 |
 | WEB-068 | Configuração da Vercel e variáveis documentadas | back | High | 005, 025 |
 | WEB-069 | Build de produção limpo | ambos | High | 065, 068 |
 | WEB-070 | README do site | back | Medium | 068 |
@@ -130,7 +130,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Descrição:** `.gitignore` do site e `.env.example` com todas as variáveis previstas e valores obviamente falsos. Varredura automatizada de segredos.
 - **Critérios de aceite:**
   1. `web/.gitignore` contém `node_modules/`, `.next/`, `.env`, `.env.local`, `.env*.local`, `.vercel/`, `coverage/` (teste lê o arquivo).
-  2. `web/.env.example` lista cada variável de `requisitos.md` (Firebase, Discord, `SESSION_SECRET`, `APP_URL`, os 6 webhooks) e todo valor casa com um padrão de falso (`troque-aqui`, `exemplo`, `000…`); nenhum valor com cara de chave real.
+  2. `web/.env.example` lista exatamente as variáveis da tabela de `docs/web/architecture.md` §4.1 (Firebase: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`; Discord; `SESSION_SECRET`; `APP_URL`; os 6 webhooks de nomes fixos `WEBHOOK_LOG_MEMBROS`, `WEBHOOK_LOG_GERENCIA`, `WEBHOOK_LOG_CAIXA`, `WEBHOOK_INVENTARIO_MEMBROS`, `WEBHOOK_INVENTARIO_GERENCIA`, `WEBHOOK_SALDO_CAIXA`). `FIREBASE_PRIVATE_KEY_ID` **não** consta (retirada: o `cert()` do Admin SDK não a usa; teste falha se aparecer). Todo valor casa com um padrão de falso (`troque-aqui`, `exemplo`, `000…`, webhook `https://discord.com/api/webhooks/000000000000000000/troque-aqui`); nenhum valor com cara de chave real. Os ids públicos de `docs/web/config-discord.md` podem ir como exemplo.
   3. Teste de varredura falha se o repositório rastreado contiver `BEGIN PRIVATE KEY`, `private_key_id` com valor, `discord.com/api/webhooks/<id>/<token>` com token real, ou padrão de token do Discord.
   4. `git ls-files` não contém `.env`, `.env.local`, `node_modules/` nem `.next/`.
 - **Arquivos prováveis:** `web/.gitignore`, `web/.env.example`, `web/test/server/segredos.test.ts`.
@@ -275,7 +275,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Tipo:** Tarefa · **Prioridade:** Highest · **Camada:** back · **Dependências:** WEB-015
 - **Descrição:** `GET /api/auth/login` gera `state` aleatório (criptográfico), guarda em cookie curto httpOnly assinado e redireciona ao Discord com `client_id`, `redirect_uri`, `response_type=code`, escopos `identify guilds.members.read` e o `state`.
 - **Critérios de aceite:**
-  1. Resposta 307/302 para `https://discord.com/oauth2/authorize` com os 5 parâmetros esperados e `scope` exatamente `identify guilds.members.read`.
+  1. Resposta 307/302 para `https://discord.com/oauth2/authorize` com os 5 parâmetros esperados (`client_id`, `redirect_uri`, `response_type=code`, `scope`, `state`) **mais `prompt=none`** (6 no total, ver architecture §4.5/ADR-04), e `scope` exatamente `identify guilds.members.read`.
   2. `redirect_uri` é `${APP_URL}/api/auth/callback` (derivado de `getEnv`, nunca do cabeçalho `Host`).
   3. O `state` tem pelo menos 128 bits de entropia e muda a cada chamada; o cookie do state é httpOnly, Secure (produção), SameSite=Lax, com expiração ≤ 10 min.
   4. `client_secret` não aparece na URL de redirecionamento.
@@ -295,9 +295,10 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-018 Converter cargos em nível (membro, gerente, dono)
 - **Tipo:** Tarefa · **Prioridade:** Highest · **Camada:** back · **Dependências:** WEB-005
-- **Descrição:** `nivelDeCargos(roles, env)` devolve 0 a 3. Hierarquia dono ⊃ gerente ⊃ membro. Cargo não configurado (variável vazia) nunca casa.
+- **Descrição:** `nivelDeCargos(roles, env)` devolve 0 a 3. Hierarquia dono ⊃ gerente ⊃ membro. Cargo não configurado (variável vazia) nunca casa. **Decidido:** `DISCORD_ROLE_MEMBRO/GERENTE/DONO` aceitam lista de ids separada por vírgula (ver `docs/web/config-discord.md`); vale o maior nível encontrado.
 - **Critérios de aceite:**
   1. Tabela de testes: nenhum cargo → 0; só membro → 1; só gerente → 2; só dono → 3; gerente + dono → 3; cargo desconhecido → 0.
+  1a. Lista de cargos: com a configuração real (dono = `1561468121733267495`; gerência = `1563258601575813191,1561468121733267493`; membro = `1561468121733267491,1561468121733267490`), qualquer um dos cargos de gerência → 2, qualquer um dos de membro → 1; usuário com `Baby Gangster` + `OG - Original Gangster` → 2 (maior nível vence); espaços ao redor dos ids e vírgulas duplicadas/finais são ignorados; item vazio na lista nunca casa; lista só com espaços/vazia → o nível nunca é concedido.
   2. Lista de cargos vazia, `undefined` ou não-array → 0 sem lançar.
   3. Se `DISCORD_ROLE_*` estiver vazio, esse cargo nunca concede nível, nem para `roles` contendo string vazia.
   4. Nível 0 significa "não entra": `exigirNivel` (WEB-022) nega.
@@ -524,13 +525,14 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-036 Remover item do catálogo (baús e auditoria na mesma transação)
 - **Tipo:** Tarefa · **Prioridade:** Highest (perda de dados) · **Camada:** back · **Dependências:** WEB-035
-- **Descrição:** `removerItemDoCatalogo(categoriaId, itemId, usuario)`: remove do catálogo e dos dois baús em UMA transação e grava auditoria com `antes` (quantidades nos dois baús) e `depois: null`.
+- **Descrição:** `removerItemDoCatalogo(categoriaId, itemId, usuario)`: remove do catálogo e dos dois baús em UMA transação e grava auditoria com `antes` (quantidades nos dois baús) e `depois: null`. **Decisão do usuário (05/11): ação exclusiva do dono (nível 3).**
 - **Critérios de aceite:**
   1. Remove o item do catálogo e dos baús `membros` e `gerencia`; auditoria `catalogo.remover_item` com usuário, data ISO, alvo e quantidades anteriores.
   2. `falharProximoCommit` ou falha injetada em qualquer escrita → `dump` idêntico e zero auditorias.
   3. Item inexistente → 404, nada gravado; `usuario` ausente → erro.
   4. `versao` dos baús afetados é incrementada (invalida ajustes em andamento, WEB-041).
   5. Item que estava em estoque 0/ausente nos baús: remove só do catálogo, auditoria com 0.
+  6. Exclusividade do dono (testada na camada de rota, WEB-037): a função recebe o `usuario` da sessão e a auditoria grava o `id` do dono; chamada sem `usuario` com `nivel` 3 → erro e nada gravado.
 - **Arquivos prováveis:** `web/src/server/catalogo/operacoes.ts`, `web/test/server/catalogo-remover.test.ts`.
 - **Status:** A fazer
 
@@ -538,7 +540,8 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Tipo:** Tarefa · **Prioridade:** High · **Camada:** back · **Dependências:** WEB-022, WEB-023, WEB-035, WEB-036
 - **Descrição:** `GET /api/catalogo`, `POST /api/catalogo/itens`, `DELETE /api/catalogo/itens/[categoriaId]/[itemId]`.
 - **Critérios de aceite:**
-  1. `GET` exige nível 1 (necessário para o baú dos membros); `POST` e `DELETE` exigem nível 2 e CSRF.
+  1. `GET` exige nível 1 (necessário para o baú dos membros); `POST` exige nível 2 e CSRF; `DELETE` exige **nível 3 (dono)** e CSRF.
+  1a. `DELETE /api/catalogo/itens/[categoriaId]/[itemId]` com nível 2 (gerência) → 403, nível 1 → 403, sem sessão → 401; em todos o `fake.chamadas` fica vazio, o item continua no catálogo e nos baús e não há auditoria. Com nível 3 → sucesso. `POST` (adicionar item) continua permitido ao nível 2 (teste).
   2. Corpo inválido → 400; duplicado/limite → 409; inexistente → 404.
   3. Parâmetros de caminho validados (id com formato seguro); `../` e `%2F` não passam.
   4. Sucesso devolve o catálogo atualizado ou o item.
@@ -551,7 +554,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-038 Zerar baú (um ou ambos) com auditoria
 - **Tipo:** Tarefa · **Prioridade:** Highest (perda de dados) · **Camada:** back · **Dependências:** WEB-013, WEB-029
-- **Descrição:** `zerarBau(alvo: 'membros'|'gerencia'|'ambos', usuario)` em uma transação, com auditoria `bau.zerar` contendo o conteúdo anterior.
+- **Descrição:** `zerarBau(alvo: 'membros'|'gerencia'|'ambos', usuario)` em uma transação, com auditoria `bau.zerar` contendo o conteúdo anterior. **Decisão do usuário (05/11): ação exclusiva do dono (nível 3).**
 - **Critérios de aceite:**
   1. `'membros'` não altera `gerencia`; `'gerencia'` não altera `membros`; `'ambos'` altera os dois numa única transação e grava uma auditoria.
   2. A auditoria guarda `antes` (mapa item→quantidade de cada baú zerado) para permitir recuperação manual; `depois` vazio.
@@ -567,7 +570,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Tipo:** Tarefa · **Prioridade:** Highest · **Camada:** back · **Dependências:** WEB-022, WEB-023, WEB-038
 - **Descrição:** `POST /api/bau/zerar` com `{ alvo, confirmacao }`. A confirmação é uma frase fixa enviada pelo cliente (ex.: `"ZERAR"`) para evitar clique acidental e chamadas forjadas.
 - **Critérios de aceite:**
-  1. Exige nível 2 e CSRF; nível 1 e anônimo negados sem escrita.
+  1. Exige **nível 3 (dono)** e CSRF; nível 2 (gerência) → 403, nível 1 → 403 e anônimo → 401, todos sem escrita (`fake.chamadas` vazio, baús e auditoria inalterados). Com nível 3 e CSRF correto → sucesso. A rota está no manifesto de WEB-026 com nível 3.
   2. Sem `confirmacao` correta → 400 e nada alterado.
   3. Alvo inválido → 400; sucesso devolve o resumo (quantos itens/unidades foram zerados).
   4. Dois zerar simultâneos: o segundo vê o baú vazio e não duplica a auditoria com conteúdo falso (auditoria do segundo com `antes` vazio ou recusa).
@@ -647,7 +650,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Tipo:** Tarefa · **Prioridade:** Medium · **Camada:** back · **Dependências:** WEB-022, WEB-043, WEB-044
 - **Descrição:** `GET /api/logs/bau/[tipo]`, `GET /api/logs/caixa`, `GET /api/auditoria`, `GET /api/auditoria/[id]`.
 - **Critérios de aceite:**
-  1. Logs do baú `membros` exigem nível 1 (decisão a confirmar: pergunta Q6); `gerencia`, caixa e auditoria exigem nível 2; auditoria é só leitura (nenhum método de escrita exportado).
+  1. Logs do baú `membros` exigem nível 1 (Q6 respondida); logs do baú `gerencia`, do caixa e auditoria exigem nível 2; auditoria é só leitura (nenhum método de escrita exportado).
   2. Parâmetros de query inválidos → 400.
   3. Nível insuficiente → 403 sem tocar o banco.
   4. `GET /api/auditoria/[id]` com id inexistente → 404.
@@ -749,7 +752,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Descrição:** Layout raiz em pt-BR, tokens de cor/tipografia/espaçamento, navegação celular primeiro (barra inferior ou menu) com itens por nível, e botão de sair. A identidade visual depende da resposta às perguntas Q2 e Q3.
 - **Critérios de aceite:**
   1. `<html lang="pt-BR">` e `<title>` por página (teste).
-  2. Menu mostra "Baú dos Membros" (nível 1+), "Baú da Gerência", "Caixa", "Painel", "Logs", "Auditoria" (nível 2+); com nível 1 os itens de gerência não aparecem (e o servidor continua negando, WEB-022).
+  2. Menu mostra "Baú dos Membros" e "Logs" (nível 1+); "Baú da Gerência", "Caixa", "Painel" e "Auditoria" (nível 2+); com nível 1 os itens de gerência não aparecem, mas "Logs" aparece (`/logs` é nível 1; nível 1 vê só a aba Baú dos Membros, nível 2+ vê as três; o servidor continua negando, WEB-022).
   3. Navegação funciona só com teclado (Tab/Enter) e o item atual tem `aria-current="page"`.
   4. Alvos de toque ≥ 44 px (classe/estilo testado) e nenhum overflow horizontal em largura 360 px (teste de layout simulado ou verificação de CSS).
   5. Botão "Sair" envia `POST` de logout com CSRF.
@@ -761,7 +764,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 - **Descrição:** Server components/layouts por rota que leem a sessão no servidor e redirecionam: sem sessão → `/login`; nível insuficiente → página "sem permissão". É conforto de UX; a segurança real é das rotas.
 - **Critérios de aceite:**
   1. Sem sessão, cada página protegida redireciona a `/login` sem renderizar dados.
-  2. Nível 1 em `/bau/gerencia`, `/caixa`, `/painel`, `/ajuste`, `/logs`, `/auditoria` → página 403 em português, sem chamar o Firestore.
+  2. Nível 1 em `/bau/gerencia`, `/caixa`, `/painel`, `/ajuste`, `/auditoria` → página 403 em português, sem chamar o Firestore. `/logs` é **nível 1**: nível 1 acessa e vê só a aba Baú dos Membros; nível 2+ vê as três abas.
   3. Tabela página × nível coerente com o menu (um teste percorre todas as páginas).
   4. Sessão a revalidar → redireciona ao início do OAuth.
 - **Arquivos prováveis:** `web/src/app/(protegido)/layout.tsx`, `web/src/components/SemPermissao.tsx`, `web/test/ui/guardas.test.tsx`.
@@ -826,8 +829,9 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-060 Painel da gerência: catálogo
 - **Tipo:** Tarefa · **Prioridade:** High · **Camada:** front · **Dependências:** WEB-037, WEB-052, WEB-054, WEB-056
-- **Descrição:** `/painel`: lista de categorias e itens, formulário de novo item (nome até 50, `maxLength`), botão remover com diálogo de confirmação mostrando o impacto (quantidades nos baús).
+- **Descrição:** `/painel` (nível 2+): lista de categorias e itens, formulário de novo item (nome até 50, `maxLength`), botão remover com diálogo de confirmação mostrando o impacto (quantidades nos baús). **O botão remover só existe para o dono (nível 3); a gerência vê o catálogo e adiciona itens, mas não vê o botão** (a segurança real é o 403 de WEB-037).
 - **Critérios de aceite:**
+  0. Com nível 2 o botão/diálogo "Remover" não é renderizado em nenhum item (teste procura por papel/nome e não encontra) e o formulário de adicionar continua visível; com nível 3 o botão aparece em cada item.
   1. Adicionar: campo com `maxLength=50`; erros de duplicado, limite de 25 e nome inválido aparecem em português.
   2. Remover exige confirmação (diálogo acessível, foco preso, Esc cancela); cancelar não chama a API.
   3. Categoria com 25 itens mostra o contador "25/25" e desabilita o formulário daquela categoria.
@@ -837,8 +841,9 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-061 Painel da gerência: zerar baú
 - **Tipo:** Tarefa · **Prioridade:** High · **Camada:** front · **Dependências:** WEB-039, WEB-052, WEB-054
-- **Descrição:** Ação "Zerar baú" (membros, gerência ou ambos) com confirmação forte: o usuário digita a palavra exigida.
+- **Descrição:** Ação "Zerar baú" (membros, gerência ou ambos) com confirmação forte: o usuário digita a palavra exigida (`ZERAR`). **Exclusiva do dono (nível 3): a UI esconde a ação para a gerência** (a segurança real é o 403 de WEB-039).
 - **Critérios de aceite:**
+  0. Com nível 2 o componente `ZerarBau` não renderiza nenhum botão, seletor nem diálogo de zerar (teste não encontra nada com o nome "Zerar"); com nível 3 aparece. Nível 2 nunca dispara chamada a `/api/bau/zerar`.
   1. O botão de confirmar só é habilitado depois de digitar exatamente a frase de confirmação.
   2. Sem confirmar, nenhuma chamada à API é feita; cancelar fecha o diálogo.
   3. O diálogo diz claramente quais baús serão zerados e que a ação fica registrada na auditoria.
@@ -861,9 +866,9 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-063 Tela de logs de movimentação
 - **Tipo:** Tarefa · **Prioridade:** Medium · **Camada:** front · **Dependências:** WEB-045, WEB-052, WEB-054, WEB-056
-- **Descrição:** `/logs`: abas Baú dos Membros, Baú da Gerência e Caixa; lista paginada.
+- **Descrição:** `/logs` (nível 1+): abas Baú dos Membros, Baú da Gerência e Caixa; lista paginada. Nível 1 vê só a aba Baú dos Membros.
 - **Critérios de aceite:**
-  1. Abas navegáveis por teclado (`role="tablist"`); cada aba carrega o seu log.
+  1. Abas navegáveis por teclado (`role="tablist"`); cada aba carrega o seu log. Com nível 1 só existe a aba Baú dos Membros (as outras não são renderizadas nem requisitadas); com nível 2+ aparecem as três.
   2. Datas exibidas no fuso `America/Sao_Paulo` em formato pt-BR.
   3. Vazio, carregando, erro e "carregar mais" tratados.
   4. Textos de usuário/anotação são exibidos como texto (nunca `dangerouslySetInnerHTML`; teste com `<img onerror>`).
@@ -899,6 +904,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 
 ## WEB-066 Testes de ponta a ponta dos fluxos no servidor
 - **Tipo:** Tarefa · **Prioridade:** High · **Camada:** ambos · **Dependências:** WEB-051
+- **Dono:** `qa-engineer` (arquivos em `web/test/qa/**`, usando os helpers de `web/test/helpers/**` do back-end); não é do backend-dev nem do frontend-dev.
 - **Descrição:** Fluxos completos chamando os handlers de rota reais, com fake do Firestore e do Discord (fetch simulado), em `web/test/qa/`.
 - **Critérios de aceite:**
   1. Login: OAuth simulado → sessão → acesso por nível (membro, gerente, dono) e negação de quem não está no servidor.
@@ -906,13 +912,14 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
   3. Caixa: entrada, saída, saída recusada, histórico e webhook de saldo.
   4. Catálogo: adicionar, duplicado recusado, 26º recusado, remover com auditoria e baús limpos.
   5. Ajuste em massa: prévia → confirmar com sucesso; prévia → depósito → confirmar recusado (D3); item com `#` (D1).
-  6. Zerar um e ambos com auditoria.
+  6. Zerar um e ambos com auditoria, como dono; o mesmo pedido e a remoção de item do catálogo feitos por gerência (nível 2) → 403 sem alterar dados.
   7. Webhook fora do ar: todas as operações acima continuam com sucesso e dados corretos.
   8. Rebaixamento de cargo: após o intervalo de revalidação, o acesso de gerência é negado.
 - **Arquivos prováveis:** `web/test/qa/e2e-fluxos.test.ts`, `web/test/helpers/**`.
 - **Status:** A fazer
 
 ## WEB-067 Teste de ponta a ponta no navegador (opcional)
+- **STATUS: CANCELADO** (decisão do usuário, Q12: sem Playwright; ver architecture §0 e §8). Não implementar nem testar; o texto abaixo fica só como histórico.
 - **Tipo:** Tarefa · **Prioridade:** Low · **Camada:** ambos · **Dependências:** WEB-065, WEB-066
 - **Descrição:** Playwright contra o build local com Firestore/Discord falsos (modo de teste habilitado só fora de produção).
 - **Critérios de aceite:**
@@ -920,7 +927,7 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
   2. O modo de teste (login falso) não existe no build de produção (teste de varredura do bundle e da rota).
   3. Roda com `npm run e2e` separado do `npm test`.
 - **Arquivos prováveis:** `web/e2e/**`, `web/playwright.config.ts`.
-- **Status:** A fazer
+- **Status:** Cancelado
 
 ## WEB-068 Configuração da Vercel e variáveis documentadas
 - **Tipo:** Tarefa · **Prioridade:** High · **Camada:** back · **Dependências:** WEB-005, WEB-025
@@ -976,22 +983,22 @@ Armazenamento: `JIRA_PROJECT_KEY` segue vazio, então os cards ficam só aqui (I
 5. **Ajuste em massa:** 040, 041, 042.
 6. **Logs, auditoria e webhooks:** 043 a 051.
 7. **Front-end** (pode começar em paralelo com a onda 3 nos cards sem dependência de rotas, como 053): 052 a 065.
-8. **Fechamento:** 066, 067, 068, 069, 070, 071.
+8. **Fechamento:** 066 (qa-engineer), 068, 069, 070, 071. (067 cancelado.)
 
 Dois agentes nunca editam o mesmo arquivo na mesma onda; o architect valida a divisão final em `docs/web/architecture.md`.
 
 # Perguntas ao usuário
-(só o que depende de você; cada uma com o padrão que será usado se não houver resposta)
+(só o que depende de você; cada uma com o padrão que será usado se não houver resposta). Decisões registradas em `docs/web/architecture.md` §0; **RESPONDIDO** = não precisa mais de ação.
 
 1. **Q1 Nome de exibição:** qual nome aparece no site e no título (ex.: "Stocky", "Stocky Marabunta")? Padrão: "Stocky".
-2. **Q2 Identidade visual:** cores principais e se há logo/brasão da facção. **RESPONDIDO pelo usuário:** paleta roxo, preto e branco (roxo como destaque, fundo preto, texto branco). Logo: sem logo por enquanto.
-3. **Q3 Modo escuro/claro:** só escuro, só claro, ou os dois seguindo o aparelho? Padrão: os dois, seguindo a preferência do sistema (escuro como base).
+2. **Q2 Identidade visual:** cores principais e se há logo/brasão da facção. **RESPONDIDO:** paleta roxo, preto e branco (roxo como destaque, fundo preto, texto branco). Logo: sem logo por enquanto.
+3. **Q3 Modo escuro/claro:** só escuro, só claro, ou os dois seguindo o aparelho? **RESPONDIDO (via architecture §0/§7):** escuro como base; o tema claro só se o sistema pedir.
 4. **Q4 Textos:** o tom das mensagens (formal ou na linguagem da galera) e os nomes das telas (ex.: "Baú dos Membros", "Baú da Gerência", "Caixa da gangue", "Painel da gerência"). Padrão: nomes do bot, tom direto e neutro.
-5. **Q5 Limites:** servem 100.000 por operação de item, US$ 1 bilhão por operação de caixa, nome com 50 caracteres e anotação com 100? Padrão: esses valores.
-6. **Q6 Quem vê o quê:** membros (nível 1) podem ver os logs do Baú dos Membros ou só a gerência vê logs e auditoria? E o ajuste em massa do Baú dos Membros é só da gerência? Padrão: logs do Baú dos Membros visíveis ao nível 1; todo o resto de logs, auditoria e ajuste só nível 2+.
-7. **Q7 Sessão e revalidação:** de quanto em quanto tempo conferir os cargos no Discord (rebaixamento tem efeito nesse prazo)? E por quanto tempo a sessão dura? Padrão: conferir a cada 15 minutos, sessão de 7 dias.
-8. **Q8 Domínio:** vai usar o endereço `*.vercel.app` ou um domínio próprio? Padrão: `*.vercel.app` (define `APP_URL` e o redirect do Discord).
-9. **Q9 Zerar baú:** confirmar digitando uma palavra (padrão: `ZERAR`) é aceitável, ou prefere só um botão de confirmação? Padrão: digitar a palavra.
+5. **Q5 Limites:** servem 100.000 por operação de item, US$ 1 bilhão por operação de caixa, nome com 50 caracteres e anotação com 100? **RESPONDIDO:** esses valores (item 1 a 100.000; caixa 1 a 1.000.000.000; nome 50; anotação 100).
+6. **Q6 Quem vê o quê:** membros (nível 1) podem ver os logs do Baú dos Membros ou só a gerência vê logs e auditoria? E o ajuste em massa do Baú dos Membros é só da gerência? **RESPONDIDO:** nível 1 vê os logs do Baú dos Membros (`/logs` é nível 1, só a aba Baú dos Membros); logs da gerência, do caixa, auditoria e ajuste em massa só nível 2+. **Nova decisão (05/11):** zerar baú e remover item do catálogo são exclusivos do dono (nível 3).
+7. **Q7 Sessão e revalidação:** de quanto em quanto tempo conferir os cargos no Discord (rebaixamento tem efeito nesse prazo)? E por quanto tempo a sessão dura? **RESPONDIDO:** cargos conferidos a cada 15 minutos, sessão de 7 dias.
+8. **Q8 Domínio:** vai usar o endereço `*.vercel.app` ou um domínio próprio? **RESPONDIDO:** `*.vercel.app`.
+9. **Q9 Zerar baú:** confirmar digitando uma palavra (padrão: `ZERAR`) é aceitável, ou prefere só um botão de confirmação? **RESPONDIDO:** digitar `ZERAR`.
 10. **Q10 Chaves já vazadas:** a chave do Firebase que esteve no repositório público do bot já foi revogada e há conta de serviço nova só para o site? Padrão: assumir que não e listar a rotação como passo obrigatório no deploy.
-11. **Q11 Licença do site:** MIT ou ISC (o bot tem as duas citações)? Padrão: MIT.
-12. **Q12 Testes no navegador (WEB-067) e CI (WEB-007):** quer os dois ou basta o conjunto de testes do Vitest? Padrão: CI sim, Playwright não.
+11. **Q11 Licença do site:** MIT ou ISC (o bot tem as duas citações)? **RESPONDIDO:** MIT.
+12. **Q12 Testes no navegador (WEB-067) e CI (WEB-007):** quer os dois ou basta o conjunto de testes do Vitest? **RESPONDIDO:** CI sim (WEB-007), Playwright não (WEB-067 cancelado).
