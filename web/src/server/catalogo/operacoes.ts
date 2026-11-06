@@ -6,7 +6,8 @@ import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
 import { lerDocBau, refBau, refCatalogo } from '../dominio/refs';
 import type { DocBau, TipoBau, UsuarioRef, UsuarioSessao } from '../dominio/tipos';
-import { registrarLogTx } from '../logs/registrar';
+import { registrarLogTxCompleto } from '../logs/registrar';
+import type { ComEvento, EventoDominio } from '../webhooks/eventos';
 import { ehIdSeguro, gerarIdItem, validarNomeItem } from '../validacao/item';
 import { lerCatalogoTx } from './leitura';
 import { garantirCatalogo } from './semente';
@@ -74,11 +75,13 @@ function semItem(bau: DocBau, categoriaId: string, itemId: string): DocBau['iten
  * Remove o item do catálogo e dos dois baús em UMA transação (WEB-036), com auditoria.
  * Exclusiva do dono: a função confere o nível da sessão além da rota (defesa em profundidade).
  */
-export async function removerItemDoCatalogo(
+export type ResultadoRemocao = { item: ItemCatalogo; removidoDe: Record<TipoBau, number>; auditoriaId: string };
+
+export async function removerItemDoCatalogoComEvento(
   categoriaId: string,
   itemId: string,
   usuario: UsuarioSessao,
-): Promise<{ item: ItemCatalogo; removidoDe: Record<TipoBau, number>; auditoriaId: string }> {
+): Promise<ComEvento<ResultadoRemocao>> {
   const quem = refUsuario(usuario);
   if (usuario.nivel !== 3) throw new ErroApp('SEM_PERMISSAO');
   if (!ehIdSeguro(categoriaId) || !ehIdSeguro(itemId)) throw new ErroApp('VALIDACAO', 'Item inválido.');
@@ -121,9 +124,10 @@ export async function removerItemDoCatalogo(
       antes: { ...removidoDe },
       depois: null,
     });
+    const eventos: EventoDominio[] = [];
     for (const tipo of TIPOS) {
       if (removidoDe[tipo] <= 0) continue;
-      registrarLogTx(tx, db, tipo, {
+      const { log } = registrarLogTxCompleto(tx, db, tipo, {
         acao: 'catalogo_remover',
         usuario: quem,
         versao: baus[tipo].versao + 1,
@@ -136,7 +140,16 @@ export async function removerItemDoCatalogo(
         resumo: `Item removido do catálogo: ${item.nome}.`,
         auditoriaId,
       });
+      eventos.push({ tipo: 'bau.aviso', baus: [tipo], log });
     }
-    return { item: { id: item.id, nome: item.nome }, removidoDe, auditoriaId };
+    return { dto: { item: { id: item.id, nome: item.nome }, removidoDe, auditoriaId }, eventos };
   });
+}
+
+export async function removerItemDoCatalogo(
+  categoriaId: string,
+  itemId: string,
+  usuario: UsuarioSessao,
+): Promise<ResultadoRemocao> {
+  return (await removerItemDoCatalogoComEvento(categoriaId, itemId, usuario)).dto;
 }

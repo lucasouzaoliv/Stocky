@@ -93,11 +93,10 @@ describe('WEB-026 manifesto e varredura', () => {
     expect([...achados].sort()).toEqual([...declarados].sort());
   });
 
-  it('AC1: rota do manifesto ausente só é aceita se for de onda futura (≥ 6); as das ondas 5 ou antes existem', () => {
-    for (const e of MANIFESTO.filter((x) => !existe(x))) expect(e.onda, e.caminho).toBeGreaterThanOrEqual(6);
-    expect(implementadas.map((e) => e.caminho).sort()).toEqual(
-      MANIFESTO.filter((e) => e.onda <= 5).map((e) => e.caminho).sort(),
-    );
+  it('AC1: com a onda 6 as 20 rotas do manifesto existem (nenhuma de onda futura pendente)', () => {
+    expect(MANIFESTO.filter((x) => !existe(x)).map((e) => e.caminho)).toEqual([]);
+    expect(implementadas).toHaveLength(20);
+    expect(Math.max(...MANIFESTO.map((e) => e.onda))).toBe(6);
   });
 
   it('o detector de rota não listada enxerga um método novo (falha se alguém criar rota fora do manifesto)', () => {
@@ -199,6 +198,23 @@ describe('WEB-026 AC3 execução com cinco perfis', () => {
       'POST /api/bau/[tipo]/ajuste/confirmar': 2,
       'POST /api/bau/zerar': 3,
     });
+  });
+});
+
+describe('WEB-045 onda 6: rotas de logs e auditoria', () => {
+  it('as 4 rotas da onda 6 existem, exigem o nível do manifesto e a auditoria só exporta GET', async () => {
+    const onda6 = MANIFESTO.filter((e) => e.onda === 6);
+    expect(onda6.map((e) => `${e.metodo} ${e.caminho}`).sort()).toEqual([
+      'GET /api/auditoria',
+      'GET /api/auditoria/[id]',
+      'GET /api/logs/bau/[tipo]',
+      'GET /api/logs/caixa',
+    ]);
+    expect(onda6.every(existe)).toBe(true);
+    for (const e of onda6) expect(metodosExportados(ler(join(RAIZ_WEB, arquivoDaRota(e.caminho)))), e.caminho).toEqual(['GET']);
+    const niveis = Object.fromEntries(onda6.map((e) => [e.caminho, e.nivel]));
+    expect(niveis).toEqual({ '/api/logs/bau/[tipo]': 1, '/api/logs/caixa': 2, '/api/auditoria': 2, '/api/auditoria/[id]': 2 });
+    expect(onda6.find((e) => e.caminho === '/api/logs/bau/[tipo]')?.nivelPorTipo).toEqual({ membros: 1, gerencia: 2 });
   });
 });
 

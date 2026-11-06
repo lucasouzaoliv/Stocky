@@ -1,10 +1,11 @@
 import { FRASE_ZERAR } from '@/compartilhado/limites';
 import { comAutorizacao } from '@/server/auth/autorizacao';
-import { zerarBau } from '@/server/bau/zerar';
+import { zerarBauComEvento } from '@/server/bau/zerar';
 import { exigirAlvoZerar } from '@/server/dominio/refs';
 import { ErroApp } from '@/server/erros';
 import { responderOk } from '@/server/http';
 import { esquemaZerar, validarCorpo } from '@/server/validacao/corpo';
+import { publicarEventos } from '@/server/webhooks/eventos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,5 +16,7 @@ export const POST = comAutorizacao({ nivel: 3 }, async ({ corpo, usuario }) => {
   const { alvo, confirmacao } = validarCorpo(esquemaZerar, corpo);
   const alvoValido = exigirAlvoZerar(alvo);
   if (confirmacao !== FRASE_ZERAR) throw new ErroApp('VALIDACAO', `Digite ${FRASE_ZERAR} para confirmar.`);
-  return responderOk(await zerarBau(alvoValido, usuario));
+  const r = await zerarBauComEvento(alvoValido, usuario);
+  publicarEventos(r.eventos);
+  return responderOk(r.dto);
 });

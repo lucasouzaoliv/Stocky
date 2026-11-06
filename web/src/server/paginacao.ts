@@ -34,8 +34,10 @@ export async function lerPaginaPorData<T>(
   colecao: CollectionReference,
   p: Paginacao,
   mapear: (id: string, dados: Record<string, unknown>) => T,
+  filtro?: { campo: string; valor: string },
 ): Promise<Pagina<T>> {
-  let consulta = colecao.orderBy('data', 'desc');
+  const base = filtro ? colecao.where(filtro.campo, '==', filtro.valor) : colecao;
+  let consulta = base.orderBy('data', 'desc');
   if (p.cursor !== null) {
     const ancora = await colecao.doc(p.cursor).get();
     if (!ancora.exists) throw new ErroApp('VALIDACAO', 'Cursor inválido.');

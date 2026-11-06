@@ -9,7 +9,8 @@ import { garantirCatalogo } from '../catalogo/semente';
 import { lerCatalogoTx } from '../catalogo/leitura';
 import { exigirTipoBau, lerDocBau, refBau } from '../dominio/refs';
 import type { TipoBau, UsuarioRef } from '../dominio/tipos';
-import { registrarLogTx } from '../logs/registrar';
+import { registrarLogTxCompleto } from '../logs/registrar';
+import type { ComEvento } from '../webhooks/eventos';
 import { ehIdSeguro } from '../validacao/item';
 
 export interface PedidoMovimentoBau {
@@ -21,7 +22,7 @@ export interface PedidoMovimentoBau {
 
 type Sentido = 'adicionar' | 'remover';
 
-async function movimentar(sentido: Sentido, p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<MovimentoBauDTO> {
+async function movimentar(sentido: Sentido, p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<ComEvento<MovimentoBauDTO>> {
   const tipo = exigirTipoBau(p.tipo);
   if (!ehIdSeguro(p.categoriaId) || !ehIdSeguro(p.itemId)) throw new ErroApp('VALIDACAO', 'Item inválido.');
   const q = parseInteiro(p.quantidade, { min: LIMITES.QUANTIDADE_MIN, max: LIMITES.QUANTIDADE_MAX });
@@ -66,7 +67,7 @@ async function movimentar(sentido: Sentido, p: PedidoMovimentoBau, usuario: Usua
 
     const versao = bau.versao + 1;
     tx.set(refBau(db, tipo), { versao, itens, atualizadoEm: new Date().toISOString() });
-    registrarLogTx(tx, db, tipo, {
+    const { log } = registrarLogTxCompleto(tx, db, tipo, {
       acao: sentido,
       usuario: quem,
       versao,
@@ -79,14 +80,23 @@ async function movimentar(sentido: Sentido, p: PedidoMovimentoBau, usuario: Usua
       resumo: null,
       auditoriaId: null,
     });
-    return { categoriaId, itemId, quantidade: novo, versao };
+    return {
+      dto: { categoriaId, itemId, quantidade: novo, versao },
+      eventos: [{ tipo: 'bau.movimento', bau: tipo, log }],
+    };
   });
 }
 
-export function adicionarAoBau(p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<MovimentoBauDTO> {
-  return movimentar('adicionar', p, usuario);
+export const adicionarAoBauComEvento = (p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<ComEvento<MovimentoBauDTO>> =>
+  movimentar('adicionar', p, usuario);
+
+export const removerDoBauComEvento = (p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<ComEvento<MovimentoBauDTO>> =>
+  movimentar('remover', p, usuario);
+
+export async function adicionarAoBau(p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<MovimentoBauDTO> {
+  return (await adicionarAoBauComEvento(p, usuario)).dto;
 }
 
-export function removerDoBau(p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<MovimentoBauDTO> {
-  return movimentar('remover', p, usuario);
+export async function removerDoBau(p: PedidoMovimentoBau, usuario: UsuarioRef): Promise<MovimentoBauDTO> {
+  return (await removerDoBauComEvento(p, usuario)).dto;
 }

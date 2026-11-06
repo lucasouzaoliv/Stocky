@@ -9,7 +9,8 @@ import { lerCatalogoDoc, lerCatalogoTx } from '../catalogo/leitura';
 import { garantirCatalogo } from '../catalogo/semente';
 import { exigirTipoBau, lerDocBau, refBau, refCatalogo } from '../dominio/refs';
 import type { DocBau, DocCatalogo, UsuarioRef } from '../dominio/tipos';
-import { registrarLogTx } from '../logs/registrar';
+import { registrarLogTxCompleto } from '../logs/registrar';
+import type { ComEvento } from '../webhooks/eventos';
 import { ehIdSeguro } from '../validacao/item';
 
 export interface LinhaAjuste {
@@ -138,12 +139,12 @@ function aplicar(bau: DocBau, mudancas: LinhaValida[]): DocBau['itens'] {
  * Confirma o ajuste em UMA transação com controle de versão otimista (WEB-041, corrige D3):
  * a versão é conferida DENTRO da transação; se o baú mudou desde a prévia, nada é gravado.
  */
-export async function confirmarAjuste(
+export async function confirmarAjusteComEvento(
   tipoBruto: unknown,
   versaoVista: unknown,
   linhas: unknown,
   usuario: UsuarioRef,
-): Promise<ConfirmacaoAjusteDTO> {
+): Promise<ComEvento<ConfirmacaoAjusteDTO>> {
   const tipo = exigirTipoBau(tipoBruto);
   if (typeof usuario?.id !== 'string' || !usuario.id || typeof usuario.nome !== 'string' || !usuario.nome) {
     throw new ErroApp('INTERNO');
@@ -166,7 +167,7 @@ export async function confirmarAjuste(
     const pedidas = analisarLinhas(linhas, catalogo);
 
     const mudancas = pedidas.filter((l) => (bau.itens[l.categoriaId]?.[l.itemId] ?? 0) !== l.quantidade);
-    if (mudancas.length === 0) return { alterados: 0, versao: bau.versao, auditoriaId: null };
+    if (mudancas.length === 0) return { dto: { alterados: 0, versao: bau.versao, auditoriaId: null }, eventos: [] };
 
     const antes: Record<string, Record<string, number>> = {};
     const depois: Record<string, Record<string, number>> = {};
@@ -190,7 +191,7 @@ export async function confirmarAjuste(
       antes,
       depois,
     });
-    registrarLogTx(tx, db, tipo, {
+    const { log } = registrarLogTxCompleto(tx, db, tipo, {
       acao: 'ajuste',
       usuario: quem,
       versao: novaVersao,
@@ -203,6 +204,18 @@ export async function confirmarAjuste(
       resumo,
       auditoriaId,
     });
-    return { alterados: mudancas.length, versao: novaVersao, auditoriaId };
+    return {
+      dto: { alterados: mudancas.length, versao: novaVersao, auditoriaId },
+      eventos: [{ tipo: 'bau.aviso', baus: [tipo], log }],
+    };
   });
+}
+
+export async function confirmarAjuste(
+  tipoBruto: unknown,
+  versaoVista: unknown,
+  linhas: unknown,
+  usuario: UsuarioRef,
+): Promise<ConfirmacaoAjusteDTO> {
+  return (await confirmarAjusteComEvento(tipoBruto, versaoVista, linhas, usuario)).dto;
 }

@@ -8,7 +8,8 @@ import { getDb } from '../firebase';
 import { garantirCatalogo } from '../catalogo/semente';
 import { lerDocSaldo, refSaldo } from '../dominio/refs';
 import type { AcaoCaixa, TipoCaixa, UsuarioRef } from '../dominio/tipos';
-import { registrarLogTx } from '../logs/registrar';
+import { registrarLogTxCompleto } from '../logs/registrar';
+import type { ComEvento } from '../webhooks/eventos';
 import { normalizarAnotacao } from '../validacao/texto';
 
 export interface PedidoCaixa {
@@ -18,7 +19,8 @@ export interface PedidoCaixa {
   anotacao: unknown;
 }
 
-export async function movimentarCaixa(p: PedidoCaixa, usuario: UsuarioRef): Promise<SaldoDTO> {
+/** Movimenta o caixa e devolve também o aviso a publicar depois do commit (WEB-051). */
+export async function movimentarCaixaComEvento(p: PedidoCaixa, usuario: UsuarioRef): Promise<ComEvento<SaldoDTO>> {
   if (p.tipo !== 'sujo' && p.tipo !== 'limpo') throw new ErroApp('VALIDACAO', 'Tipo de dinheiro inválido.');
   if (p.acao !== 'entrada' && p.acao !== 'saida') throw new ErroApp('VALIDACAO', 'Ação inválida.');
   const tipo: TipoCaixa = p.tipo;
@@ -45,7 +47,18 @@ export async function movimentarCaixa(p: PedidoCaixa, usuario: UsuarioRef): Prom
     }
     const resultado = { sujo: saldo.sujo, limpo: saldo.limpo, [tipo]: novo };
     tx.set(refSaldo(db), { ...resultado, versao: saldo.versao + 1, atualizadoEm: new Date().toISOString() });
-    registrarLogTx(tx, db, 'caixa', { acao, tipo, valor: v.valor, anotacao, saldoResultante: novo, usuario: quem });
-    return { sujo: resultado.sujo, limpo: resultado.limpo };
+    const { log } = registrarLogTxCompleto(tx, db, 'caixa', {
+      acao,
+      tipo,
+      valor: v.valor,
+      anotacao,
+      saldoResultante: novo,
+      usuario: quem,
+    });
+    return { dto: { sujo: resultado.sujo, limpo: resultado.limpo }, eventos: [{ tipo: 'caixa.movimento', log }] };
   });
+}
+
+export async function movimentarCaixa(p: PedidoCaixa, usuario: UsuarioRef): Promise<SaldoDTO> {
+  return (await movimentarCaixaComEvento(p, usuario)).dto;
 }

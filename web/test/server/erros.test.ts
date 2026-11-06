@@ -232,6 +232,7 @@ describe('WEB-006 contexto injetável', () => {
   });
 
   it('sem agendador e fora de requisição, a tarefa ainda roda', async () => {
+    resetContexto();
     const feito = vi.fn(async () => undefined);
     agendar(feito);
     await new Promise((r) => setImmediate(r));

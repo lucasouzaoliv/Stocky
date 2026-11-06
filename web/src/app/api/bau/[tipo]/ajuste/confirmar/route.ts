@@ -1,10 +1,11 @@
 import { LIMITES } from '@/compartilhado/limites';
 import { comAutorizacao } from '@/server/auth/autorizacao';
-import { confirmarAjuste } from '@/server/bau/ajuste';
+import { confirmarAjusteComEvento } from '@/server/bau/ajuste';
 import { exigirTipoBau } from '@/server/dominio/refs';
 import { ErroApp } from '@/server/erros';
 import { responderOk } from '@/server/http';
 import { esquemaConfirmar, validarCorpo } from '@/server/validacao/corpo';
+import { publicarEventos } from '@/server/webhooks/eventos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,8 @@ export const POST = comAutorizacao<{ tipo: string }>(
     if (!usuario) throw new ErroApp('SEM_SESSAO');
     const tipo = exigirTipoBau(params.tipo);
     const { versao, linhas } = validarCorpo(esquemaConfirmar, corpo);
-    return responderOk(await confirmarAjuste(tipo, versao, linhas, usuario));
+    const r = await confirmarAjusteComEvento(tipo, versao, linhas, usuario);
+    publicarEventos(r.eventos);
+    return responderOk(r.dto);
   },
 );

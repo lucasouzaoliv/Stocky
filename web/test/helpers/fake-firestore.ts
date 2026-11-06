@@ -170,8 +170,15 @@ export interface DocRefFake {
   delete(): Promise<void>;
 }
 
+export interface ConsultaExecutada {
+  colecao: string;
+  filtros: string[];
+  ordem: Array<{ campo: string; direcao: 'asc' | 'desc' }>;
+}
+
 export interface ConsultaFake {
   caminhoColecao: string;
+  where(campo: string, op: '==', valor: unknown): ConsultaFake;
   orderBy(campo: string, direcao?: 'asc' | 'desc'): ConsultaFake;
   limit(n: number): ConsultaFake;
   startAfter(ancora: SnapshotFake): ConsultaFake;
@@ -199,6 +206,8 @@ export interface FakeFirestore {
   runTransaction<T>(fn: (tx: TransacaoFake) => Promise<T>): Promise<T>;
   FieldValue: typeof FieldValueFake;
   chamadas: ChamadaFake[];
+  /** Consultas com filtro/ordem executadas (para conferir contra o arquivo de índices). */
+  consultas: ConsultaExecutada[];
   falharProximoCommit(erro: Error): void;
   falharEm(op: Exclude<Op, 'create'>, regexCaminho: RegExp, erro: Error): void;
   dump(): Record<string, Dados>;
@@ -210,6 +219,7 @@ export function criarFakeFirestore({
 }: { seed?: Record<string, Dados>; registro?: ChamadaFake[] } = {}): FakeFirestore {
   const banco = { docs: new Map<string, Dados>(Object.entries(seed).map(([c, d]) => [c, clonar(d)])) };
   const chamadas: ChamadaFake[] = [];
+  const consultas: ConsultaExecutada[] = [];
   const falhas: Array<{ op: string; regex: RegExp; erro: Error }> = [];
   let proximoErroCommit: Error | null = null;
   let sequenciaId = 0;
@@ -247,9 +257,11 @@ export function criarFakeFirestore({
     ordem: Array<{ campo: string; direcao: 'asc' | 'desc' }>,
     limite: number | null,
     apos: string | null = null,
+    filtros: Array<{ campo: string; valor: unknown }> = [],
   ): QuerySnapshotFake {
     const prefixo = `${caminhoColecao}/`;
     let caminhos = [...banco.docs.keys()].filter((c) => c.startsWith(prefixo) && !c.slice(prefixo.length).includes('/'));
+    caminhos = caminhos.filter((c) => filtros.every(({ campo, valor }) => lerCampo(banco.docs.get(c), campo) === valor));
     if (ordem.length === 0) {
       caminhos.sort();
     } else {
@@ -275,33 +287,40 @@ export function criarFakeFirestore({
       protected readonly ordem: Array<{ campo: string; direcao: 'asc' | 'desc' }> = [],
       protected readonly limite: number | null = null,
       protected readonly apos: string | null = null,
+      protected readonly filtros: Array<{ campo: string; valor: unknown }> = [],
     ) {}
+
+    where(campo: string, op: '==', valor: unknown): ConsultaFake {
+      if (op !== '==') throw new Error(`Operador não suportado pelo fake: ${String(op)}`);
+      return new Consulta(this.caminhoColecao, this.ordem, this.limite, this.apos, [...this.filtros, { campo, valor }]);
+    }
 
     orderBy(campo: string, direcao: 'asc' | 'desc' = 'asc'): ConsultaFake {
       if (!['asc', 'desc'].includes(direcao)) throw new Error(`Direção inválida em orderBy: ${String(direcao)}`);
-      return new Consulta(this.caminhoColecao, [...this.ordem, { campo, direcao }], this.limite, this.apos);
+      return new Consulta(this.caminhoColecao, [...this.ordem, { campo, direcao }], this.limite, this.apos, this.filtros);
     }
 
     limit(n: number): ConsultaFake {
-      return new Consulta(this.caminhoColecao, this.ordem, n, this.apos);
+      return new Consulta(this.caminhoColecao, this.ordem, n, this.apos, this.filtros);
     }
 
     startAfter(ancora: SnapshotFake): ConsultaFake {
       if (this.ordem.length === 0) throw new Error('startAfter exige orderBy antes.');
-      return new Consulta(this.caminhoColecao, this.ordem, this.limite, `${this.caminhoColecao}/${ancora.id}`);
+      return new Consulta(this.caminhoColecao, this.ordem, this.limite, `${this.caminhoColecao}/${ancora.id}`, this.filtros);
     }
 
     async get(): Promise<QuerySnapshotFake> {
       registrar('get', this.caminhoColecao, false);
+      consultas.push({ colecao: this.caminhoColecao, filtros: this.filtros.map((f) => f.campo), ordem: [...this.ordem] });
       const erro = consumirFalha('get', this.caminhoColecao);
-      const resultado = coletar(this.caminhoColecao, this.ordem, this.limite, this.apos);
+      const resultado = coletar(this.caminhoColecao, this.ordem, this.limite, this.apos, this.filtros);
       await ceder();
       if (erro) throw erro;
       return resultado;
     }
 
     resultadoSincrono(): QuerySnapshotFake {
-      return coletar(this.caminhoColecao, this.ordem, this.limite, this.apos);
+      return coletar(this.caminhoColecao, this.ordem, this.limite, this.apos, this.filtros);
     }
   }
 
@@ -435,6 +454,7 @@ export function criarFakeFirestore({
     runTransaction,
     FieldValue: FieldValueFake,
     chamadas,
+    consultas,
     falharProximoCommit(erro) {
       proximoErroCommit = erro;
     },

@@ -6,7 +6,8 @@ import { getDb } from '../firebase';
 import { garantirCatalogo } from '../catalogo/semente';
 import { exigirAlvoZerar, lerDocBau, refBau } from '../dominio/refs';
 import type { DocBau, TipoBau, UsuarioSessao } from '../dominio/tipos';
-import { registrarLogTx } from '../logs/registrar';
+import { registrarLogTxCompleto } from '../logs/registrar';
+import type { ComEvento, EventoDominio } from '../webhooks/eventos';
 
 function contar(bau: DocBau): { itens: number; unidades: number } {
   let itens = 0;
@@ -24,7 +25,7 @@ function contar(bau: DocBau): { itens: number; unidades: number } {
  * Zera um baú ou os dois em UMA transação (WEB-038, ADR-16): uma auditoria com o conteúdo anterior,
  * um log por baú, `versao` +1 em cada baú alvo. Baú já vazio é válido. Exclusiva do dono.
  */
-export async function zerarBau(alvo: unknown, usuario: UsuarioSessao): Promise<ZerarDTO> {
+export async function zerarBauComEvento(alvo: unknown, usuario: UsuarioSessao): Promise<ComEvento<ZerarDTO>> {
   if (typeof usuario?.id !== 'string' || !usuario.id || typeof usuario.nome !== 'string' || !usuario.nome) {
     throw new ErroApp('INTERNO');
   }
@@ -65,9 +66,10 @@ export async function zerarBau(alvo: unknown, usuario: UsuarioSessao): Promise<Z
       antes,
       depois: {},
     });
+    const eventos: EventoDominio[] = [];
     alvos.forEach((tipo, i) => {
       const c = contar(baus[i]!);
-      registrarLogTx(tx, db, tipo, {
+      const { log } = registrarLogTxCompleto(tx, db, tipo, {
         acao: 'zerar',
         usuario: quem,
         versao: baus[i]!.versao + 1,
@@ -80,7 +82,12 @@ export async function zerarBau(alvo: unknown, usuario: UsuarioSessao): Promise<Z
         resumo: `Baú zerado: ${c.itens} itens, ${c.unidades} unidades.`,
         auditoriaId,
       });
+      eventos.push({ tipo: 'bau.aviso', baus: [tipo], log });
     });
-    return { alvos, itens, unidades, auditoriaId };
+    return { dto: { alvos, itens, unidades, auditoriaId }, eventos };
   });
+}
+
+export async function zerarBau(alvo: unknown, usuario: UsuarioSessao): Promise<ZerarDTO> {
+  return (await zerarBauComEvento(alvo, usuario)).dto;
 }
