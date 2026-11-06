@@ -1,6 +1,7 @@
 'use client';
 
 import { Minus, Plus, Search } from 'lucide-react';
+import Image from 'next/image';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { BauDTO, CatalogoDTO, MovimentoBauDTO, TipoBau } from '@/compartilhado/api-tipos';
 import { formatarNumero } from '@/compartilhado/formatacao';
@@ -295,8 +296,7 @@ function ConteudoBau({
                         <li key={i.id} className={`bau__item${i.quantidade === 0 ? ' bau__item--zerado' : ''}`}>
                           <div className="bau__item-topo">
                             {foto ? (
-                              // eslint-disable-next-line @next/next/no-img-element -- imagem pequena e estática de /public
-                              <img className="bau__item-foto" src={foto} alt="" width={40} height={40} loading="lazy" decoding="async" />
+                              <Image className="bau__item-foto" src={foto} alt="" width={80} height={80} unoptimized />
                             ) : (
                               <span className="bau__item-icone" aria-hidden="true">
                                 <Icone focusable="false" />
