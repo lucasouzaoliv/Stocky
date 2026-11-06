@@ -3,8 +3,9 @@ const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = req
 module.exports = {
   type: 'button',
   customIds: ['ger_abrir_modal_ajustar'],
+  permissao: 'gerente',
 
-  async execute(interaction, client) {
+  execute(interaction) {
     const [, tipo] = interaction.customId.split(':');
 
     const modal = new ModalBuilder()
@@ -17,7 +18,7 @@ module.exports = {
           .setCustomId('inventario')
           .setLabel('Cole o inventário editado aqui')
           .setStyle(TextInputStyle.Paragraph)
-          .setPlaceholder('Gaze:120\nBandagem:97\n...')
+          .setPlaceholder('# Armas\nColt:3\n# Medicamentos\nGaze:120')
           .setRequired(true)
           .setMaxLength(4000)
       )

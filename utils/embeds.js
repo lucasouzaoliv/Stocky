@@ -1,11 +1,13 @@
 const { EmbedBuilder } = require('discord.js');
-const config = require('../config.json');
+const { getConfig } = require('./config');
+const { getCategorias } = require('./db');
 
-const COR = config.cor || 0x3498DB;
+const COR_PADRAO = 0x3498DB;
+const LIMITE_CAMPO = 1024;
 
 function baseEmbed() {
   return new EmbedBuilder()
-    .setColor(COR)
+    .setColor(getConfig().cor || COR_PADRAO)
     .setFooter({ text: '🏴 Marabunta Grande — Stocky' })
     .setTimestamp();
 }
@@ -72,6 +74,24 @@ function embedLog(acao, usuario, item, categoria, quantidade, novaQtd, tipoBau) 
     .setTimestamp();
 }
 
+// Junta linhas sem passar de 1024 caracteres (limite de campo do Discord).
+function juntarCampo(linhas) {
+  const completo = linhas.join('\n');
+  if (completo.length <= LIMITE_CAMPO) return completo || '—';
+  const sufixo = (n) => `\n… e mais ${n}`;
+  const reserva = sufixo(linhas.length).length;
+  const aceitas = [];
+  let tamanho = 0;
+  for (const linha of linhas) {
+    const extra = (aceitas.length ? 1 : 0) + linha.length;
+    if (tamanho + extra + reserva > LIMITE_CAMPO) break;
+    aceitas.push(linha);
+    tamanho += extra;
+  }
+  if (!aceitas.length) return `${linhas[0].slice(0, LIMITE_CAMPO - 1)}…`;
+  return aceitas.join('\n') + sufixo(linhas.length - aceitas.length);
+}
+
 async function embedInventario(bau, tipo) {
   const titulo = tipo === 'gerencia' ? '🔐 Inventário — Baú da Gerência' : '📦 Inventário — Baú dos Membros';
   const embed = baseEmbed().setTitle(titulo);
@@ -89,14 +109,13 @@ async function embedInventario(bau, tipo) {
     return embed;
   }
 
-  const { getCategorias } = require('./db');
   const categorias = await getCategorias();
 
   for (const [catId, dados] of Object.entries(porCategoria)) {
     const catInfo = categorias.find(c => c.id === catId);
     const emojiCat = catInfo ? catInfo.emoji : '📂';
-    const linhas = dados.itens.map(i => `**${i.nome}** — \`${i.quantidade}\``).join('\n');
-    embed.addFields({ name: `${emojiCat} ${dados.nome}`, value: linhas, inline: false });
+    const linhas = dados.itens.map(i => `**${i.nome}** — \`${i.quantidade}\``);
+    embed.addFields({ name: `${emojiCat} ${dados.nome}`.slice(0, 256), value: juntarCampo(linhas), inline: false });
   }
 
   return embed;

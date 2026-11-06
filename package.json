@@ -3,24 +3,34 @@
   "version": "1.0.0",
   "description": "Bot de gerenciamento de baú para facções FiveM RP",
   "main": "index.js",
-  "scripts": {
-    "start": "node start.js",
-    "deploy": "node deploy-commands.js"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Luuqee/Stocky.git"
+    "url": "git+https://github.com/lucasouzaoliv/stocky.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lucasouzaoliv/stocky/issues"
+  },
+  "homepage": "https://github.com/lucasouzaoliv/stocky#readme",
+  "scripts": {
+    "start": "node start.js",
+    "deploy": "node deploy-commands.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Luuqee/Stocky/issues"
-  },
-  "homepage": "https://github.com/Luuqee/Stocky#readme",
   "dependencies": {
     "discord.js": "^14.25.1",
     "firebase-admin": "^13.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

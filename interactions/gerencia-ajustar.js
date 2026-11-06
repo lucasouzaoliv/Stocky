@@ -1,92 +1,71 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { embedSucesso, embedGerencia, embedInventario } = require('../utils/embeds');
+const { embedErro } = require('../utils/embeds');
 const { getCatalogo, getBau } = require('../utils/db');
-const { getDb } = require('../utils/firebase');
-const config = require('../config.json');
+const { interpretarAjuste } = require('../utils/ajuste-texto');
+const { criarPendente, TTL_PENDENTE_MS } = require('../utils/ajustes-pendentes');
+const { respostaEfemera, responderErro, rowConfirmarAjuste, embedResumoAjuste } = require('../utils/ui');
 
-function rowMenuGerencia() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('ger_adicionar_item').setLabel('➕ Adicionar Item').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('ger_remover_item').setLabel('➖ Remover Item').setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('ger_zerar_bau').setLabel('🗑️ Zerar Baú').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('ger_ver_logs').setLabel('📋 Ver Logs').setStyle(ButtonStyle.Primary)
-  );
+const MAX_ERROS_EXIBIDOS = 15;
+const MAX_TRECHO_LINHA = 60;
+
+function trecho(linha) {
+  return linha.length > MAX_TRECHO_LINHA ? `${linha.slice(0, MAX_TRECHO_LINHA - 1)}…` : linha;
 }
 
-function rowMenuGerencia2() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('ger_ajustar_membros').setLabel('📝 Ajustar Baú Membros').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('ger_ajustar_gerencia').setLabel('📝 Ajustar Baú Gerência').setStyle(ButtonStyle.Secondary)
+function descreverErros(erros) {
+  const linhas = erros.slice(0, MAX_ERROS_EXIBIDOS).map(
+    (e) => `Linha ${e.numero}: ${e.motivo}\n\`${trecho(e.linha).replace(/`/g, "'")}\``
   );
+  if (erros.length > MAX_ERROS_EXIBIDOS) linhas.push(`… e mais ${erros.length - MAX_ERROS_EXIBIDOS} erro(s).`);
+  return `${linhas.join('\n')}\n\nNada foi alterado. Corrija e envie de novo.`;
 }
 
 module.exports = {
   type: 'modal',
   customIds: ['ger_modal_ajustar'],
+  permissao: 'gerente',
 
-  async execute(interaction, client) {
+  async execute(interaction) {
     const [, tipo] = interaction.customId.split(':');
     const texto = interaction.fields.getTextInputValue('inventario');
-    const catalogo = await getCatalogo();
-    const bauAtual = await getBau(tipo);
-    const novoBau = { ...bauAtual };
 
-    const linhas = texto.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-    let atualizados = 0;
-    const erros = [];
+    await interaction.deferReply(respostaEfemera());
 
-    for (const linha of linhas) {
-      if (!linha.includes(':')) continue;
-      const [nomeRaw, qtdRaw] = linha.split(':');
-      const nome = nomeRaw.trim();
-      const qtd = parseInt(qtdRaw.trim());
+    try {
+      const catalogo = await getCatalogo();
+      const bau = await getBau(tipo);
+      const { mudancas, erros } = interpretarAjuste(texto, catalogo);
 
-      if (isNaN(qtd) || qtd < 0) {
-        erros.push(`Quantidade inválida: **${linha}**`);
-        continue;
+      if (erros.length > 0) {
+        return await interaction.editReply({ embeds: [embedErro('Ajuste inválido', descreverErros(erros))] });
       }
 
-      let encontrado = false;
-      for (const [catId, cat] of Object.entries(catalogo)) {
-        const item = cat.items.find(i => i.nome.toLowerCase() === nome.toLowerCase());
-        if (item) {
-          const key = `${catId}__${item.id}`;
-          if (qtd === 0) {
-            delete novoBau[key];
-          } else {
-            novoBau[key] = { nome: item.nome, categoria: cat.nome, categoriaId: catId, quantidade: qtd };
-          }
-          atualizados++;
-          encontrado = true;
-          break;
-        }
+      // Só o que de fato muda entra na pendência: o resto do baú fica como está.
+      const alteracoes = mudancas
+        .map((m) => {
+          const atual = bau[`${m.categoriaId}__${m.itemId}`];
+          return { ...m, antes: atual ? atual.quantidade : 0, categoria: catalogo[m.categoriaId].nome };
+        })
+        .filter((m) => m.antes !== m.quantidade);
+
+      if (alteracoes.length === 0) {
+        return await interaction.editReply({ content: 'ℹ️ Nenhuma alteração: as quantidades informadas já são as atuais.' });
       }
 
-      if (!encontrado) erros.push(`Item não encontrado: **${nome}**`);
+      const id = criarPendente({
+        tipo,
+        mudancas: alteracoes.map(({ categoriaId, itemId, nome, quantidade }) => ({ categoriaId, itemId, nome, quantidade })),
+        usuarioId: interaction.user.id
+      });
+
+      const minutos = Math.round(TTL_PENDENTE_MS / 60000);
+      return await interaction.editReply({
+        content: `Confira as alterações abaixo. Nada foi gravado ainda; confirme em até ${minutos} minutos.`,
+        embeds: [embedResumoAjuste(tipo, alteracoes.map((a) => ({ nome: a.nome, categoria: a.categoria, antes: a.antes, depois: a.quantidade })))],
+        components: [rowConfirmarAjuste(id)]
+      });
+    } catch (erro) {
+      console.error('Erro em ger_modal_ajustar:', erro);
+      await responderErro(interaction);
     }
-
-    const db = getDb();
-    await db.collection('bau').doc(tipo).set(novoBau);
-
-    const canalInvId = tipo === 'gerencia' ? config.channels.inventarioGerencia : config.channels.inventarioMembros;
-    const canalInv = client.channels.cache.get(canalInvId);
-    if (canalInv) {
-      const inventarioEmbed = await embedInventario(novoBau, tipo);
-      const msgs = await canalInv.messages.fetch({ limit: 10 });
-      const msgBot = msgs.find(m => m.author.id === client.user.id);
-      if (msgBot) {
-        await msgBot.edit({ embeds: [inventarioEmbed] });
-      } else {
-        await canalInv.send({ embeds: [inventarioEmbed] });
-      }
-    }
-
-    let descricao = `**${atualizados}** item(s) atualizado(s) com sucesso!`;
-    if (erros.length) descricao += `\n\n⚠️ Erros:\n${erros.join('\n')}`;
-
-    return interaction.reply({
-      embeds: [embedSucesso('Inventário ajustado!', descricao)],
-      flags: 64
-    });
   }
 };
