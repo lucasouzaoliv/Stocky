@@ -66,7 +66,7 @@ describe('WEB-053 teclado e item atual (AC3)', () => {
 
 describe('WEB-053 sair (AC5)', () => {
   it('envia POST de logout com JSON e token CSRF', async () => {
-    fetchFalso.mockResolvedValue({ ok: true });
+    fetchFalso.mockResolvedValue(new Response(JSON.stringify({ ok: true, dados: {} }), { status: 200 }));
     render(<Navegacao nivel={1} csrf="token-falso" />);
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'));
@@ -79,7 +79,7 @@ describe('WEB-053 sair (AC5)', () => {
   });
 
   it('mostra erro curto e reabilita o botão quando o logout falha', async () => {
-    fetchFalso.mockResolvedValue({ ok: false });
+    fetchFalso.mockResolvedValue(new Response(JSON.stringify({ ok: false, codigo: 'SEM_PERMISSAO', erro: 'x' }), { status: 403 }));
     render(<Navegacao nivel={1} csrf="tok" />);
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível sair. Tente de novo.');

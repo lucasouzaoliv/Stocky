@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { api } from '@/components/api';
 
 export type NivelNavegacao = 1 | 2 | 3;
 
@@ -34,19 +35,14 @@ export function Navegacao({ nivel, csrf }: { nivel: NivelNavegacao; csrf: string
   async function sair() {
     setSaindo(true);
     setErro(null);
-    try {
-      const resposta = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-        body: '{}',
-      });
-      if (!resposta.ok) throw new Error('logout');
-      router.replace('/login');
-      router.refresh();
-    } catch {
+    const resultado = await api.post('/api/auth/logout', {}, { csrf });
+    if (!resultado.ok && resultado.codigo !== 'SEM_SESSAO') {
       setErro('Não foi possível sair. Tente de novo.');
       setSaindo(false);
+      return;
     }
+    router.replace('/login');
+    router.refresh();
   }
 
   return (

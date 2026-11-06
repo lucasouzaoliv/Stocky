@@ -1,9 +1,16 @@
 import 'server-only';
 import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import {
+  getFirestore,
+  type CollectionReference,
+  type DocumentReference,
+  type Firestore,
+  type Transaction,
+} from 'firebase-admin/firestore';
 import { getEnv } from './env';
 
 export type Db = Firestore;
+export type { CollectionReference, DocumentReference, Transaction };
 
 let injetado: Db | null = null;
 let memo: Db | null = null;

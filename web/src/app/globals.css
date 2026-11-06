@@ -351,3 +351,43 @@ table {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Tela de login */
+.login {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+}
+
+.login__cartao {
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--espaco-6);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  display: grid;
+  gap: var(--espaco-4);
+}
+
+.login__cartao h1 {
+  margin: 0;
+}
+
+.login__texto {
+  margin: 0;
+  color: var(--cor-texto-suave);
+}
+
+.login__erro {
+  margin: 0;
+  padding: var(--espaco-3);
+  border: 1px solid var(--cor-erro);
+  border-radius: var(--raio);
+  color: var(--cor-erro);
+}
+
+.login__botao {
+  text-decoration: none;
+}
