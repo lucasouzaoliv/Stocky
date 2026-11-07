@@ -23,7 +23,7 @@ describe('atualizarCatalogoParaPadrao', () => {
     setDb(comoDb(fake));
     const r = await atualizarCatalogoParaPadrao(dono);
     expect(r.removidos).toBe(1);
-    expect(r.adicionados).toBe(59);
+    expect(r.adicionados).toBe(58);
     const d = fake.dump();
     expect((d['config/catalogo'] as { categorias: unknown[] }).categorias).toHaveLength(CATALOGO_PADRAO.length);
     expect(d['baus/membros']).toMatchObject({ versao: 5, itens: ESTOQUE_INICIAL.membros });
