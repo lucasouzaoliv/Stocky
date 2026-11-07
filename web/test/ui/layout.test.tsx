@@ -107,7 +107,7 @@ describe('WEB-053 tokens e acessibilidade visual', () => {
   });
   it('fonte do sistema, sem fonte externa', () => {
     expect(css).not.toMatch(/@import|@font-face/);
-    // Só imagens locais de /fundos/ (mesma origem); nada de URL externa.
-    for (const m of css.matchAll(/url\(([^)]*)\)/g)) expect(m[1]).toMatch(/^'\/fundos\/[\w-]+\.webp'$/);
+    // Só imagens de /fundos/ e fontes de /fontes/ (mesma origem); nada de URL externa.
+    for (const m of css.matchAll(/url\(([^)]*)\)/g)) expect(m[1]).toMatch(/^'\/(fundos\/[\w-]+\.webp|fontes\/[\w-]+\.woff2)'$/);
   });
 });
