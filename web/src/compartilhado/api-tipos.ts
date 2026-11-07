@@ -124,3 +124,53 @@ export interface CsrfDTO {
 export type RespostaApi<T> =
   | { ok: true; dados: T }
   | { ok: false; erro: string; codigo: string; detalhes?: unknown };
+
+export interface EstadoDrogaDTO {
+  tipo: TipoBau;
+  versao: number;
+  /** Unidades de Saco de Meta no baú. */
+  estoque: number;
+  /** Quanto o usuário ainda precisa depositar no caixa. */
+  minhaPendencia: number;
+}
+
+export interface ResultadoDrogaDTO {
+  estoque: number;
+  versao: number;
+  /** Valor a cobrar por esta retirada (0 quando não cobra). */
+  esperado: number;
+  /** Quanto o usuário ainda deve depositar depois desta operação. */
+  devido: number;
+}
+
+export interface PendenciaDTO {
+  usuarioId: string;
+  nome: string;
+  devido: number;
+  desde: string | null;
+}
+
+export interface LinhaRankingDTO {
+  usuarioId: string;
+  nome: string;
+  valor: number;
+}
+
+export interface LinhaVendaDTO {
+  usuarioId: string;
+  nome: string;
+  vendido: number;
+  depositado: number;
+  /** Quanto falta depositar (0 se depositou tudo). */
+  falta: number;
+}
+
+export interface DadosDTO {
+  /** Quantos registros de cada tipo foram lidos (limite de leitura). */
+  amostra: { droga: number; caixa: number };
+  retiradasDroga: LinhaRankingDTO[];
+  depositosCaixa: LinhaRankingDTO[];
+  retiradasCaixa: LinhaRankingDTO[];
+  vendas: LinhaVendaDTO[];
+  pendentes: PendenciaDTO[];
+}

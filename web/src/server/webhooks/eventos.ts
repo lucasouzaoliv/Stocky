@@ -1,16 +1,17 @@
 import 'server-only';
 import { agendar } from '../contexto';
 import { enviarWebhook, type PayloadWebhook } from '../discord/webhook';
-import type { LogBau, LogCaixa, TipoBau } from '../dominio/tipos';
+import type { LogBau, LogCaixa, TipoBau, UsuarioRef } from '../dominio/tipos';
 import { log } from '../log';
 import { atualizarInventario } from './inventario';
-import { CANAL_LOG_CAIXA, canalDeLogBau, embedAvisoBau, embedMovimentoBau, embedMovimentoCaixa } from './movimentacao';
+import { CANAL_LOG_CAIXA, canalDeLogBau, embedAvisoBau, embedMovimentoBau, embedMovimentoCaixa, embedPendenciaDroga } from './movimentacao';
 import { atualizarSaldo } from './saldo';
 
 export type EventoDominio =
   | { tipo: 'bau.movimento'; bau: TipoBau; log: LogBau }
   | { tipo: 'bau.aviso'; baus: TipoBau[]; log: LogBau }
-  | { tipo: 'caixa.movimento'; log: LogCaixa };
+  | { tipo: 'caixa.movimento'; log: LogCaixa }
+  | { tipo: 'droga.pendencia'; usuario: UsuarioRef; devido: number; quantidade: number; motivo: string; jaPendente: boolean };
 
 /** Resultado de uma escrita: a resposta da rota e os avisos a publicar DEPOIS do commit (WEB-051). */
 export interface ComEvento<T> {
@@ -36,6 +37,8 @@ function tarefasDo(e: EventoDominio): Tarefa[] {
       ]);
     case 'caixa.movimento':
       return [enviar(CANAL_LOG_CAIXA, { embeds: [embedMovimentoCaixa(e.log)] }), () => atualizarSaldo()];
+    case 'droga.pendencia':
+      return [enviar(canalDeLogBau('gerencia'), { embeds: [embedPendenciaDroga(e)] })];
   }
 }
 

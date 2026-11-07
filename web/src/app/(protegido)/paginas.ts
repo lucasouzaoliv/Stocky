@@ -9,6 +9,9 @@ export const NIVEL_POR_PAGINA: ReadonlyArray<{ prefixo: string; nivel: NivelAces
   { prefixo: '/ajuste', nivel: 2 },
   { prefixo: '/logs', nivel: 1 },
   { prefixo: '/auditoria', nivel: 2 },
+  { prefixo: '/dados', nivel: 2 },
+  { prefixo: '/drogas', nivel: 1 },
+  { prefixo: '/calculadora', nivel: 1 },
 ];
 
 /** Nível mínimo de um caminho; o que não consta na tabela exige só estar logado (a página decide o resto). */

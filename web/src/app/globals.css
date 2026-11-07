@@ -1900,3 +1900,175 @@ a.botao {
   opacity: 0.5;
   filter: grayscale(0.7);
 }
+
+/* Drogas, calculadora e dados */
+.droga,
+.dados {
+  display: grid;
+  gap: var(--espaco-4);
+  align-content: start;
+}
+
+.droga__estoque {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  margin: 0;
+  padding: var(--espaco-4);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-cartao);
+}
+
+.droga__estoque strong {
+  font-size: var(--texto-titulo);
+  font-variant-numeric: tabular-nums;
+}
+
+.droga__pendencia {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-4);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-aviso);
+  border-radius: var(--raio-cartao);
+}
+
+.droga__pendencia p {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  margin: 0;
+}
+
+.droga__pendencia svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--cor-aviso);
+  flex: none;
+}
+
+.droga__linha {
+  display: grid;
+  gap: var(--espaco-3);
+  align-items: end;
+}
+
+@media (min-width: 40rem) {
+  .droga__linha {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.droga__resultado {
+  min-height: 4.5rem;
+}
+
+.droga__calculo {
+  margin: 0;
+  color: var(--cor-texto-suave);
+}
+
+.droga__total {
+  margin: 0;
+  font-size: var(--texto-titulo);
+  font-weight: 700;
+  color: var(--cor-destaque);
+  font-variant-numeric: tabular-nums;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--espaco-4);
+  background: rgb(0 0 0 / 0.7);
+}
+
+.modal__caixa {
+  display: grid;
+  gap: var(--espaco-3);
+  width: min(100%, 26rem);
+  padding: var(--espaco-6);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-neon);
+  border-radius: var(--raio-cartao);
+  box-shadow: var(--brilho-forte);
+}
+
+.dados__bloco {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-4);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-cartao);
+}
+
+.dados__bloco--alerta {
+  border-color: var(--cor-aviso);
+}
+
+.dados__lista {
+  display: grid;
+  gap: var(--espaco-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dados__linha {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--espaco-1) var(--espaco-3);
+}
+
+.dados__nome {
+  overflow-wrap: anywhere;
+}
+
+.dados__valor {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dados__desde {
+  grid-column: 1 / -1;
+  font-size: var(--texto-pequeno);
+  color: var(--cor-texto-suave);
+}
+
+.dados__barra {
+  grid-column: 1 / -1;
+  height: 0.5rem;
+  background: var(--cor-fundo);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dados__barra > span {
+  display: block;
+  height: 100%;
+  background: var(--cor-botao);
+  border-radius: 999px;
+}
+
+.dados__rolagem {
+  overflow-x: auto;
+}
+
+.dados__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.dados__tabela th,
+.dados__tabela td {
+  padding: var(--espaco-2) var(--espaco-3);
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
