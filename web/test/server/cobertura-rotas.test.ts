@@ -197,7 +197,7 @@ describe('WEB-026 AC3 execução com cinco perfis', () => {
       'POST /api/bau/[tipo]/ajuste/previa': 2,
       'POST /api/bau/[tipo]/ajuste/confirmar': 2,
       'POST /api/bau/zerar': 3,
-      'POST /api/catalogo/atualizar': 3,
+      'POST /api/catalogo/atualizar': 2,
     });
   });
 });
