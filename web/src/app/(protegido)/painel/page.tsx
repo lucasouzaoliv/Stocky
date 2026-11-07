@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AtualizarCatalogo } from '@/components/AtualizarCatalogo';
 import { Catalogo } from '@/components/Catalogo';
 import { SemPermissao } from '@/components/SemPermissao';
 import { ZerarBau } from '@/components/ZerarBau';
@@ -30,6 +31,7 @@ export default async function PaginaPainel() {
           </div>
         </section>
         <Catalogo />
+        <AtualizarCatalogo />
         <ZerarBau />
       </div>
     </main>

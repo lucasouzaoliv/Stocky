@@ -76,9 +76,9 @@ afterEach(() => {
 });
 
 describe('WEB-026 manifesto e varredura', () => {
-  it('o manifesto lista exatamente as 20 rotas do contrato, sem repetição', () => {
-    expect(MANIFESTO).toHaveLength(20);
-    expect(new Set(MANIFESTO.map((e) => chave(e.metodo, e.caminho))).size).toBe(20);
+  it('o manifesto lista exatamente as 21 rotas do contrato, sem repetição', () => {
+    expect(MANIFESTO).toHaveLength(21);
+    expect(new Set(MANIFESTO.map((e) => chave(e.metodo, e.caminho))).size).toBe(21);
   });
 
   it('AC1: todo route.ts e todo método exportado estão no manifesto, e só eles', () => {
@@ -93,9 +93,9 @@ describe('WEB-026 manifesto e varredura', () => {
     expect([...achados].sort()).toEqual([...declarados].sort());
   });
 
-  it('AC1: com a onda 6 as 20 rotas do manifesto existem (nenhuma de onda futura pendente)', () => {
+  it('AC1: com a onda 6 as 21 rotas do manifesto existem (nenhuma de onda futura pendente)', () => {
     expect(MANIFESTO.filter((x) => !existe(x)).map((e) => e.caminho)).toEqual([]);
-    expect(implementadas).toHaveLength(20);
+    expect(implementadas).toHaveLength(21);
     expect(Math.max(...MANIFESTO.map((e) => e.onda))).toBe(6);
   });
 
@@ -186,9 +186,9 @@ describe('WEB-026 AC3 execução com cinco perfis', () => {
     expect(protegidas.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('onda 5: as 5 rotas de gerência estão implementadas e exigem o nível do manifesto (dono nas destrutivas)', async () => {
+  it('onda 5: as 6 rotas de gerência estão implementadas e exigem o nível do manifesto (dono nas destrutivas)', async () => {
     const onda5 = MANIFESTO.filter((e) => e.onda === 5);
-    expect(onda5).toHaveLength(5);
+    expect(onda5).toHaveLength(6);
     expect(onda5.every(existe)).toBe(true);
     const niveis = Object.fromEntries(onda5.map((e) => [`${e.metodo} ${e.caminho}`, e.nivel]));
     expect(niveis).toEqual({
@@ -197,6 +197,7 @@ describe('WEB-026 AC3 execução com cinco perfis', () => {
       'POST /api/bau/[tipo]/ajuste/previa': 2,
       'POST /api/bau/[tipo]/ajuste/confirmar': 2,
       'POST /api/bau/zerar': 3,
+      'POST /api/catalogo/atualizar': 3,
     });
   });
 });

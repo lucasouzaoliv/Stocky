@@ -168,23 +168,12 @@ describe('ADR-18: índice composto da auditoria filtrada', () => {
     expect(achou).toBe(true);
   });
 
-  it('toda consulta com filtro feita pela leitura tem índice correspondente (o fake não exige, então conferimos aqui)', async () => {
+  it('a consulta com filtro não ordena no banco, então não exige índice composto (a ordem é feita no servidor)', async () => {
     abrir(seedAud(8));
     await lerAuditoria(pag('bau.zerar'));
-    await lerAuditoria(pag(null));
     const comFiltro = fake.consultas.filter((c) => c.filtros.length > 0);
     expect(comFiltro).toHaveLength(1);
-    for (const c of comFiltro) {
-      const campos = [...c.filtros, ...c.ordem.map((o) => o.campo)];
-      const direcao = c.ordem[0]!.direcao === 'desc' ? 'DESCENDING' : 'ASCENDING';
-      const ok = indices.some(
-        (i) =>
-          i.collectionGroup === c.colecao &&
-          i.fields.map((f) => f.fieldPath).join(',') === campos.join(',') &&
-          i.fields[i.fields.length - 1]!.order === direcao,
-      );
-      expect(ok, `sem índice para ${c.colecao} ${campos.join(',')}`).toBe(true);
-    }
+    for (const c of comFiltro) expect(c.ordem).toEqual([]);
   });
 
   it('sem filtro a consulta é de campo único (sem índice composto)', async () => {
