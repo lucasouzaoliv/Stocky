@@ -70,7 +70,7 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'lockpick', nome: 'Lockpick' },
       { id: 'alicate_de_corte', nome: 'Alicate de Corte' },
       { id: 'vara_nivel_3', nome: 'Vara Nível 3' },
-      { id: 'removedor_de_digitais', nome: 'Removedor de Digitais' },
+      { id: 'removedor_de_piche', nome: 'Removedor de Piche' },
     ],
   },
   {
