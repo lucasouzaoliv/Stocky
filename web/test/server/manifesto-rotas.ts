@@ -38,7 +38,7 @@ export const MANIFESTO: readonly EntradaManifesto[] = [
   { metodo: 'POST', caminho: '/api/bau/[tipo]/ajuste/previa', nivel: 2, params: TIPO, onda: 5 },
   { metodo: 'POST', caminho: '/api/bau/[tipo]/ajuste/confirmar', nivel: 2, params: TIPO, onda: 5 },
   { metodo: 'POST', caminho: '/api/bau/zerar', nivel: 3, onda: 5 },
-  { metodo: 'POST', caminho: '/api/catalogo/atualizar', nivel: 3, onda: 5 },
+  { metodo: 'POST', caminho: '/api/catalogo/atualizar', nivel: 2, onda: 5 },
   { metodo: 'GET', caminho: '/api/caixa', nivel: 2, onda: 4 },
   { metodo: 'GET', caminho: '/api/caixa/historico', nivel: 2, onda: 4 },
   { metodo: 'POST', caminho: '/api/caixa/movimentar', nivel: 2, onda: 4 },

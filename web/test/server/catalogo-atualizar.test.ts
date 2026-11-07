@@ -28,9 +28,9 @@ describe('atualizarCatalogoParaPadrao', () => {
     expect(d['baus/membros']).toMatchObject({ versao: 5, itens: { armas: { colt: 3 } } });
   });
 
-  it('só o dono pode', async () => {
+  it('nível 1 (membro) não pode', async () => {
     setDb(comoDb(criarFakeFirestore({ seed: seedBase() })));
-    const e = await atualizarCatalogoParaPadrao({ ...dono, nivel: 2 as never }).then(() => null, (x: unknown) => x);
+    const e = await atualizarCatalogoParaPadrao({ ...dono, nivel: 1 as never }).then(() => null, (x: unknown) => x);
     expect(e).toBeInstanceOf(ErroApp);
   });
 });

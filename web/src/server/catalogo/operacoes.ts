@@ -165,7 +165,7 @@ export type ResultadoAtualizacao = { removidos: number; adicionados: number; aud
  */
 export async function atualizarCatalogoParaPadrao(usuario: UsuarioSessao): Promise<ResultadoAtualizacao> {
   const quem = refUsuario(usuario);
-  if (usuario.nivel !== 3) throw new ErroApp('SEM_PERMISSAO');
+  if (usuario.nivel < 2) throw new ErroApp('SEM_PERMISSAO');
 
   await garantirCatalogo();
   const db = getDb();

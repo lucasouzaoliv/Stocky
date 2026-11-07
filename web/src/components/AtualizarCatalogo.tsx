@@ -8,10 +8,10 @@ export interface AtualizarCatalogoProps {
   cliente?: ClienteApi;
 }
 
-/** Exclusivo do dono (nível 3). A segurança real é o 403 da rota. */
+/** Gerência e dono (nível 2 ou mais). A segurança real é o 403 da rota. */
 export function AtualizarCatalogo({ cliente = apiPadrao }: AtualizarCatalogoProps) {
   const sessao = useSessaoOpcional();
-  if (!sessao || sessao.usuario.nivel < 3) return null;
+  if (!sessao || sessao.usuario.nivel < 2) return null;
   return <AtualizarCatalogoDono cliente={cliente} csrf={sessao.csrf} />;
 }
 
