@@ -39,9 +39,9 @@ describe('WEB-008 parseInteiro', () => {
     expect(parseInteiro(0, QTD)).toMatchObject({ ok: false, motivo: 'minimo' });
     expect(parseInteiro('0', QTD)).toMatchObject({ ok: false, motivo: 'minimo' });
     expect(parseInteiro(-3, QTD)).toMatchObject({ ok: false, motivo: 'minimo' });
-    expect(parseInteiro(100001, QTD)).toMatchObject({ ok: false, motivo: 'maximo' });
-    expect(parseInteiro('100001', QTD)).toMatchObject({ ok: false, motivo: 'maximo' });
-    expect(parseInteiro(100000, QTD)).toEqual({ ok: true, valor: 100000 });
+    expect(parseInteiro(10_000_001, QTD)).toMatchObject({ ok: false, motivo: 'maximo' });
+    expect(parseInteiro('10000001', QTD)).toMatchObject({ ok: false, motivo: 'maximo' });
+    expect(parseInteiro(10_000_000, QTD)).toEqual({ ok: true, valor: 10_000_000 });
     expect(parseInteiro(1, QTD)).toEqual({ ok: true, valor: 1 });
   });
 
@@ -54,10 +54,10 @@ describe('WEB-008 parseInteiro', () => {
 
   it('AC3: mensagens em português distinguem formato, mínimo e máximo', () => {
     const min = parseInteiro(0, QTD);
-    const max = parseInteiro(100001, QTD);
+    const max = parseInteiro(10_000_001, QTD);
     const maxCaixa = parseInteiro(2_000_000_000, CAIXA);
     expect(min).toMatchObject({ erro: 'O valor mínimo é 1.' });
-    expect(max).toMatchObject({ erro: 'Valor acima do limite (máx. 100.000).' });
+    expect(max).toMatchObject({ erro: 'Valor acima do limite (máx. 10.000.000).' });
     expect(maxCaixa).toMatchObject({ erro: 'Valor acima do limite (máx. 1.000.000.000).' });
   });
 
@@ -66,12 +66,12 @@ describe('WEB-008 parseInteiro', () => {
     expect(() => {
       (LIMITES as { QUANTIDADE_MAX: number }).QUANTIDADE_MAX = 1;
     }).toThrow(TypeError);
-    expect(LIMITES.QUANTIDADE_MAX).toBe(100_000);
+    expect(LIMITES.QUANTIDADE_MAX).toBe(10_000_000);
   });
 
   it('LIMITES traz os valores do contrato', () => {
     expect(LIMITES).toMatchObject({
-      QUANTIDADE_MIN: 1, QUANTIDADE_MAX: 100_000, VALOR_CAIXA_MIN: 1, VALOR_CAIXA_MAX: 1_000_000_000,
+      QUANTIDADE_MIN: 1, QUANTIDADE_MAX: 10_000_000, VALOR_CAIXA_MIN: 1, VALOR_CAIXA_MAX: 1_000_000_000,
       NOME_ITEM_MAX: 50, ID_ITEM_MAX: 50, ITENS_POR_CATEGORIA_MAX: 25, ANOTACAO_MAX: 100,
       AJUSTE_LINHAS_MAX: 200, PAGINA_MAX: 100, CORPO_MAX_BYTES: 10_240, CORPO_AJUSTE_MAX_BYTES: 102_400,
     });

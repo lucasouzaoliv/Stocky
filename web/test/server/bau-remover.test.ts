@@ -164,7 +164,7 @@ describe('WEB-030 removerDoBau', () => {
   });
 
   describe('AC5: mesma validação de quantidade do adicionar', () => {
-    for (const [nome, valor] of [...VALORES_INVALIDOS, ['acima do máximo', 100_001]] as Array<[string, unknown]>) {
+    for (const [nome, valor] of [...VALORES_INVALIDOS, ['acima do máximo', 10_000_001]] as Array<[string, unknown]>) {
       it(nome, async () => {
         await abrir({ medicamentos: { analgesico: 10 } });
         const antes = fake.dump();

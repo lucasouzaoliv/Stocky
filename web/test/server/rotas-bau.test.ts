@@ -134,7 +134,7 @@ describe('WEB-031 AC2: corpo inválido → 400 em português', () => {
     ['quantidade 0', corpoOk({ quantidade: 0 })],
     ['quantidade negativa', corpoOk({ quantidade: -1 })],
     ['quantidade decimal', corpoOk({ quantidade: 1.5 })],
-    ['quantidade 100001', corpoOk({ quantidade: 100001 })],
+    ['quantidade 10000001', corpoOk({ quantidade: 10000001 })],
     ['corpo é lista', [corpoOk()]],
     ['corpo é texto', 'oi'],
     ['corpo é nulo', null],

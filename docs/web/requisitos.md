@@ -19,7 +19,7 @@ Site que substitui o bot de Discord para gerir o estoque (baús) e o caixa de um
 6. **Catálogo padrão** semeado na primeira execução (categorias: Medicamentos, Armas, Coletes e Munição, Materiais, Drogas, Extras; itens como no bot).
 
 ## Regras de negócio (vêm do bot revisado, mantêm-se)
-- Quantidade de item por operação: inteiro estrito entre 1 e 100.000. Valor do caixa por operação: inteiro estrito entre 1 e 1.000.000.000. Sem ponto, vírgula, sinal ou texto misturado.
+- Quantidade de item por operação: inteiro estrito entre 1 e 10.000.000. Valor do caixa por operação: inteiro estrito entre 1 e 1.000.000.000. Sem ponto, vírgula, sinal ou texto misturado.
 - Nome de item: até 50 caracteres; id gerado a partir do nome (sem acento, minúsculo, `_`), nunca vazio, sem colisão (nem entre nomes equivalentes). Máximo de 25 itens por categoria. Até 200 linhas por ajuste em massa.
 - Estoque nunca fica negativo; ao chegar a zero o item some do baú.
 - Toda alteração de estoque e de saldo é **atômica** (transação do Firestore). Registro de auditoria e log são gravados **na mesma transação** da alteração.

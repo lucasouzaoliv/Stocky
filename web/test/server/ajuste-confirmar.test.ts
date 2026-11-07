@@ -95,7 +95,7 @@ describe('WEB-041 confirmarAjuste', () => {
     for (const linhas of [
       [linha('armas', 'colt', 9), linha('armas', 'usp', -3)],
       [linha('armas', 'colt', 9), linha('armas', 'colt', 1)],
-      [linha('armas', 'colt', 100_001)],
+      [linha('armas', 'colt', 10_000_001)],
       [],
       'x',
     ]) {
