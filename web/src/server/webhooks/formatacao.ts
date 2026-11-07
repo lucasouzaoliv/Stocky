@@ -13,7 +13,7 @@ export const LIMITES_DISCORD = Object.freeze({
 });
 
 export const COR = Object.freeze({ roxo: 0x9000c0, entrada: 0x22c55e, saida: 0xef4444, aviso: 0xf59e0b });
-export const RODAPE = 'Marabunta Grande • Stocky';
+export const RODAPE = 'Ballas • Stocky';
 
 const ZWSP = '​';
 
