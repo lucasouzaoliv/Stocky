@@ -4,7 +4,7 @@ import { iconeDaCategoria, iconeDoItem } from '@/components/icones';
 
 describe('ícones por categoria e item', () => {
   it.each([
-    ['Medicamentos', 'Bandagem', Pill],
+    ['Medicamentos', 'Analgésico', Pill],
     ['Medicamentos', 'Seringa de adrenalina', Syringe],
     ['Armas', 'Pistola', Crosshair],
     ['Coletes e Munição', 'Colete leve', Shield],

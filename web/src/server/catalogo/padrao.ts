@@ -9,15 +9,19 @@ function congelar<T>(valor: T): T {
   return valor;
 }
 
+/**
+ * Catálogo inicial (temporada atual). Só vale para uma instalação nova: o catálogo que já está no Firestore
+ * não muda sozinho (use `npm run catalogo:atualizar` ou o Painel). Ids novos seguem `gerarIdItem(nome)`.
+ */
 export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
   {
     id: 'medicamentos',
     nome: 'Medicamentos',
     emoji: '💊',
     itens: [
-      { id: 'bandagem', nome: 'Bandagem' },
       { id: 'gaze', nome: 'Gaze' },
       { id: 'adrenalina', nome: 'Adrenalina' },
+      { id: 'analgesico', nome: 'Analgésico' },
     ],
   },
   {
@@ -28,7 +32,8 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'colt', nome: 'Colt' },
       { id: 'usp', nome: 'USP' },
       { id: 'desert', nome: 'Desert Eagle' },
-      { id: 'ak_47', nome: 'AK 47' },
+      { id: 'knife', nome: 'Knife' },
+      { id: 'cz_scorpion_evo', nome: 'CZ Scorpion Evo' },
     ],
   },
   {
@@ -50,17 +55,18 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
     emoji: '🪛',
     itens: [
       { id: 'laptop', nome: 'Laptop' },
-      { id: 'caixa_polvora', nome: 'Caixa de Pólvora' },
-      { id: 'sulfato_bario', nome: 'Sulfato de Bário' },
-      { id: 'alcool_gel', nome: 'Álcool em Gel' },
-      { id: 'sabonete', nome: 'Sabonete' },
       { id: 'pecas_roupas', nome: 'Peças de Roupas' },
-      { id: 'kit_eletronico', nome: 'Kit Eletrônico' },
-      { id: 'cobre', nome: 'Cobre' },
       { id: 'plastico', nome: 'Plástico' },
       { id: 'sucata_metal', nome: 'Sucata de Metal' },
-      { id: 'aluminio', nome: 'Alumínio' },
-      { id: 'borracha', nome: 'Borracha' },
+      { id: 'bateria_de_impressora', nome: 'Bateria de Impressora' },
+      { id: 'pneu', nome: 'Pneu' },
+      { id: 'esponjinha', nome: 'Esponjinha' },
+      { id: 'caixa_de_ferramentas', nome: 'Caixa de Ferramentas' },
+      { id: 'chave_de_roda', nome: 'Chave de Roda' },
+      { id: 'chave_de_fenda', nome: 'Chave de Fenda' },
+      { id: 'serra_eletrica', nome: 'Serra Elétrica' },
+      { id: 'pistola_pneumatica', nome: 'Pistola Pneumática' },
+      { id: 'lockpick', nome: 'Lockpick' },
     ],
   },
   {
@@ -71,6 +77,7 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'cocaina', nome: 'Cocaína' },
       { id: 'lsd', nome: 'LSD' },
       { id: 'meta', nome: 'Meta' },
+      { id: 'insumo_para_fabricacao_de_drogas', nome: 'Insumo para Fabricação de Drogas' },
     ],
   },
   {
@@ -78,12 +85,27 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
     nome: 'Extras',
     emoji: '📦',
     itens: [
-      { id: 'fichas_cassino', nome: 'Fichas de Cassino' },
       { id: 'agulha', nome: 'Agulha' },
       { id: 'linha', nome: 'Linha' },
       { id: 'resina', nome: 'Resina' },
       { id: 'tesoura', nome: 'Tesoura' },
       { id: 'notas_marcadas', nome: 'Notas Marcadas' },
+      { id: 'chaves_de_casa', nome: 'Chaves de Casa' },
+      { id: 'chave_de_carro', nome: 'Chave de Carro' },
+      { id: 'skateboard', nome: 'Skateboard' },
+      { id: 'caixa_de_comida', nome: 'Caixa de Comida' },
+      { id: 'celular', nome: 'Celular' },
+      { id: 'tablet', nome: 'Tablet' },
+      { id: 'radio', nome: 'Rádio' },
+      { id: 'usb_trojan', nome: 'USB Trojan' },
+      { id: 'trojan_bancario', nome: 'Trojan Bancário' },
+      { id: 'identidade', nome: 'Identidade' },
+      { id: 'placa_falsa', nome: 'Placa Falsa' },
+      { id: 'doe_mendigo', nome: 'Doe - Mendigo' },
+      { id: 'polaroid', nome: 'Polaroid' },
+      { id: 'arquivo_ghost', nome: 'Arquivo Ghost' },
+      { id: 'lista_de_modificacoes', nome: 'Lista de Modificações' },
+      { id: 'dinheiro', nome: 'Dinheiro' },
     ],
   },
 ]);

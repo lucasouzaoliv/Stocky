@@ -27,7 +27,7 @@ const doc = (i: number, extra: Dados = {}): Dados => ({
   data: dataDe(i),
   alvo: { tipo: 'membros' },
   resumo: `Resumo ${i}`,
-  antes: { medicamentos: { bandagem: i } },
+  antes: { medicamentos: { analgesico: i } },
   depois: {},
   ...extra,
 });
@@ -56,7 +56,7 @@ describe('WEB-044 AC1: lista com usuário, data, ação e resumo; detalhe com al
       data: dataDe(2),
       resumo: 'Resumo 2',
       alvo: { tipo: 'membros' },
-      antes: { medicamentos: { bandagem: 2 } },
+      antes: { medicamentos: { analgesico: 2 } },
       depois: {},
     });
   });

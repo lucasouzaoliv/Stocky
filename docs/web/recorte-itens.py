@@ -21,9 +21,39 @@ M={
  'resina':('s2',(430,582,478,638)),
  'tesoura':('s2',(314,222,372,282)),
  'notas_marcadas':('s1',(516,346,570,390)),
+ 'chaves_de_casa':('s1',(398,222,444,264)),
+ 'bateria_de_impressora':('s1',(164,584,206,622)),
+ 'skateboard':('s1',(284,596,316,618)),
+ 'insumo_para_fabricacao_de_drogas':('s1',(510,590,576,642)),
+ 'knife':('s2',(202,108,246,150)),
+ 'tablet':('s2',(438,116,480,154)),
+ 'radio':('s2',(552,112,586,162)),
+ 'chave_de_carro':('s2',(76,226,126,272)),
+ 'doe_mendigo':('s2',(430,222,484,286)),
+ 'placa_falsa':('s2',(546,238,594,270)),
+ 'caixa_de_ferramentas':('s2',(76,348,126,398)),
+ 'pneu':('s2',(432,348,486,400)),
+ 'chave_de_roda':('s2',(68,470,132,528)),
+ 'dinheiro':('s2',(200,476,248,510)),
+ 'polaroid':('s2',(70,596,128,650)),
+ 'caixa_de_comida':('s2',(316,586,370,642)),
+ 'esponjinha':('s2',(546,586,596,628)),
+ 'serra_eletrica':('s3',(60,186,118,232)),
+ 'pistola_pneumatica':('s3',(188,184,238,236)),
+ 'chave_de_fenda':('s3',(300,184,360,240)),
+ 'lista_de_modificacoes':('s3',(422,190,470,234)),
+ 'lockpick':('s3',(306,428,356,478)),
+ 'identidade':('s3',(420,548,470,586)),
+ 'celular':('s3',(538,543,576,586)),
+ 'analgesico':('s4',(162,190,210,246)),
+ 'trojan_bancario':('s4',(162,312,210,356)),
+ 'usb_trojan':('s4',(162,428,210,474)),
+ 'arquivo_ghost':('s5',(46,98,104,176)),
+ 'cz_scorpion_evo':('s5',(56,236,96,274)),
 }
+
 only=sys.argv[1:]
-REFINA={'adrenalina':34,'agulha':30,'tesoura':34,'linha':30}
+REFINA={'chave_de_fenda':34,'lockpick':34,'trojan_bancario':34,'skateboard':40,'adrenalina':34,'agulha':30,'tesoura':34,'linha':30}
 S=160  # lado final
 for k,(s,(x0,y0,x1,y1)) in M.items():
     if only and k not in only: continue

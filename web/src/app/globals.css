@@ -641,6 +641,11 @@ body:has(.login) {
 
 .login__botao {
   text-decoration: none;
+  text-align: center;
+}
+
+.login__cartao .login__botao + .login__botao {
+  margin-top: var(--espaco-2);
 }
 
 /* Baú */

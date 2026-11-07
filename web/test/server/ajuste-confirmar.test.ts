@@ -11,7 +11,7 @@ import { DONO, OUTRO_USUARIO, USUARIO, auditorias, logsDe, seedBase, type ItensB
 import { falharCommitDaOperacao } from './commit-falho';
 
 let fake: FakeFirestore;
-function abrir(membros: ItensBau = { armas: { colt: 3 }, medicamentos: { bandagem: 10 } }, versao = 4) {
+function abrir(membros: ItensBau = { armas: { colt: 3 }, medicamentos: { analgesico: 10 } }, versao = 4) {
   resetSemente();
   fake = criarFakeFirestore({ seed: seedBase({ membros, gerencia: { armas: { usp: 1 } }, versao }) });
   setDb(comoDb(fake));
@@ -68,13 +68,13 @@ describe('WEB-041 confirmarAjuste', () => {
   });
 
   it('AC2: sem mudança entre prévia e confirmação, aplica tudo e a versão sobe 1; alterados correto', async () => {
-    const linhas = [linha('armas', 'colt', 5), linha('medicamentos', 'gaze', 4), linha('medicamentos', 'bandagem', 10)];
+    const linhas = [linha('armas', 'colt', 5), linha('medicamentos', 'gaze', 4), linha('medicamentos', 'analgesico', 10)];
     const previa = await preverAjuste('membros', linhas);
     expect(previa.alterados).toBe(2);
     const r = await confirmarAjuste('membros', previa.versao, linhas, USUARIO);
     expect(r).toMatchObject({ alterados: 2, versao: 5 });
     expect(r.auditoriaId).toMatch(/^auto/);
-    expect(bau()).toMatchObject({ versao: 5, itens: { armas: { colt: 5 }, medicamentos: { bandagem: 10, gaze: 4 } } });
+    expect(bau()).toMatchObject({ versao: 5, itens: { armas: { colt: 5 }, medicamentos: { analgesico: 10, gaze: 4 } } });
   });
 
   it('AC2: uma prévia pode ser confirmada uma vez; a segunda confirmação com a mesma versão é recusada', async () => {
@@ -183,7 +183,7 @@ describe('WEB-041 confirmarAjuste', () => {
 
   it('AC6: itens fora do pedido não são tocados e quantidade 0 remove o item (e a categoria vazia)', async () => {
     await confirmarAjuste('membros', 4, [linha('armas', 'colt', 0), linha('medicamentos', 'gaze', 1)], USUARIO);
-    expect(bau().itens).toEqual({ medicamentos: { bandagem: 10, gaze: 1 } });
+    expect(bau().itens).toEqual({ medicamentos: { analgesico: 10, gaze: 1 } });
   });
 
   it('AC6: ajusta só o baú pedido; o outro mantém estoque e versão', async () => {

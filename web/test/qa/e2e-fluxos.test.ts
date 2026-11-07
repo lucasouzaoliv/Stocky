@@ -236,14 +236,14 @@ describe('WEB-066 AC2 baú', () => {
   it('concorrência 6 + 6 com estoque 10: um sucesso, um 409, estoque final 4', async () => {
     const m = await entrarOk('500000000000000001', [CARGO.membro]);
     const outro = await entrarOk('500000000000000004', [CARGO.membro]);
-    await mover(ADICIONAR, m, 'membros', 'medicamentos', 'bandagem', 10);
+    await mover(ADICIONAR, m, 'membros', 'medicamentos', 'analgesico', 10);
     const r = await Promise.all([
-      mover(REMOVER, m, 'membros', 'medicamentos', 'bandagem', 6),
-      mover(REMOVER, outro, 'membros', 'medicamentos', 'bandagem', 6),
+      mover(REMOVER, m, 'membros', 'medicamentos', 'analgesico', 6),
+      mover(REMOVER, outro, 'membros', 'medicamentos', 'analgesico', 6),
     ]);
     expect(r.map((x) => x.status).sort()).toEqual([200, 409]);
     expect(r.find((x) => x.status === 409)!.corpo.codigo).toBe('ESTOQUE_INSUFICIENTE');
-    expect(await qtd(m, 'membros', 'medicamentos', 'bandagem')).toBe(4);
+    expect(await qtd(m, 'membros', 'medicamentos', 'analgesico')).toBe(4);
     expect(logs(fake.dump(), 'membros').filter((x) => x.acao === 'remover')).toHaveLength(1);
   });
 });
@@ -278,8 +278,8 @@ describe('WEB-066 AC4 catálogo', () => {
     expect(criado.status).toBe(201);
     expect(criado.corpo.dados.item).toEqual({ id: 'erva_fina', nome: 'Erva Fina' });
     expect((await novo('erva-fina')).corpo.codigo).toBe('DUPLICADO');
-    // drogas tem 3 padrão + 1 = 4; completa até 25
-    for (let i = 5; i <= 25; i += 1) expect((await novo(`Item ${i}`)).status, `item ${i}`).toBe(201);
+    // drogas tem 4 padrão + 1 = 5; completa até 25
+    for (let i = 6; i <= 25; i += 1) expect((await novo(`Item ${i}`)).status, `item ${i}`).toBe(201);
     const excedente = await novo('Item 26');
     expect(excedente.status).toBe(409);
     expect(excedente.corpo.codigo).toBe('LIMITE_CATEGORIA');

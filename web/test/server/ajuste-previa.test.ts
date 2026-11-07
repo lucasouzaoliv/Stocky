@@ -8,7 +8,7 @@ import { comoDb, criarFakeFirestore, type FakeFirestore } from '../helpers/fake-
 import { VALORES_INVALIDOS, seedBase, type ItensBau } from '../helpers/estado';
 
 let fake: FakeFirestore;
-function abrir(membros: ItensBau = { armas: { colt: 3 }, medicamentos: { bandagem: 10 } }, extra: Parameters<typeof seedBase>[0] = {}) {
+function abrir(membros: ItensBau = { armas: { colt: 3 }, medicamentos: { analgesico: 10 } }, extra: Parameters<typeof seedBase>[0] = {}) {
   resetSemente();
   const seed = seedBase({ membros, versao: 7, ...extra });
   if (extra.extra) Object.assign(seed, extra.extra);
@@ -79,7 +79,7 @@ describe('WEB-040 preverAjuste', () => {
   });
 
   it('AC3: mais de 200 linhas → 400; 200 passam; lista vazia ou não-lista → 400', async () => {
-    const itens = [...Array(12)].map((_, i) => linha('materiais', ['laptop', 'caixa_polvora', 'sulfato_bario', 'alcool_gel', 'sabonete', 'pecas_roupas', 'kit_eletronico', 'cobre', 'plastico', 'sucata_metal', 'aluminio', 'borracha'][i]!, 1));
+    const itens = [...Array(12)].map((_, i) => linha('materiais', ['laptop', 'pecas_roupas', 'plastico', 'sucata_metal', 'bateria_de_impressora', 'pneu', 'esponjinha', 'caixa_de_ferramentas', 'chave_de_roda', 'chave_de_fenda', 'serra_eletrica', 'pistola_pneumatica'][i]!, 1));
     expect((await preverAjuste('membros', itens)).linhas).toHaveLength(12);
     const repetidas = Array.from({ length: 201 }, () => linha('armas', 'colt', 1));
     expect((await recusa(preverAjuste('membros', repetidas))).status).toBe(400);
@@ -136,7 +136,7 @@ describe('WEB-040 preverAjuste', () => {
   });
 
   it('AC6: linhas sem mudança (antes = depois) não contam em alterados, inclusive 0 → 0', async () => {
-    const r = await preverAjuste('membros', [linha('armas', 'colt', 3), linha('armas', 'usp', 0), linha('medicamentos', 'bandagem', 11)]);
+    const r = await preverAjuste('membros', [linha('armas', 'colt', 3), linha('armas', 'usp', 0), linha('medicamentos', 'analgesico', 11)]);
     expect(r.alterados).toBe(1);
     expect(r.linhas).toHaveLength(3);
   });
