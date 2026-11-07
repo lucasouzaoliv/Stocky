@@ -36,7 +36,8 @@ export async function lerPaginaPorData<T>(
   mapear: (id: string, dados: Record<string, unknown>) => T,
   filtro?: { campo: string; valor: string },
 ): Promise<Pagina<T>> {
-  const base = filtro ? colecao.where(filtro.campo, '==', filtro.valor) : colecao;
+  if (filtro) return await lerPaginaFiltrada(colecao, p, mapear, filtro);
+  const base = colecao;
   let consulta = base.orderBy('data', 'desc');
   if (p.cursor !== null) {
     const ancora = await colecao.doc(p.cursor).get();
@@ -48,4 +49,36 @@ export async function lerPaginaPorData<T>(
   const itens = docs.map((d) => mapear(d.id, d.data() as Record<string, unknown>));
   const ultimo = docs[docs.length - 1];
   return { itens, proximoCursor: res.docs.length > p.limite && ultimo ? ultimo.id : null };
+}
+
+/** Teto de documentos lidos no filtro por campo (sem índice composto): a auditoria é pequena. */
+const TETO_FILTRO = 1000;
+
+/**
+ * Filtro por igualdade sem exigir índice composto no Firestore: lê só pelo campo filtrado,
+ * ordena por `data` decrescente em memória (id como desempate) e pagina pelo id do cursor.
+ */
+async function lerPaginaFiltrada<T>(
+  colecao: CollectionReference,
+  p: Paginacao,
+  mapear: (id: string, dados: Record<string, unknown>) => T,
+  filtro: { campo: string; valor: string },
+): Promise<Pagina<T>> {
+  const res = await colecao.where(filtro.campo, '==', filtro.valor).limit(TETO_FILTRO).get();
+  const texto = (v: unknown): string => (typeof v === 'string' ? v : '');
+  const todos = res.docs
+    .map((d) => ({ id: d.id, dados: d.data() as Record<string, unknown> }))
+    .sort((x, y) => texto(y.dados.data).localeCompare(texto(x.dados.data)) || y.id.localeCompare(x.id));
+  let inicio = 0;
+  if (p.cursor !== null) {
+    const pos = todos.findIndex((d) => d.id === p.cursor);
+    if (pos < 0) throw new ErroApp('VALIDACAO', 'Cursor inválido.');
+    inicio = pos + 1;
+  }
+  const fatia = todos.slice(inicio, inicio + p.limite);
+  const ultimo = fatia[fatia.length - 1];
+  return {
+    itens: fatia.map((d) => mapear(d.id, d.dados)),
+    proximoCursor: inicio + p.limite < todos.length && ultimo ? ultimo.id : null,
+  };
 }

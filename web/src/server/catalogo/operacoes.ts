@@ -5,12 +5,13 @@ import { registrarAuditoriaTx } from '../auditoria/registrar';
 import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
 import { lerDocBau, mapaDaCategoria, quantidadeNoBau, refBau, refCatalogo } from '../dominio/refs';
-import type { DocBau, TipoBau, UsuarioRef, UsuarioSessao } from '../dominio/tipos';
+import type { CategoriaCatalogo, DocBau, TipoBau, UsuarioRef, UsuarioSessao } from '../dominio/tipos';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento, EventoDominio } from '../webhooks/eventos';
 import { chaveDeNome } from '../validacao/texto';
 import { ehIdDeFormatoValido, ehIdSeguro, gerarIdItem, validarNomeItem } from '../validacao/item';
 import { lerCatalogoTx } from './leitura';
+import { CATALOGO_PADRAO } from './padrao';
 import { garantirCatalogo } from './semente';
 
 const TIPOS: readonly TipoBau[] = ['membros', 'gerencia'];
@@ -153,4 +154,52 @@ export async function removerItemDoCatalogo(
   usuario: UsuarioSessao,
 ): Promise<ResultadoRemocao> {
   return (await removerItemDoCatalogoComEvento(categoriaId, itemId, usuario)).dto;
+}
+
+export type ResultadoAtualizacao = { removidos: number; adicionados: number; auditoriaId: string };
+
+/**
+ * Troca o catálogo pelo padrão atual (`CATALOGO_PADRAO`) em UMA transação: itens que saíram são
+ * apagados dos dois baús (o estoque dos que continuam fica como está), a versão dos baús sobe e a
+ * auditoria é gravada junto. Exclusiva do dono.
+ */
+export async function atualizarCatalogoParaPadrao(usuario: UsuarioSessao): Promise<ResultadoAtualizacao> {
+  const quem = refUsuario(usuario);
+  if (usuario.nivel !== 3) throw new ErroApp('SEM_PERMISSAO');
+
+  await garantirCatalogo();
+  const db = getDb();
+  return await db.runTransaction(async (tx) => {
+    const atual = await lerCatalogoTx(tx, db);
+    const [membros, gerencia] = await Promise.all(TIPOS.map((t) => tx.get(refBau(db, t))));
+    if (!membros?.exists || !gerencia?.exists) throw new ErroApp('INTERNO');
+    const baus: Record<TipoBau, DocBau> = { membros: lerDocBau(membros.data()), gerencia: lerDocBau(gerencia.data()) };
+
+    const novas = structuredClone(CATALOGO_PADRAO) as CategoriaCatalogo[];
+    const ids = (cs: readonly CategoriaCatalogo[]) => new Set(cs.flatMap((c) => c.itens.map((i) => `${c.id}/${i.id}`)));
+    const antigos = ids(atual.categorias);
+    const novos = ids(novas);
+    const removidos = [...antigos].filter((k) => !novos.has(k)).length;
+    const adicionados = [...novos].filter((k) => !antigos.has(k)).length;
+
+    const agora = new Date().toISOString();
+    tx.set(refCatalogo(db), { categorias: novas, atualizadoEm: agora });
+    for (const tipo of TIPOS) {
+      const itens: DocBau['itens'] = {};
+      for (const [cat, mapa] of Object.entries(baus[tipo].itens)) {
+        const mantidos = Object.fromEntries(Object.entries(mapa ?? {}).filter(([item]) => novos.has(`${cat}/${item}`)));
+        if (Object.keys(mantidos).length > 0) itens[cat] = mantidos;
+      }
+      tx.set(refBau(db, tipo), { versao: baus[tipo].versao + 1, itens, atualizadoEm: agora });
+    }
+    const auditoriaId = registrarAuditoriaTx(tx, db, {
+      acao: 'catalogo.remover_item',
+      usuario: quem,
+      alvo: { categoriaId: 'catalogo', itemId: 'padrao', nomeItem: 'Catálogo padrão' },
+      resumo: `Atualizou o catálogo: ${removidos} itens removidos, ${adicionados} adicionados.`,
+      antes: { itens: antigos.size },
+      depois: { itens: novos.size },
+    });
+    return { removidos, adicionados, auditoriaId };
+  });
 }
