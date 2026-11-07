@@ -22,7 +22,7 @@ afterEach(() => {
   resetSemente();
 });
 
-const pedido = (extra: Record<string, unknown> = {}) => ({ tipo: 'membros', acao: 'retirar', quantidade: 10, motivo: 'pista', ...extra });
+const pedido = (extra: Record<string, unknown> = {}) => ({ tipo: 'membros', acao: 'retirar', quantidade: 10, motivo: 'pista', comprador: 'Fulano', ...extra });
 async function recusa(p: Promise<unknown>): Promise<ErroApp> {
   const e = await p.then(() => null, (x: unknown) => x);
   expect(e).toBeInstanceOf(ErroApp);
@@ -54,7 +54,7 @@ describe('movimentarDroga', () => {
     await movimentarDroga(pedido(), ana);
     const r = await movimentarDroga(pedido({ quantidade: 400, motivo: 'pista' }), ana);
     expect(r.dto.devido).toBe(2300 + 400 * 215);
-    expect(r.eventos.find((e) => e.tipo === 'droga.pendencia')).toMatchObject({ jaPendente: true });
+    expect(r.eventos.find((e) => e.tipo === 'droga.pendencia')).toMatchObject({ jaPendente: true, comprador: 'Fulano' });
   });
 
   it('com dinheiro depositado junto, entra no caixa sujo e abate a pendência', async () => {
@@ -62,6 +62,12 @@ describe('movimentarDroga', () => {
     expect(r.dto.devido).toBe(0);
     expect(r.eventos.map((e) => e.tipo)).toEqual(['bau.movimento', 'caixa.movimento']);
     expect((fake.dump()['caixa/saldo'] as { sujo: number }).sujo).toBe(2300);
+  });
+
+  it('o comprador vai para o log do baú junto com o motivo', async () => {
+    await movimentarDroga(pedido({ motivo: 'parceria', comprador: 'Ciclano' }), ana);
+    const logs = Object.entries(fake.dump()).filter(([k]) => k.startsWith('logs/'));
+    expect(JSON.stringify(logs)).toContain('Vendido para: Ciclano');
   });
 
   it('motivo "outro" não cobra nada; guardar devolve ao estoque', async () => {
@@ -76,6 +82,9 @@ describe('movimentarDroga', () => {
     expect((await recusa(movimentarDroga(pedido({ acao: 'guardar', motivo: 'pista' }), ana))).status).toBe(400);
     expect((await recusa(movimentarDroga(pedido({ quantidade: 0 }), ana))).status).toBe(400);
     expect((await recusa(movimentarDroga(pedido({ deposito: -5 }), ana))).status).toBe(400);
+    expect((await recusa(movimentarDroga(pedido({ comprador: '  ' }), ana))).status).toBe(400);
+    expect((await recusa(movimentarDroga(pedido({ comprador: undefined }), ana))).status).toBe(400);
+    expect((await recusa(movimentarDroga(pedido({ comprador: 'x'.repeat(101) }), ana))).status).toBe(400);
     expect((await recusa(movimentarDroga(pedido({ acao: 'x' }), ana))).status).toBe(400);
     expect((await recusa(movimentarDroga(pedido({ tipo: 'cofre' }), ana))).status).toBe(400);
   });

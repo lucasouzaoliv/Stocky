@@ -46,11 +46,15 @@ describe('Drogas', () => {
     fireEvent.change(screen.getByLabelText('Quantidade'), { target: { value: '10' } });
     fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'pista' } });
     fireEvent.click(screen.getByRole('button', { name: 'Retirar' }));
+    expect(await screen.findByText('Informe para quem foi vendido.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Vendido para'), { target: { value: 'Fulano' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Retirar' }));
     const janela = await screen.findByRole('dialog');
     expect(within(janela).getByText('$2.300')).toBeInTheDocument();
     expect(chamadas.some((c) => c.metodo === 'POST')).toBe(false);
     fireEvent.click(within(janela).getByRole('button', { name: 'Confirmar retirada' }));
-    await waitFor(() => expect(chamadas.find((c) => c.metodo === 'POST')?.corpo).toEqual({ acao: 'retirar', quantidade: 10, motivo: 'pista' }));
+    await waitFor(() => expect(chamadas.find((c) => c.metodo === 'POST')?.corpo).toEqual({ acao: 'retirar', quantidade: 10, motivo: 'pista', comprador: 'Fulano' }));
     expect(await screen.findByText(/Falta depositar \$2\.300/)).toBeInTheDocument();
   });
 

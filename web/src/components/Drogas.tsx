@@ -30,6 +30,7 @@ interface Pedido {
   quantidade: number;
   motivo: string;
   deposito: number;
+  comprador: string;
 }
 
 export function Drogas({ cliente = apiPadrao }: DrogasProps) {
@@ -45,7 +46,8 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
   const [quantidade, setQuantidade] = useState('');
   const [motivo, setMotivo] = useState('');
   const [deposito, setDeposito] = useState('');
-  const [erros, setErros] = useState<{ quantidade?: string; motivo?: string; deposito?: string }>({});
+  const [comprador, setComprador] = useState('');
+  const [erros, setErros] = useState<{ quantidade?: string; motivo?: string; deposito?: string; comprador?: string }>({});
   const [confirmando, setConfirmando] = useState<Pedido | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [depositoPendente, setDepositoPendente] = useState('');
@@ -55,6 +57,7 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
   const { aviso, mostrar, fechar } = useAviso();
   const idTitulo = useId();
   const idMotivo = useId();
+  const idComprador = useId();
 
   const carregar = useCallback(
     async (sinal?: AbortSignal) => {
@@ -106,6 +109,9 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
     const novosErros: typeof erros = {};
     if (!q.ok) novosErros.quantidade = q.erro;
     if (!motivo) novosErros.motivo = 'Escolha o motivo.';
+    const nomeComprador = comprador.trim();
+    const vende = acao === 'retirar' && motivo !== '' && motivoCobra(motivo as MotivoRetirada);
+    if (vende && nomeComprador === '') novosErros.comprador = 'Informe para quem foi vendido.';
     let dep = 0;
     if (deposito.trim() !== '') {
       const d = parseInteiro(deposito, { min: LIMITES.VALOR_CAIXA_MIN, max: LIMITES.VALOR_CAIXA_MAX });
@@ -113,8 +119,8 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
       else novosErros.deposito = d.erro;
     }
     setErros(novosErros);
-    if (!q.ok || !motivo || novosErros.deposito) return null;
-    return { acao, quantidade: q.valor, motivo, deposito: dep };
+    if (!q.ok || !motivo || novosErros.deposito || novosErros.comprador) return null;
+    return { acao, quantidade: q.valor, motivo, deposito: dep, comprador: vende ? nomeComprador : '' };
   }
 
   function pedir() {
@@ -133,6 +139,7 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
     try {
       const corpo: Record<string, unknown> = { acao: p.acao, quantidade: p.quantidade, motivo: p.motivo };
       if (p.deposito > 0) corpo.deposito = p.deposito;
+      if (p.comprador) corpo.comprador = p.comprador;
       const r = await cliente.post<ResultadoDrogaDTO>(`/api/drogas/${tipo}/movimentar`, corpo, csrf ? { csrf } : undefined);
       if (!r.ok) {
         mostrar({ tipo: 'erro', texto: r.mensagem });
@@ -141,6 +148,7 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
       setQuantidade('');
       setDeposito('');
       setMotivo('');
+      setComprador('');
       const resto = r.dados.devido > 0 ? ` Falta depositar ${formatarDinheiro(r.dados.devido)} no caixa.` : '';
       mostrar({
         tipo: 'sucesso',
@@ -256,6 +264,23 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
                 </select>
                 {erros.motivo ? <p className="campo__erro" role="alert">{erros.motivo}</p> : null}
               </div>
+              {acao === 'retirar' && motivo !== '' && motivoCobra(motivo as MotivoRetirada) ? (
+                <div className="campo">
+                  <label className="campo__rotulo" htmlFor={idComprador}>Vendido para</label>
+                  <input
+                    id={idComprador}
+                    className="campo__entrada"
+                    type="text"
+                    maxLength={LIMITES.ANOTACAO_MAX}
+                    autoComplete="off"
+                    value={comprador}
+                    disabled={enviando}
+                    aria-invalid={erros.comprador ? true : undefined}
+                    onChange={(e) => setComprador(e.target.value)}
+                  />
+                  {erros.comprador ? <p className="campo__erro" role="alert">{erros.comprador}</p> : null}
+                </div>
+              ) : null}
               <CampoQuantidade rotulo="Dinheiro depositado no caixa (opcional)" valor={deposito} aoMudar={setDeposito} erro={erros.deposito} desabilitado={enviando} />
             </div>
             <div className="caixa__acoes">
@@ -277,6 +302,7 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
               {calculo.atacado ? ' (preço de atacado)' : ''}
             </p>
             <p className="droga__total">{formatarDinheiro(calculo.total)}</p>
+            <p className="droga__calculo">Vendido para: <bdi>{confirmando.comprador}</bdi></p>
             <p className="painel__ajuda">
               Cobre esse valor do cliente e deposite no caixa. Você fica em pendência até depositar.
             </p>

@@ -62,6 +62,7 @@ export const esquemaDroga = z.strictObject({
   quantidade: numeroOuTexto,
   motivo: z.string(),
   deposito: numeroOuTexto.optional(),
+  comprador: z.string().optional(),
 });
 
 export const esquemaDeposito = z.strictObject({ valor: numeroOuTexto });
