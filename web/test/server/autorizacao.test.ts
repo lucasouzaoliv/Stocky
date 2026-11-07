@@ -58,7 +58,7 @@ describe('WEB-022 comAutorizacao', () => {
   it('AC1: sessão que precisa revalidar → 401 REVALIDAR com detalhes {} e nada executa', async () => {
     const rota = comAutorizacao({ nivel: 1 }, tocarBanco);
     const cookies = await cookieSessaoTeste({ nivel: 3 });
-    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 16 * 60_000 });
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 13 * 60 * 60_000 });
     const res = await rota(criarRequisicao(`${APP}/api/teste`, { cookies }));
     expect(res.status).toBe(401);
     expect(await res.json()).toMatchObject({ ok: false, codigo: 'REVALIDAR', detalhes: {} });
