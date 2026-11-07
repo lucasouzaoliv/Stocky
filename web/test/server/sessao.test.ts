@@ -145,10 +145,10 @@ describe('WEB-015 sessão', () => {
     expect(cookieSessao(token).maxAge).toBeLessThanOrEqual(6 * 24 * 3600);
   });
 
-  it('estadoSessao: ok dentro de 15 min, revalidar depois', async () => {
+  it('estadoSessao: ok dentro de 12 h, revalidar depois', async () => {
     const s = (await lerSessao(await criarTokenSessao(dados)))!;
     expect(estadoSessao(s, s.cv + 1000)).toBe('ok');
-    expect(estadoSessao(s, s.cv + 16 * 60_000)).toBe('revalidar');
+    expect(estadoSessao(s, s.cv + 13 * 60 * 60_000)).toBe('revalidar');
   });
 
   it('AC3: o código de sessão não compara assinatura com === (usa a biblioteca)', () => {

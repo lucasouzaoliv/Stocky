@@ -14,5 +14,5 @@ export const LIMITES = Object.freeze({
 });
 
 export const SESSAO_DURACAO_MS = 7 * 24 * 60 * 60 * 1000;
-export const REVALIDACAO_MS = 15 * 60 * 1000;
+export const REVALIDACAO_MS = 12 * 60 * 60 * 1000;
 export const FRASE_ZERAR = 'ZERAR';

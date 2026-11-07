@@ -363,7 +363,7 @@ export const LIMITES = Object.freeze({
   CORPO_MAX_BYTES: 10_240, CORPO_AJUSTE_MAX_BYTES: 102_400,
 });
 export const SESSAO_DURACAO_MS = 7 * 24 * 60 * 60 * 1000;
-export const REVALIDACAO_MS = 15 * 60 * 1000;
+export const REVALIDACAO_MS = 12 * 60 * 60 * 1000;
 export const FRASE_ZERAR = 'ZERAR';
 
 // compartilhado/numero.ts (WEB-008)

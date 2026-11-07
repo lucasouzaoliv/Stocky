@@ -19,7 +19,7 @@ O que tem: Baú dos Membros, Baú da Gerência, Caixa da gangue (dinheiro sujo e
 | 2 Gerente | cargos de `DISCORD_ROLE_GERENTE` | tudo do nível 1, Baú da Gerência, caixa, ajuste em massa, logs e auditoria |
 | 3 Dono | cargos de `DISCORD_ROLE_DONO` | tudo do nível 2, zerar baú e remover item do catálogo |
 
-Vale o maior nível encontrado. Quem não está no servidor ou não tem nenhum cargo configurado não entra. A permissão é checada no servidor em toda rota. Os cargos são conferidos de novo a cada 15 minutos e a sessão dura no máximo 7 dias.
+Vale o maior nível encontrado. Quem não está no servidor ou não tem nenhum cargo configurado não entra. A permissão é checada no servidor em toda rota. Os cargos são conferidos de novo a cada 12 horas e a sessão dura no máximo 7 dias.
 
 ## Limites de entrada
 
@@ -154,7 +154,7 @@ Decisão sobre emojis: como ZWJ e seletor de variação são removidos, sequênc
 
 ### Riscos aceitos
 
-- **Logout não revoga o JWT no servidor.** A sessão é assinada e sem estado: `POST /api/auth/logout` apaga o cookie do navegador, mas um cookie copiado antes continua válido até expirar (no máximo 7 dias). O risco é limitado pela revalidação de cargos a cada 15 minutos (quem perde o cargo perde o acesso) e pelo `httpOnly`/`Secure` do cookie. Revogar exigiria ler uma lista de sessões revogadas no Firestore a cada requisição, custo maior que o risco para este site.
+- **Logout não revoga o JWT no servidor.** A sessão é assinada e sem estado: `POST /api/auth/logout` apaga o cookie do navegador, mas um cookie copiado antes continua válido até expirar (no máximo 7 dias). O risco é limitado pela revalidação de cargos a cada 12 horas (quem perde o cargo perde o acesso) e pelo `httpOnly`/`Secure` do cookie. Revogar exigiria ler uma lista de sessões revogadas no Firestore a cada requisição, custo maior que o risco para este site.
 - **State do OAuth sem uso único no servidor.** O state é um JWT assinado, de 10 minutos, no cookie `httpOnly` `stocky_oauth` (`Path=/api/auth`), e o callback sempre o apaga. Reapresentar o mesmo cookie e o mesmo `state` dentro dessa janela passa a checagem, mas o código de autorização do Discord só vale uma vez, então o login não se repete. Invalidar o state exigiria gravar cada uso no Firestore (uma escrita extra por login, mais limpeza), custo maior que o risco: quem tem o cookie `httpOnly` já controla o navegador da vítima.
 - **Dependências de produção com 6 avisos moderados** (`glob`/`minimatch` via `rimraf`, `gaxios`, `google-gax` dentro do `firebase-admin`). O `npm audit fix` não altera nada (a correção exige `google-gax` 6, versão major, que o `firebase-admin` fixado ainda não aceita). O site nunca chama `glob` com entrada do usuário. Reavaliar a cada atualização do `firebase-admin`.
 

@@ -89,7 +89,7 @@ describe('WEB-070 README', () => {
     expect(readme).toContain(`${LIMITES.NOME_ITEM_MAX} caracteres`);
     expect(readme).toContain(`${LIMITES.ITENS_POR_CATEGORIA_MAX} itens`);
     expect(readme).toContain(`${LIMITES.AJUSTE_LINHAS_MAX} linhas`);
-    expect(readme).toContain(`${REVALIDACAO_MS / 60_000} minutos`);
+    expect(readme).toContain(`${REVALIDACAO_MS / 3_600_000} horas`);
   });
 
   it('licença MIT presente', () => {

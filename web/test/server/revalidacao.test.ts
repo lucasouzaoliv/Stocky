@@ -19,17 +19,17 @@ afterEach(() => {
 });
 
 describe('WEB-020 revalidação', () => {
-  it('AC4: o intervalo é a constante de 15 minutos', () => {
-    expect(REVALIDACAO_MS).toBe(15 * 60 * 1000);
+  it('AC4: o intervalo é a constante de 12 horas', () => {
+    expect(REVALIDACAO_MS).toBe(12 * 60 * 60 * 1000);
   });
 
-  it('AC1: 14:59 aceita, 15:01 pede revalidação, sem chamar o Discord', async () => {
+  it('AC1: 11:59 aceita, 12:01 pede revalidação, sem chamar o Discord', async () => {
     const f = criarFakeFetch(() => respostaJson({}));
     setFetch(f.fetch);
     const s = (await lerSessao(await criarTokenSessao({ userId: '1', nome: 'a', nivel: 1 })))!;
-    expect(estadoSessao(s, s.cv + 14 * 60_000 + 59_000)).toBe('ok');
+    expect(estadoSessao(s, s.cv + 11 * 60 * 60_000 + 59 * 60_000)).toBe('ok');
     expect(estadoSessao(s, s.cv + REVALIDACAO_MS)).toBe('ok');
-    expect(estadoSessao(s, s.cv + 15 * 60_000 + 1000)).toBe('revalidar');
+    expect(estadoSessao(s, s.cv + 12 * 60 * 60_000 + 1000)).toBe('revalidar');
     expect(precisaRevalidar(s, s.cv + REVALIDACAO_MS + 1)).toBe(true);
     expect(f.chamadas).toHaveLength(0);
   });
