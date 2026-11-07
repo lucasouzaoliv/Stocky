@@ -58,9 +58,9 @@ describe('WEB-040 preverAjuste', () => {
     expect(r.alterados).toBe(1);
   });
 
-  it('AC2: 100.000 é aceito; 100.001, negativo, decimal e texto misturado recusam a prévia inteira listando as linhas', async () => {
-    await preverAjuste('membros', [linha('armas', 'colt', 100_000), linha('armas', 'usp', '100000')]);
-    for (const q of [100_001, -1, 1.5, '1,5', '10abc', '1e3', '+5', '', true, null, {}]) {
+  it('AC2: 10.000.000 é aceito; 10.000.001, negativo, decimal e texto misturado recusam a prévia inteira listando as linhas', async () => {
+    await preverAjuste('membros', [linha('armas', 'colt', 10_000_000), linha('armas', 'usp', '100000')]);
+    for (const q of [10_000_001, -1, 1.5, '1,5', '10abc', '1e3', '+5', '', true, null, {}]) {
       const e = await recusa(preverAjuste('membros', [linha('armas', 'colt', 1), linha('armas', 'usp', q), linha('armas', 'ak_47', q)]));
       expect([e.status, e.codigo], String(q)).toEqual([400, 'VALIDACAO']);
       expect(e.detalhes?.linhas?.map((l) => l.indice), String(q)).toEqual([1, 2]);

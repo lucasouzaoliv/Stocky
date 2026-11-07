@@ -23,7 +23,7 @@ Vale o maior nível encontrado. Quem não está no servidor ou não tem nenhum c
 
 ## Limites de entrada
 
-- Quantidade de item por operação: inteiro de 1 a 100.000.
+- Quantidade de item por operação: inteiro de 1 a 10.000.000.
 - Valor do caixa por operação: inteiro de 1 a 1.000.000.000.
 - Nome de item: até 50 caracteres; no máximo 25 itens por categoria.
 - Ajuste em massa: até 200 linhas.

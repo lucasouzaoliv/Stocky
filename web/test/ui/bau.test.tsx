@@ -197,11 +197,11 @@ describe('quantidade pendente: − e + não chamam a API', () => {
     expect(chamadas.length).toBe(antes);
   });
 
-  it('o + respeita o limite de 100.000 e valor inválido volta a 1', async () => {
+  it('o + respeita o limite de 10.000.000 e valor inválido volta a 1', async () => {
     await pronto();
-    fireEvent.change(campo('Pistola'), { target: { value: '100000' } });
+    fireEvent.change(campo('Pistola'), { target: { value: '10000000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Aumentar quantidade de Pistola' }));
-    expect(campo('Pistola')).toHaveValue('100000');
+    expect(campo('Pistola')).toHaveValue('10000000');
     fireEvent.change(campo('Pistola'), { target: { value: 'abc' } });
     fireEvent.click(screen.getByRole('button', { name: 'Aumentar quantidade de Pistola' }));
     expect(campo('Pistola')).toHaveValue('1');
@@ -221,7 +221,7 @@ describe('quantidade pendente: − e + não chamam a API', () => {
     expect(campo('Pistola')).toHaveAttribute('inputmode', 'numeric');
   });
 
-  it.each(['0', '-3', '1.5', '2,5', 'abc', '10abc', '100001', ''])('rejeita "%s" ao confirmar, com mensagem, sem chamar a API', async (valor) => {
+  it.each(['0', '-3', '1.5', '2,5', 'abc', '10abc', '10000001', ''])('rejeita "%s" ao confirmar, com mensagem, sem chamar a API', async (valor) => {
     const { chamadas } = await pronto();
     const antes = chamadas.length;
     fireEvent.change(campo('Pistola'), { target: { value: valor } });
@@ -233,12 +233,12 @@ describe('quantidade pendente: − e + não chamam a API', () => {
     expect(chamadas.length).toBe(antes);
   });
 
-  it('aceita o limite de 100.000', async () => {
+  it('aceita o limite de 10.000.000', async () => {
     const { chamadas } = await pronto();
-    fireEvent.change(campo('Pistola'), { target: { value: '100000' } });
+    fireEvent.change(campo('Pistola'), { target: { value: '10000000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar Pistola' }));
     await waitFor(() => expect(posts(chamadas)).toHaveLength(1));
-    expect(posts(chamadas)[0]).toMatchObject({ corpo: { quantidade: 100000 } });
+    expect(posts(chamadas)[0]).toMatchObject({ corpo: { quantidade: 10000000 } });
   });
 
   it('valor aceito pelo cliente mas recusado pelo servidor (400) mostra o erro da API em aviso', async () => {

@@ -109,7 +109,7 @@ describe('WEB-029 adicionarAoBau', () => {
   });
 
   describe('AC3: quantidade inválida → ErroApp 400 e nada gravado', () => {
-    for (const [nome, valor] of [...VALORES_INVALIDOS, ['acima do máximo', 100_001], ['muito grande', '99999999999999999999']] as Array<[string, unknown]>) {
+    for (const [nome, valor] of [...VALORES_INVALIDOS, ['acima do máximo', 10_000_001], ['muito grande', '99999999999999999999']] as Array<[string, unknown]>) {
       it(nome, async () => {
         await abrir();
         const antes = fake.dump();
@@ -121,12 +121,12 @@ describe('WEB-029 adicionarAoBau', () => {
       });
     }
 
-    it('limites 1 e 100000 são aceitos; texto só de dígitos também (contrato do parseInteiro)', async () => {
+    it('limites 1 e 10000000 são aceitos; texto só de dígitos também (contrato do parseInteiro)', async () => {
       await abrir();
       await adicionarAoBau(pedido(1), USUARIO);
-      await adicionarAoBau(pedido(100_000), USUARIO);
+      await adicionarAoBau(pedido(10_000_000), USUARIO);
       await adicionarAoBau(pedido('5'), USUARIO);
-      expect(itensDoBau().medicamentos!.analgesico).toBe(100_006);
+      expect(itensDoBau().medicamentos!.analgesico).toBe(10_000_006);
     });
   });
 

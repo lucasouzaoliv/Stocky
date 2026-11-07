@@ -36,7 +36,7 @@ describe('atualizarCatalogoParaPadrao', () => {
       for (const [cat, mapa] of Object.entries(bau)) {
         for (const [item, q] of Object.entries(mapa ?? {})) {
           expect(ids.has(`${cat}/${item}`), `${cat}/${item}`).toBe(true);
-          expect(Number.isInteger(q) && q > 0 && q <= 100_000).toBe(true);
+          expect(Number.isInteger(q) && q > 0 && q <= 10_000_000).toBe(true);
         }
       }
     }

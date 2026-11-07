@@ -152,10 +152,10 @@ describe('números como texto/decimal/exponencial em todas as rotas que recebem 
     '9007199254740993', '1e308', '"Infinity"', '"NaN"', 'null', 'true', '[5]', '{"v":5}', '"\uFF15"', '"٥"', '"5 5"',
     '"0b101"', '"0o7"', '"5n"', '"1_000"', '"999999999999999999999"',
   ];
-  /** Acima do máximo de cada rota: quantidade 100 000, valor do caixa 1 000 000 000. */
+  /** Acima do máximo de cada rota: quantidade 10 000 000, valor do caixa 1 000 000 000. */
   const ACIMA: Readonly<Record<string, string[]>> = {
-    adicionar: ['100001', '"100001"'],
-    remover: ['100001', '"100001"'],
+    adicionar: ['10000001', '"10000001"'],
+    remover: ['10000001', '"10000001"'],
     movimentar: ['1000000001', '"1000000001"'],
   };
   const BONS: ReadonlyArray<[string, number]> = [['5', 5], ['"5"', 5], ['"5\\u00a0"', 5], ['" 5 "', 5], ['"00005"', 5], ['5.0', 5], ['5e0', 5], ['1e3', 1000]];

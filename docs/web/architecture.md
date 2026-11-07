@@ -12,7 +12,7 @@ Este documento é o **contrato**. Quando ele diverge de um "arquivo provável" o
 |---|---|---|
 | Cargos | `DISCORD_ROLE_MEMBRO/GERENTE/DONO` aceitam lista separada por vírgula; vale o maior nível | §4.5, WEB-018 |
 | Q2/Q3 Visual | Roxo como destaque, fundo preto, texto branco; escuro é a base (tema claro só se o sistema pedir) | §7 |
-| Q5 Limites | Item 1 a 100.000; caixa 1 a 1.000.000.000; nome 50; anotação 100 | §4.2 |
+| Q5 Limites | Item 1 a 10.000.000; caixa 1 a 1.000.000.000; nome 50; anotação 100 | §4.2 |
 | Q6 Quem vê o quê | Nível 1 vê logs do Baú dos Membros; logs da gerência, do caixa, auditoria e ajuste em massa só nível 2+ | §6 |
 | Q7 Sessão | Sessão de 7 dias (absoluta); cargos revalidados a cada 15 min | ADR-04 |
 | Q8 Domínio | `*.vercel.app` | ADR-12 |

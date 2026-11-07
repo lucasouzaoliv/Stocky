@@ -163,7 +163,7 @@ describe('WEB-062 AC2: só linhas alteradas; limite de 200', () => {
 });
 
 describe('WEB-062 AC3: campo inválido', () => {
-  it.each(['10abc', '-1', '100001', '', '1,5', '2.5'])('"%s" marca a linha e impede Ver resumo', async (texto) => {
+  it.each(['10abc', '-1', '10000001', '', '1,5', '2.5'])('"%s" marca a linha e impede Ver resumo', async (texto) => {
     const chamadas = montar();
     await screen.findByText('Colt');
     digitar('Colt', '5');
