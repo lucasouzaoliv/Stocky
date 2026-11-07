@@ -1,3 +1,51 @@
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fontes/raleway-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fontes/raleway-medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fontes/raleway-semibold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fontes/raleway-bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fontes/raleway-extrabold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Secret Service';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fontes/secret-service.woff2') format('woff2');
+}
+
 /* Tokens. Escuro é o único tema: grafite com roxo neon (direção "street-tech"). */
 :root {
   color-scheme: dark;
@@ -20,7 +68,8 @@
   --brilho-suave: 0 0 0 1px rgb(181 46 232 / 0.18), 0 10px 30px -12px rgb(144 0 192 / 0.45);
   --brilho-forte: 0 0 0 1px rgb(181 46 232 / 0.45), 0 0 38px -6px rgb(181 46 232 / 0.5);
 
-  --fonte: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fonte: 'Raleway', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fonte-titulo: 'Secret Service', 'Courier New', Courier, monospace;
   --texto-pequeno: 0.8125rem;
   --texto-base: 1rem;
   --texto-grande: 1.25rem;
@@ -62,15 +111,22 @@ body {
 
 h1,
 h2,
-h3 {
+h3,
+.bau__titulo,
+.painel__titulo,
+.caixa__form-titulo,
+.bau__categoria-titulo {
+  font-family: var(--fonte-titulo);
+  font-weight: 400;
+  font-synthesis: none;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
 h1 {
   font-size: var(--texto-titulo);
-  font-weight: 800;
+  font-weight: 400;
   margin: 0 0 var(--espaco-4);
 }
 
