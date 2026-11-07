@@ -16,7 +16,7 @@ export const ESTOQUE_INICIAL: Readonly<Record<TipoBau, DocBau['itens']>> = {
   gerencia: {
     armas: { desert: 1, usp: 8, cz_scorpion_evo: 3, c_4: 9 },
     coletesemuni: { colete: 3, colete_danificado: 2, muni_9mm: 462, muni_45acp: 1705, muni_50ae: 693 },
-    materiais: { bateria_de_impressora: 4, plastico: 1053, removedor_de_digitais: 1 },
+    materiais: { bateria_de_impressora: 4, plastico: 1053, removedor_de_piche: 1 },
     drogas: { insumo_para_fabricacao_de_drogas: 8, saco_de_metanfetamina: 596 },
     extras: { placa_falsa: 1, chaves_de_casa: 4, notas_marcadas: 99654, arquivo_ghost: 2 },
   },
