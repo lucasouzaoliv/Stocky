@@ -11,6 +11,7 @@ import type { ComEvento, EventoDominio } from '../webhooks/eventos';
 import { chaveDeNome } from '../validacao/texto';
 import { ehIdDeFormatoValido, ehIdSeguro, gerarIdItem, validarNomeItem } from '../validacao/item';
 import { lerCatalogoTx } from './leitura';
+import { ESTOQUE_INICIAL } from './estoque-inicial';
 import { CATALOGO_PADRAO } from './padrao';
 import { garantirCatalogo } from './semente';
 
@@ -159,9 +160,9 @@ export async function removerItemDoCatalogo(
 export type ResultadoAtualizacao = { removidos: number; adicionados: number; auditoriaId: string };
 
 /**
- * Troca o catálogo pelo padrão atual (`CATALOGO_PADRAO`) em UMA transação: itens que saíram são
- * apagados dos dois baús (o estoque dos que continuam fica como está), a versão dos baús sobe e a
- * auditoria é gravada junto. Exclusiva do dono.
+ * Troca o catálogo pelo padrão atual (`CATALOGO_PADRAO`) em UMA transação e grava nos dois baús o
+ * estoque contado (`ESTOQUE_INICIAL`) no lugar do que havia; a versão dos baús sobe e a auditoria
+ * é gravada junto. Gerência e dono.
  */
 export async function atualizarCatalogoParaPadrao(usuario: UsuarioSessao): Promise<ResultadoAtualizacao> {
   const quem = refUsuario(usuario);
@@ -185,18 +186,14 @@ export async function atualizarCatalogoParaPadrao(usuario: UsuarioSessao): Promi
     const agora = new Date().toISOString();
     tx.set(refCatalogo(db), { categorias: novas, atualizadoEm: agora });
     for (const tipo of TIPOS) {
-      const itens: DocBau['itens'] = {};
-      for (const [cat, mapa] of Object.entries(baus[tipo].itens)) {
-        const mantidos = Object.fromEntries(Object.entries(mapa ?? {}).filter(([item]) => novos.has(`${cat}/${item}`)));
-        if (Object.keys(mantidos).length > 0) itens[cat] = mantidos;
-      }
+      const itens = structuredClone(ESTOQUE_INICIAL[tipo]) as DocBau['itens'];
       tx.set(refBau(db, tipo), { versao: baus[tipo].versao + 1, itens, atualizadoEm: agora });
     }
     const auditoriaId = registrarAuditoriaTx(tx, db, {
       acao: 'catalogo.remover_item',
       usuario: quem,
       alvo: { categoriaId: 'catalogo', itemId: 'padrao', nomeItem: 'Catálogo padrão' },
-      resumo: `Atualizou o catálogo: ${removidos} itens removidos, ${adicionados} adicionados.`,
+      resumo: `Atualizou o catálogo (${removidos} removidos, ${adicionados} novos) e o estoque dos baús.`,
       antes: { itens: antigos.size },
       depois: { itens: novos.size },
     });

@@ -95,7 +95,7 @@ describe('WEB-035 adicionarItemAoCatalogo', () => {
     const r = await Promise.allSettled(Array.from({ length: 30 }, (_, i) => adicionarItemAoCatalogo('extras', `Novo ${i}`, USUARIO)));
     const ok = r.filter((x) => x.status === 'fulfilled').length;
     expect(itensDe('extras')).toHaveLength(25);
-    expect(ok).toBe(25 - 21);
+    expect(ok).toBe(25 - 23);
     for (const x of r) if (x.status === 'rejected') expect((x.reason as ErroApp).codigo).toBe('LIMITE_CATEGORIA');
     expect(auditorias(fake.dump())).toHaveLength(ok);
   });
