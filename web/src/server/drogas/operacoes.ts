@@ -20,6 +20,7 @@ import type { Db, DocumentReference } from '../firebase';
 import { getDb } from '../firebase';
 import type { TipoBau, UsuarioRef } from '../dominio/tipos';
 import { ErroApp } from '../erros';
+import { sanearTexto, temCaractereVisivel } from '../validacao/texto';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento } from '../webhooks/eventos';
 
@@ -51,6 +52,20 @@ export interface PedidoDroga {
   quantidade: unknown;
   motivo: unknown;
   deposito?: unknown;
+  /** Para quem foi vendido. Obrigatório quando o motivo é uma venda. */
+  comprador?: unknown;
+}
+
+function lerComprador(v: unknown, obrigatorio: boolean): string {
+  const bruto = typeof v === 'string' ? sanearTexto(v) : '';
+  if (!temCaractereVisivel(bruto)) {
+    if (obrigatorio) throw new ErroApp('VALIDACAO', 'Informe para quem foi vendido.');
+    return '';
+  }
+  if (Array.from(bruto).length > LIMITES.ANOTACAO_MAX) {
+    throw new ErroApp('VALIDACAO', `O nome do comprador pode ter no máximo ${LIMITES.ANOTACAO_MAX} caracteres.`);
+  }
+  return bruto;
 }
 
 function lerDeposito(v: unknown): number {
@@ -77,7 +92,9 @@ export async function movimentarDroga(p: PedidoDroga, usuario: UsuarioRef): Prom
   const motivo = p.motivo as string;
   const deposito = lerDeposito(p.deposito);
   const quem: UsuarioRef = { id: usuario.id, nome: usuario.nome };
-  const venda = acao === 'retirar' && motivoCobra(motivo as MotivoRetirada) ? calcularVenda(motivo as MotivoRetirada, q.valor) : null;
+  const ehVenda = acao === 'retirar' && motivoCobra(motivo as MotivoRetirada);
+  const comprador = acao === 'retirar' ? lerComprador(p.comprador, ehVenda) : '';
+  const venda = ehVenda ? calcularVenda(motivo as MotivoRetirada, q.valor) : null;
   const esperado = venda?.total ?? 0;
 
   await garantirCatalogo();
@@ -127,7 +144,7 @@ export async function movimentarDroga(p: PedidoDroga, usuario: UsuarioRef): Prom
       nomeCategoria: categoria.nome,
       quantidade: q.valor,
       saldoResultante: novo,
-      resumo: `Motivo: ${ROTULO_MOTIVO[motivo] ?? motivo}`,
+      resumo: `Motivo: ${ROTULO_MOTIVO[motivo] ?? motivo}${comprador ? ` · Vendido para: ${comprador}` : ''}`,
       auditoriaId: null,
     });
     const eventos: ComEvento<ResultadoDrogaDTO>['eventos'] = [{ tipo: 'bau.movimento', bau: tipo, log }];
@@ -163,9 +180,10 @@ export async function movimentarDroga(p: PedidoDroga, usuario: UsuarioRef): Prom
       quantidade: q.valor,
       esperado,
       deposito,
+      comprador,
     });
     if (acao === 'retirar' && devido > 0) {
-      eventos.push({ tipo: 'droga.pendencia', usuario: quem, devido, quantidade: q.valor, motivo, jaPendente: pend.devido > 0 });
+      eventos.push({ tipo: 'droga.pendencia', usuario: quem, devido, quantidade: q.valor, motivo, comprador, jaPendente: pend.devido > 0 });
     }
     return { dto: { estoque: novo, versao, esperado, devido }, eventos };
   });

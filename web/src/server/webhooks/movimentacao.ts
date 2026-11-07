@@ -75,12 +75,15 @@ export function embedAvisoBau(log: LogBau, tipo: TipoBau): Embed {
 }
 
 /** Aviso aos gerentes: alguém retirou droga para venda e ainda não depositou o valor. */
-export function embedPendenciaDroga(e: { usuario: UsuarioRef; devido: number; quantidade: number; motivo: string; jaPendente: boolean }): Embed {
+export function embedPendenciaDroga(e: { usuario: UsuarioRef; devido: number; quantidade: number; motivo: string; comprador: string; jaPendente: boolean }): Embed {
   return garantirLimites({
     title: e.jaPendente ? '🚨 Retirou de novo e segue em pendência' : '⚠️ Pendência de depósito',
     description: `**${limpo(e.usuario.nome, 100)}** retirou **${formatarNumero(e.quantidade)}x Saco de Meta** (${limpo(ROTULO_MOTIVO[e.motivo] ?? e.motivo, 60)}) e ainda precisa depositar no caixa.`,
     color: COR.aviso,
-    fields: [{ name: 'Falta depositar', value: formatarDinheiro(e.devido), inline: true }],
+    fields: [
+      { name: 'Falta depositar', value: formatarDinheiro(e.devido), inline: true },
+      ...(e.comprador ? [{ name: 'Vendido para', value: limpo(e.comprador, 100), inline: true }] : []),
+    ],
     footer: { text: RODAPE },
     timestamp: new Date().toISOString(),
   });

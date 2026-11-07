@@ -11,7 +11,7 @@ export type EventoDominio =
   | { tipo: 'bau.movimento'; bau: TipoBau; log: LogBau }
   | { tipo: 'bau.aviso'; baus: TipoBau[]; log: LogBau }
   | { tipo: 'caixa.movimento'; log: LogCaixa }
-  | { tipo: 'droga.pendencia'; usuario: UsuarioRef; devido: number; quantidade: number; motivo: string; jaPendente: boolean };
+  | { tipo: 'droga.pendencia'; usuario: UsuarioRef; devido: number; quantidade: number; motivo: string; comprador: string; jaPendente: boolean };
 
 /** Resultado de uma escrita: a resposta da rota e os avisos a publicar DEPOIS do commit (WEB-051). */
 export interface ComEvento<T> {
