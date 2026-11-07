@@ -56,3 +56,12 @@ export const esquemaConfirmar = z.strictObject({
   versao: z.number(),
   linhas: z.array(linhaAjuste),
 });
+
+export const esquemaDroga = z.strictObject({
+  acao: z.string(),
+  quantidade: numeroOuTexto,
+  motivo: z.string(),
+  deposito: numeroOuTexto.optional(),
+});
+
+export const esquemaDeposito = z.strictObject({ valor: numeroOuTexto });

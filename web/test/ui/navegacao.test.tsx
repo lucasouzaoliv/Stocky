@@ -55,7 +55,7 @@ describe('WEB-053 teclado e item atual (AC3)', () => {
     render(<Navegacao nivel={3} csrf="tok" />);
     const controles = [...screen.getByRole('navigation', { name: 'Principal' }).querySelectorAll('a, button')];
     expect(controles.map((c) => c.textContent)).toEqual([
-      'Baú dos Membros', 'Baú da Gerência', 'Caixa', 'Movimentações', 'Mais', 'Painel', 'Auditoria', 'Sair',
+      'Baú dos Membros', 'Baú da Gerência', 'Caixa', 'Drogas', 'Mais', 'Movimentações', 'Calculadora', 'Dados', 'Painel', 'Auditoria', 'Sair',
     ]);
     for (const c of controles) expect((c as HTMLElement).tabIndex).toBeGreaterThanOrEqual(0);
     // links são <a href> e o botão é <button>: Enter ativa ambos nativamente
@@ -96,13 +96,13 @@ describe('WEB-053 sair (AC5)', () => {
 });
 
 describe('barra inferior e menu "Mais" no celular', () => {
-  it('Painel, Auditoria e Sair ficam no painel controlado pelo botão Mais', () => {
+  it('Movimentações, Calculadora, Dados, Painel, Auditoria e Sair ficam no painel controlado pelo botão Mais', () => {
     render(<Navegacao nivel={3} csrf="tok" />);
     const mais = screen.getByRole('button', { name: 'Mais' });
     const painel = document.getElementById(mais.getAttribute('aria-controls')!)!;
     expect(mais).toHaveAttribute('aria-expanded', 'false');
     expect(painel).toHaveAttribute('data-aberto', 'nao');
-    expect([...painel.querySelectorAll('a, button')].map((c) => c.textContent)).toEqual(['Painel', 'Auditoria', 'Sair']);
+    expect([...painel.querySelectorAll('a, button')].map((c) => c.textContent)).toEqual(['Movimentações', 'Calculadora', 'Dados', 'Painel', 'Auditoria', 'Sair']);
     fireEvent.click(mais);
     expect(mais).toHaveAttribute('aria-expanded', 'true');
     expect(painel).toHaveAttribute('data-aberto', 'sim');
@@ -117,11 +117,11 @@ describe('barra inferior e menu "Mais" no celular', () => {
     expect(mais).toHaveFocus();
   });
 
-  it('nível 1: só o Sair no Mais, sem links de gerência', () => {
+  it('nível 1: Movimentações, Calculadora e Sair no Mais, sem links de gerência', () => {
     render(<Navegacao nivel={1} csrf="tok" />);
     const mais = screen.getByRole('button', { name: 'Mais' });
     const painel = document.getElementById(mais.getAttribute('aria-controls')!)!;
-    expect([...painel.querySelectorAll('a, button')].map((c) => c.textContent)).toEqual(['Sair']);
+    expect([...painel.querySelectorAll('a, button')].map((c) => c.textContent)).toEqual(['Movimentações', 'Calculadora', 'Sair']);
   });
 
   it('mostra a marca configurável em um só arquivo', async () => {

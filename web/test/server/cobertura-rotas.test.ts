@@ -76,9 +76,9 @@ afterEach(() => {
 });
 
 describe('WEB-026 manifesto e varredura', () => {
-  it('o manifesto lista exatamente as 21 rotas do contrato, sem repetição', () => {
-    expect(MANIFESTO).toHaveLength(21);
-    expect(new Set(MANIFESTO.map((e) => chave(e.metodo, e.caminho))).size).toBe(21);
+  it('o manifesto lista exatamente as 26 rotas do contrato, sem repetição', () => {
+    expect(MANIFESTO).toHaveLength(26);
+    expect(new Set(MANIFESTO.map((e) => chave(e.metodo, e.caminho))).size).toBe(26);
   });
 
   it('AC1: todo route.ts e todo método exportado estão no manifesto, e só eles', () => {
@@ -93,9 +93,9 @@ describe('WEB-026 manifesto e varredura', () => {
     expect([...achados].sort()).toEqual([...declarados].sort());
   });
 
-  it('AC1: com a onda 6 as 21 rotas do manifesto existem (nenhuma de onda futura pendente)', () => {
+  it('AC1: com a onda 6 as 26 rotas do manifesto existem (nenhuma de onda futura pendente)', () => {
     expect(MANIFESTO.filter((x) => !existe(x)).map((e) => e.caminho)).toEqual([]);
-    expect(implementadas).toHaveLength(21);
+    expect(implementadas).toHaveLength(26);
     expect(Math.max(...MANIFESTO.map((e) => e.onda))).toBe(6);
   });
 
@@ -204,7 +204,7 @@ describe('WEB-026 AC3 execução com cinco perfis', () => {
 
 describe('WEB-045 onda 6: rotas de logs e auditoria', () => {
   it('as 4 rotas da onda 6 existem, exigem o nível do manifesto e a auditoria só exporta GET', async () => {
-    const onda6 = MANIFESTO.filter((e) => e.onda === 6);
+    const onda6 = MANIFESTO.filter((e) => e.onda === 6 && /^\/api\/(logs|auditoria)/.test(e.caminho));
     expect(onda6.map((e) => `${e.metodo} ${e.caminho}`).sort()).toEqual([
       'GET /api/auditoria',
       'GET /api/auditoria/[id]',

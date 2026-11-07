@@ -2,7 +2,8 @@ import 'server-only';
 import { formatarDinheiro, formatarNumero } from '@/compartilhado/formatacao';
 import type { CanalWebhook } from '../env';
 import type { Embed } from '../discord/webhook';
-import type { LogBau, LogCaixa, TipoBau } from '../dominio/tipos';
+import { ROTULO_MOTIVO } from '@/compartilhado/drogas';
+import type { LogBau, LogCaixa, TipoBau, UsuarioRef } from '../dominio/tipos';
 import { COR, RODAPE, escaparMarkdown, garantirLimites, truncar } from './formatacao';
 
 const NOME_BAU: Readonly<Record<TipoBau, string>> = { membros: 'Baú dos Membros', gerencia: 'Baú da Gerência' };
@@ -70,5 +71,17 @@ export function embedAvisoBau(log: LogBau, tipo: TipoBau): Embed {
     ],
     footer: { text: RODAPE },
     timestamp: log.data,
+  });
+}
+
+/** Aviso aos gerentes: alguém retirou droga para venda e ainda não depositou o valor. */
+export function embedPendenciaDroga(e: { usuario: UsuarioRef; devido: number; quantidade: number; motivo: string; jaPendente: boolean }): Embed {
+  return garantirLimites({
+    title: e.jaPendente ? '🚨 Retirou de novo e segue em pendência' : '⚠️ Pendência de depósito',
+    description: `**${limpo(e.usuario.nome, 100)}** retirou **${formatarNumero(e.quantidade)}x Saco de Meta** (${limpo(ROTULO_MOTIVO[e.motivo] ?? e.motivo, 60)}) e ainda precisa depositar no caixa.`,
+    color: COR.aviso,
+    fields: [{ name: 'Falta depositar', value: formatarDinheiro(e.devido), inline: true }],
+    footer: { text: RODAPE },
+    timestamp: new Date().toISOString(),
   });
 }

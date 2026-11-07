@@ -2,10 +2,13 @@
 
 import {
   Banknote,
+  Calculator,
+  ChartColumn,
   Ellipsis,
   History,
   LayoutDashboard,
   LogOut,
+  Pill,
   ScrollText,
   Vault,
   Warehouse,
@@ -32,8 +35,11 @@ export const ITENS_MENU: readonly ItemMenu[] = [
   { rotulo: 'Baú dos Membros', href: '/bau/membros', nivelMinimo: 1, icone: Warehouse, principal: true },
   { rotulo: 'Baú da Gerência', href: '/bau/gerencia', nivelMinimo: 2, icone: Vault, principal: true },
   { rotulo: 'Caixa', href: '/caixa', nivelMinimo: 2, icone: Banknote, principal: true },
+  { rotulo: 'Drogas', href: '/drogas', nivelMinimo: 1, icone: Pill, principal: true },
+  { rotulo: 'Movimentações', href: '/logs', nivelMinimo: 1, icone: History, principal: false },
+  { rotulo: 'Calculadora', href: '/calculadora', nivelMinimo: 1, icone: Calculator, principal: false },
+  { rotulo: 'Dados', href: '/dados', nivelMinimo: 2, icone: ChartColumn, principal: false },
   { rotulo: 'Painel', href: '/painel', nivelMinimo: 2, icone: LayoutDashboard, principal: false },
-  { rotulo: 'Movimentações', href: '/logs', nivelMinimo: 1, icone: History, principal: true },
   { rotulo: 'Auditoria', href: '/auditoria', nivelMinimo: 2, icone: ScrollText, principal: false },
 ];
 
