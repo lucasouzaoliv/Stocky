@@ -84,7 +84,7 @@ describe('WEB-037 POST /api/catalogo/itens (nível 2)', () => {
     expect((await adicionar(2, { categoriaId: 'nada', nome: 'Faca' })).status).toBe(404);
     const dup = await adicionar(2, { categoriaId: 'medicamentos', nome: 'GAZE' });
     expect([dup.status, dup.corpo.codigo]).toEqual([409, 'DUPLICADO']);
-    for (let i = 0; i < 21; i++) expect((await adicionar(2, { categoriaId: 'drogas', nome: `D${i}` })).status).toBe(201);
+    for (let i = 0; i < 19; i++) expect((await adicionar(2, { categoriaId: 'drogas', nome: `D${i}` })).status).toBe(201);
     const lim = await adicionar(2, { categoriaId: 'drogas', nome: 'D-extra' });
     expect([lim.status, lim.corpo.codigo]).toEqual([409, 'LIMITE_CATEGORIA']);
     expect(itens('drogas')).toHaveLength(25);

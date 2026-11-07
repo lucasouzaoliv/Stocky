@@ -22,7 +22,7 @@ function AtualizarCatalogoDono({ cliente, csrf }: { cliente: ClienteApi; csrf: s
 
   async function atualizar() {
     if (trava.current) return;
-    if (!window.confirm('Trocar o catálogo pelo da season atual? Os itens antigos saem dos baús.')) return;
+    if (!window.confirm('Trocar o catálogo pelo da season atual e colocar nos baús o estoque contado? O estoque atual dos baús será substituído.')) return;
     trava.current = true;
     setEnviando(true);
     setMensagem('');
@@ -40,7 +40,7 @@ function AtualizarCatalogoDono({ cliente, csrf }: { cliente: ClienteApi; csrf: s
       <h2 id="painel-atualizar" className="painel__titulo">
         Atualizar catálogo
       </h2>
-      <p className="painel__ajuda">Troca a lista de itens pela da season atual. Itens que saíram são apagados dos dois baús.</p>
+      <p className="painel__ajuda">Troca a lista de itens pela da season atual e coloca nos dois baús o estoque contado nos prints. O estoque atual dos baús é substituído.</p>
       <div className="bau__acoes">
         <button type="button" className="botao botao--perigo" onClick={() => void atualizar()} disabled={enviando}>
           {enviando ? 'Atualizando…' : 'Atualizar catálogo'}

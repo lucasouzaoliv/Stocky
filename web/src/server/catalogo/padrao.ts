@@ -34,6 +34,7 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'desert', nome: 'Desert Eagle' },
       { id: 'knife', nome: 'Knife' },
       { id: 'cz_scorpion_evo', nome: 'CZ Scorpion Evo' },
+      { id: 'c_4', nome: 'C-4' },
     ],
   },
   {
@@ -67,6 +68,9 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'serra_eletrica', nome: 'Serra Elétrica' },
       { id: 'pistola_pneumatica', nome: 'Pistola Pneumática' },
       { id: 'lockpick', nome: 'Lockpick' },
+      { id: 'alicate_de_corte', nome: 'Alicate de Corte' },
+      { id: 'vara_nivel_3', nome: 'Vara Nível 3' },
+      { id: 'removedor_de_digitais', nome: 'Removedor de Digitais' },
     ],
   },
   {
@@ -78,6 +82,8 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'lsd', nome: 'LSD' },
       { id: 'meta', nome: 'Meta' },
       { id: 'insumo_para_fabricacao_de_drogas', nome: 'Insumo para Fabricação de Drogas' },
+      { id: 'saco_de_metanfetamina', nome: 'Saco de Metanfetamina' },
+      { id: 'mesa_de_metanfetamina', nome: 'Mesa de Metanfetamina' },
     ],
   },
   {
@@ -106,6 +112,8 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'arquivo_ghost', nome: 'Arquivo Ghost' },
       { id: 'lista_de_modificacoes', nome: 'Lista de Modificações' },
       { id: 'dinheiro', nome: 'Dinheiro' },
+      { id: 'snikkel', nome: 'Snikkel' },
+      { id: 'cafe_do_cassino', nome: 'Café do Cassino' },
     ],
   },
 ]);
