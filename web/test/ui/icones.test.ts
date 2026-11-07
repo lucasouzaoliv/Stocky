@@ -27,7 +27,7 @@ describe('imagens dos itens', () => {
     const { existsSync } = await import('node:fs');
     const { resolve } = await import('node:path');
     const { imagemDoItem } = await import('@/components/imagens');
-    for (const id of ['gaze', 'adrenalina', 'usp', 'desert', 'colete', 'muni_9mm', 'meta', 'notas_marcadas']) {
+    for (const id of ['gaze', 'adrenalina', 'usp', 'desert', 'colete', 'muni_9mm', 'saco_de_meta', 'notas_marcadas']) {
       const url = imagemDoItem(id);
       expect(url).toBe(`/itens/${id}.webp`);
       expect(existsSync(resolve(process.cwd(), 'public', url!.slice(1)))).toBe(true);

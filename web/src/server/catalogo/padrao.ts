@@ -80,9 +80,8 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
     itens: [
       { id: 'cocaina', nome: 'Cocaína' },
       { id: 'lsd', nome: 'LSD' },
-      { id: 'meta', nome: 'Meta' },
+      { id: 'saco_de_meta', nome: 'Saco de Meta' },
       { id: 'insumo_para_fabricacao_de_drogas', nome: 'Insumo para Fabricação de Drogas' },
-      { id: 'saco_de_metanfetamina', nome: 'Saco de Metanfetamina' },
       { id: 'mesa_de_metanfetamina', nome: 'Mesa de Metanfetamina' },
     ],
   },
