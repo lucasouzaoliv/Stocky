@@ -1,5 +1,5 @@
 import 'server-only';
-import type { ZerarDTO } from '@/compartilhado/api-tipos';
+import { NOME_DO_BAU, TIPOS_BAU, type ZerarDTO } from '@/compartilhado/api-tipos';
 import { registrarAuditoriaTx } from '../auditoria/registrar';
 import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
@@ -31,7 +31,7 @@ export async function zerarBauComEvento(alvo: unknown, usuario: UsuarioSessao): 
   }
   if (usuario.nivel !== 3) throw new ErroApp('SEM_PERMISSAO');
   const escolhido = exigirAlvoZerar(alvo);
-  const alvos: TipoBau[] = escolhido === 'ambos' ? ['membros', 'gerencia'] : [escolhido];
+  const alvos: TipoBau[] = escolhido === 'ambos' ? [...TIPOS_BAU] : [escolhido];
   const quem = { id: usuario.id, nome: usuario.nome };
 
   await garantirCatalogo();
@@ -56,7 +56,7 @@ export async function zerarBauComEvento(alvo: unknown, usuario: UsuarioSessao): 
       tx.set(refBau(db, tipo), { versao: bau.versao + 1, itens: {}, atualizadoEm: agora });
     });
 
-    const nomes = alvos.map((t) => (t === 'membros' ? 'Baú dos Membros' : 'Baú da Gerência')).join(' e ');
+    const nomes = alvos.map((t) => NOME_DO_BAU[t]).join(' e ');
     const resumo = `Zerou ${nomes}: ${itens} itens, ${unidades} unidades.`;
     const auditoriaId = registrarAuditoriaTx(tx, db, {
       acao: 'bau.zerar',

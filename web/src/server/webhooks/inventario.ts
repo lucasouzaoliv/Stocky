@@ -14,7 +14,7 @@ export async function atualizarInventario(tipoBruto: TipoBau): Promise<Resultado
     const tipo = exigirTipoBau(tipoBruto);
     const bau = await lerBau(tipo);
     const embeds = montarEmbedsInventario(bau, `${getEnv().appUrl}/bau/${tipo}`);
-    const chave: ChaveMensagem = tipo === 'membros' ? 'inventario_membros' : 'inventario_gerencia';
+    const chave: ChaveMensagem = `inventario_${tipo}`;
     return await publicarMensagemFixa(chave, tipo === 'membros' ? 'inventarioMembros' : 'inventarioGerencia', { embeds });
   } catch (e) {
     log.erro('Falha ao montar o inventário para o Discord', e);

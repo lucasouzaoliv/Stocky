@@ -18,6 +18,7 @@ const TAMANHO_PAGINA = 20;
 const ABAS: ReadonlyArray<{ escopo: EscopoLog; rotulo: string; nivel: NivelAcesso; url: string }> = [
   { escopo: 'membros', rotulo: 'Baú dos Membros', nivel: 1, url: '/api/logs/bau/membros' },
   { escopo: 'gerencia', rotulo: 'Baú da Gerência', nivel: 2, url: '/api/logs/bau/gerencia' },
+  { escopo: 'casa', rotulo: 'Baú da Casa', nivel: 2, url: '/api/logs/bau/casa' },
   { escopo: 'caixa', rotulo: 'Caixa', nivel: 2, url: '/api/logs/caixa' },
 ];
 

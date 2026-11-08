@@ -12,12 +12,13 @@ const AGORA = '2026-11-05T12:00:00.000Z';
 
 /** Estado inicial já semeado (catálogo padrão, dois baús e saldo), para os testes não passarem pela semente. */
 export function seedBase(
-  o: { membros?: ItensBau; gerencia?: ItensBau; versao?: number; saldo?: { sujo?: number; limpo?: number }; extra?: Record<string, Dados> } = {},
+  o: { membros?: ItensBau; gerencia?: ItensBau; casa?: ItensBau; versao?: number; saldo?: { sujo?: number; limpo?: number }; extra?: Record<string, Dados> } = {},
 ): Record<string, Dados> {
   return {
     'config/catalogo': { categorias: structuredClone(CATALOGO_PADRAO), atualizadoEm: AGORA },
     'baus/membros': { versao: o.versao ?? 0, itens: o.membros ?? {}, atualizadoEm: AGORA },
     'baus/gerencia': { versao: o.versao ?? 0, itens: o.gerencia ?? {}, atualizadoEm: AGORA },
+    'baus/casa': { versao: o.versao ?? 0, itens: o.casa ?? {}, atualizadoEm: AGORA },
     'caixa/saldo': { sujo: o.saldo?.sujo ?? 0, limpo: o.saldo?.limpo ?? 0, versao: 0, atualizadoEm: AGORA },
     ...(o.extra ?? {}),
   };

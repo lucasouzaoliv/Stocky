@@ -26,6 +26,7 @@ interface AlvoRemocao {
 const BAUS: Array<[TipoBau, string]> = [
   ['membros', 'Baú dos Membros'],
   ['gerencia', 'Baú da Gerência'],
+  ['casa', 'Baú da Casa'],
 ];
 
 export function Catalogo({ cliente = apiPadrao }: CatalogoProps) {
@@ -273,14 +274,15 @@ function DialogoRemover({
     const controle = new AbortController();
     let ativo = true;
     void (async () => {
-      const [membros, gerencia] = await Promise.all(
+      const [membros, gerencia, casa] = await Promise.all(
         BAUS.map(([tipo]) => cliente.get<BauDTO>(`/api/bau/${tipo}`, { signal: controle.signal })),
       );
       if (!ativo) return;
-      if (membros?.ok && gerencia?.ok) {
+      if (membros?.ok && gerencia?.ok && casa?.ok) {
         setImpacto({
           membros: somaItem(membros.dados, categoria.id, item.id),
           gerencia: somaItem(gerencia.dados, categoria.id, item.id),
+          casa: somaItem(casa.dados, categoria.id, item.id),
         });
       } else {
         setImpacto('erro');

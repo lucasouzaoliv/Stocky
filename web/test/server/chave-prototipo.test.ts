@@ -81,7 +81,7 @@ describe('QA-W1 dados antigos: item "constructor" já no catálogo', () => {
   it('o dono ainda remove do catálogo o "constructor" antigo: contagens numéricas, baú limpo', async () => {
     abrir();
     const r = await removerItemDoCatalogo('armas', 'constructor', DONO);
-    expect(r.removidoDe).toEqual({ membros: 0, gerencia: 7 });
+    expect(r.removidoDe).toEqual({ membros: 0, gerencia: 7, casa: 0 });
     const dump = fake.dump();
     expect((dump['baus/gerencia'] as { itens: unknown }).itens).toEqual({});
     expect((dump['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { colt: 4 } });

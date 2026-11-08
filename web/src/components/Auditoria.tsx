@@ -21,7 +21,7 @@ export const ROTULO_ACAO_AUDITORIA: Record<AcaoAuditoria, string> = {
 };
 
 const ACOES = Object.keys(ROTULO_ACAO_AUDITORIA) as AcaoAuditoria[];
-const ROTULO_BAU: Record<string, string> = { membros: 'Baú dos Membros', gerencia: 'Baú da Gerência' };
+const ROTULO_BAU: Record<string, string> = { membros: 'Baú dos Membros', gerencia: 'Baú da Gerência', casa: 'Baú da Casa' };
 
 export function Auditoria({ cliente = apiPadrao }: AuditoriaProps) {
   const [acao, setAcao] = useState<AcaoAuditoria | ''>('');

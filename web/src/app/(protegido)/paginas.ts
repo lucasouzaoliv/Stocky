@@ -4,6 +4,7 @@ import type { NivelAcesso } from '@/compartilhado/api-tipos';
 export const NIVEL_POR_PAGINA: ReadonlyArray<{ prefixo: string; nivel: NivelAcesso }> = [
   { prefixo: '/bau/membros', nivel: 1 },
   { prefixo: '/bau/gerencia', nivel: 2 },
+  { prefixo: '/bau/casa', nivel: 2 },
   { prefixo: '/caixa', nivel: 2 },
   { prefixo: '/painel', nivel: 2 },
   { prefixo: '/ajuste', nivel: 2 },

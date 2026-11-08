@@ -28,6 +28,9 @@ export default async function PaginaPainel() {
             <Link className="botao botao--secundario" href="/ajuste/gerencia">
               Ajustar Baú da Gerência
             </Link>
+            <Link className="botao botao--secundario" href="/ajuste/casa">
+              Ajustar Baú da Casa
+            </Link>
           </div>
         </section>
         <Catalogo />

@@ -28,6 +28,8 @@ describe('atualizarCatalogoParaPadrao', () => {
     expect((d['config/catalogo'] as { categorias: unknown[] }).categorias).toHaveLength(CATALOGO_PADRAO.length);
     expect(d['baus/membros']).toMatchObject({ versao: 5, itens: ESTOQUE_INICIAL.membros });
     expect(d['baus/gerencia']).toMatchObject({ itens: ESTOQUE_INICIAL.gerencia });
+    expect(d['baus/casa']).toMatchObject({ itens: ESTOQUE_INICIAL.casa });
+    expect(d['caixa/saldo']).toMatchObject({ sujo: 73924 });
   });
 
   it('todo item do estoque contado existe no catálogo padrão, na categoria certa, com quantidade válida', () => {

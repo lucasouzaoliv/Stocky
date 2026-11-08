@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 const TITULOS: Record<TipoBau, string> = {
   membros: 'Ajuste em massa: Baú dos Membros',
   gerencia: 'Ajuste em massa: Baú da Gerência',
+  casa: 'Ajuste em massa: Baú da Casa',
 };
 
 function tipoValido(valor: string): valor is TipoBau {

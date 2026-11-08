@@ -1,10 +1,10 @@
 import 'server-only';
-import type { ItemCatalogo } from '@/compartilhado/api-tipos';
+import { TIPOS_BAU, type ItemCatalogo } from '@/compartilhado/api-tipos';
 import { LIMITES } from '@/compartilhado/limites';
 import { registrarAuditoriaTx } from '../auditoria/registrar';
 import { ErroApp } from '../erros';
 import { getDb } from '../firebase';
-import { lerDocBau, mapaDaCategoria, quantidadeNoBau, refBau, refCatalogo } from '../dominio/refs';
+import { lerDocBau, lerDocSaldo, mapaDaCategoria, quantidadeNoBau, refBau, refCatalogo, refSaldo } from '../dominio/refs';
 import type { CategoriaCatalogo, DocBau, TipoBau, UsuarioRef, UsuarioSessao } from '../dominio/tipos';
 import { registrarLogTxCompleto } from '../logs/registrar';
 import type { ComEvento, EventoDominio } from '../webhooks/eventos';
@@ -15,7 +15,7 @@ import { ESTOQUE_INICIAL } from './estoque-inicial';
 import { CATALOGO_PADRAO } from './padrao';
 import { garantirCatalogo } from './semente';
 
-const TIPOS: readonly TipoBau[] = ['membros', 'gerencia'];
+const TIPOS: readonly TipoBau[] = TIPOS_BAU;
 
 function refUsuario(u: UsuarioRef): UsuarioRef {
   if (typeof u?.id !== 'string' || !u.id || typeof u.nome !== 'string' || !u.nome) throw new ErroApp('INTERNO');
@@ -93,9 +93,9 @@ export async function removerItemDoCatalogoComEvento(
   const db = getDb();
   return await db.runTransaction(async (tx) => {
     const catalogo = await lerCatalogoTx(tx, db);
-    const [membros, gerencia] = await Promise.all(TIPOS.map((t) => tx.get(refBau(db, t))));
-    if (!membros?.exists || !gerencia?.exists) throw new ErroApp('INTERNO');
-    const baus: Record<TipoBau, DocBau> = { membros: lerDocBau(membros.data()), gerencia: lerDocBau(gerencia.data()) };
+    const snaps = await Promise.all(TIPOS.map((t) => tx.get(refBau(db, t))));
+    if (snaps.some((s) => !s.exists)) throw new ErroApp('INTERNO');
+    const baus = Object.fromEntries(TIPOS.map((t, i) => [t, lerDocBau(snaps[i]!.data())])) as Record<TipoBau, DocBau>;
 
     const categoria = catalogo.categorias.find((c) => c.id === categoriaId);
     if (!categoria) throw new ErroApp('NAO_ENCONTRADO', 'Categoria não encontrada.');
@@ -103,10 +103,7 @@ export async function removerItemDoCatalogoComEvento(
     if (!item) throw new ErroApp('NAO_ENCONTRADO', 'Item não encontrado nesta categoria.');
 
     const agora = new Date().toISOString();
-    const removidoDe = {
-      membros: quantidadeNoBau(baus.membros.itens, categoriaId, itemId),
-      gerencia: quantidadeNoBau(baus.gerencia.itens, categoriaId, itemId),
-    };
+    const removidoDe = Object.fromEntries(TIPOS.map((t) => [t, quantidadeNoBau(baus[t].itens, categoriaId, itemId)])) as Record<TipoBau, number>;
     const categorias = catalogo.categorias.map((c) =>
       c.id === categoriaId ? { ...c, itens: c.itens.filter((i) => i.id !== itemId) } : c,
     );
@@ -123,7 +120,7 @@ export async function removerItemDoCatalogoComEvento(
       acao: 'catalogo.remover_item',
       usuario: quem,
       alvo: { categoriaId, itemId, nomeItem: item.nome },
-      resumo: `Removeu "${item.nome}" de ${categoria.nome} (membros: ${removidoDe.membros}, gerência: ${removidoDe.gerencia}).`,
+      resumo: `Removeu "${item.nome}" de ${categoria.nome} (membros: ${removidoDe.membros}, gerência: ${removidoDe.gerencia}, casa: ${removidoDe.casa}).`,
       antes: { ...removidoDe },
       depois: null,
     });
@@ -172,10 +169,11 @@ export async function atualizarCatalogoParaPadrao(usuario: UsuarioSessao): Promi
   const db = getDb();
   return await db.runTransaction(async (tx) => {
     const atual = await lerCatalogoTx(tx, db);
-    const [membros, gerencia] = await Promise.all(TIPOS.map((t) => tx.get(refBau(db, t))));
-    if (!membros?.exists || !gerencia?.exists) throw new ErroApp('INTERNO');
-    const baus: Record<TipoBau, DocBau> = { membros: lerDocBau(membros.data()), gerencia: lerDocBau(gerencia.data()) };
+    const snaps = await Promise.all(TIPOS.map((t) => tx.get(refBau(db, t))));
+    if (snaps.some((s) => !s.exists)) throw new ErroApp('INTERNO');
+    const baus = Object.fromEntries(TIPOS.map((t, i) => [t, lerDocBau(snaps[i]!.data())])) as Record<TipoBau, DocBau>;
 
+    const saldo = lerDocSaldo((await tx.get(refSaldo(db))).data());
     const novas = structuredClone(CATALOGO_PADRAO) as CategoriaCatalogo[];
     const ids = (cs: readonly CategoriaCatalogo[]) => new Set(cs.flatMap((c) => c.itens.map((i) => `${c.id}/${i.id}`)));
     const antigos = ids(atual.categorias);
@@ -189,11 +187,14 @@ export async function atualizarCatalogoParaPadrao(usuario: UsuarioSessao): Promi
       const itens = structuredClone(ESTOQUE_INICIAL[tipo]) as DocBau['itens'];
       tx.set(refBau(db, tipo), { versao: baus[tipo].versao + 1, itens, atualizadoEm: agora });
     }
+    // Dinheiro sujo = quantidade de notas marcadas contada nos baús; o limpo não muda.
+    const sujo = TIPOS.reduce((n, t) => n + quantidadeNoBau(ESTOQUE_INICIAL[t], 'extras', 'notas_marcadas'), 0);
+    tx.set(refSaldo(db), { sujo, limpo: saldo.limpo, versao: saldo.versao + 1, atualizadoEm: agora });
     const auditoriaId = registrarAuditoriaTx(tx, db, {
       acao: 'catalogo.remover_item',
       usuario: quem,
       alvo: { categoriaId: 'catalogo', itemId: 'padrao', nomeItem: 'Catálogo padrão' },
-      resumo: `Atualizou o catálogo (${removidos} removidos, ${adicionados} novos) e o estoque dos baús.`,
+      resumo: `Atualizou o catálogo (${removidos} removidos, ${adicionados} novos) o estoque dos baús e o dinheiro sujo.`,
       antes: { itens: antigos.size },
       depois: { itens: novos.size },
     });

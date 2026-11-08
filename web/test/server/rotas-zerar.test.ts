@@ -57,7 +57,7 @@ describe('WEB-039 POST /api/bau/zerar (nível 3, só o dono)', () => {
   it('AC1: dono com CSRF correto zera → 200 com o resumo', async () => {
     const r = await zerar(3);
     expect(r.status).toBe(200);
-    expect(r.corpo.dados).toMatchObject({ alvos: ['membros', 'gerencia'], itens: 3, unidades: 16 });
+    expect(r.corpo.dados).toMatchObject({ alvos: ['membros', 'gerencia', 'casa'], itens: 3, unidades: 16 });
     expect(estoque('membros')).toMatchObject({ itens: {}, versao: 3 });
     expect(estoque('gerencia')).toMatchObject({ itens: {}, versao: 3 });
     expect(auditorias(fake.dump())).toHaveLength(1);
@@ -114,7 +114,7 @@ describe('WEB-039 POST /api/bau/zerar (nível 3, só o dono)', () => {
     expect(unidades).toEqual([0, 16]);
     const lista = auditorias(fake.dump());
     expect(lista).toHaveLength(2);
-    expect(lista.filter((x) => JSON.stringify(x.antes) === JSON.stringify({ membros: {}, gerencia: {} }))).toHaveLength(1);
+    expect(lista.filter((x) => JSON.stringify(x.antes) === JSON.stringify({ membros: {}, gerencia: {}, casa: {} }))).toHaveLength(1);
     expect(logsDe(fake.dump(), 'membros')).toHaveLength(2);
   });
 

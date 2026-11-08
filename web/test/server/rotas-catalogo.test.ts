@@ -134,7 +134,7 @@ describe('WEB-037 DELETE /api/catalogo/itens/[categoriaId]/[itemId] (nível 3, s
   it('AC1a: o dono (nível 3) com CSRF correto remove → 200 com { item, removidoDe, auditoriaId }', async () => {
     const r = await remover(3);
     expect(r.status).toBe(200);
-    expect(r.corpo.dados).toMatchObject({ item: { id: 'analgesico', nome: 'Analgésico' }, removidoDe: { membros: 10, gerencia: 5 } });
+    expect(r.corpo.dados).toMatchObject({ item: { id: 'analgesico', nome: 'Analgésico' }, removidoDe: { membros: 10, gerencia: 5, casa: 0 } });
     expect(itens('medicamentos').some((i) => i.id === 'analgesico')).toBe(false);
     expect(estoque('membros')).toEqual({});
     expect(estoque('gerencia')).toEqual({});

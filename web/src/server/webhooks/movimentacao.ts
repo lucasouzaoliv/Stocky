@@ -2,11 +2,12 @@ import 'server-only';
 import { formatarDinheiro, formatarNumero } from '@/compartilhado/formatacao';
 import type { CanalWebhook } from '../env';
 import type { Embed } from '../discord/webhook';
+import { NOME_DO_BAU } from '@/compartilhado/api-tipos';
 import { ROTULO_MOTIVO } from '@/compartilhado/drogas';
 import type { LogBau, LogCaixa, TipoBau, UsuarioRef } from '../dominio/tipos';
 import { COR, RODAPE, escaparMarkdown, garantirLimites, truncar } from './formatacao';
 
-const NOME_BAU: Readonly<Record<TipoBau, string>> = { membros: 'Baú dos Membros', gerencia: 'Baú da Gerência' };
+const NOME_BAU: Readonly<Record<TipoBau, string>> = NOME_DO_BAU;
 
 /** Texto do usuário já limpo para o Discord: escapado e cortado antes de entrar em título, campo ou descrição. */
 const limpo = (t: string | null | undefined, max: number): string => truncar(escaparMarkdown(t ?? ''), max);
