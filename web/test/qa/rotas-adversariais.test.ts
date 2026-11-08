@@ -44,7 +44,7 @@ let fake: FakeFirestore;
 let saidas: string[];
 let tarefas: Array<() => Promise<void>>;
 
-function abrir(seed = seedBase({ membros: { armas: { colt: 10 } }, gerencia: { armas: { usp: 5 } }, saldo: { sujo: 100, limpo: 100 } })) {
+function abrir(seed = seedBase({ membros: { armas: { desert: 10 } }, gerencia: { armas: { usp: 5 } }, saldo: { sujo: 100, limpo: 100 } })) {
   fake = criarFakeFirestore({ seed });
   setDb(comoDb(fake));
 }
@@ -208,7 +208,7 @@ describe('QA CSRF: variações de Origin e token', () => {
       metodo: 'DELETE',
       cookies: dono.cookies,
       headers: { origin: APP },
-      params: { categoriaId: 'armas', itemId: 'colt' },
+      params: { categoriaId: 'armas', itemId: 'desert' },
     });
     expect(r.status).toBe(403);
     expect(escritas()).toHaveLength(0);
@@ -266,19 +266,19 @@ describe('QA open redirect no parâmetro volta e no callback', () => {
 /* ------------------------------------------------------------------ corpo hostil */
 describe('QA corpo hostil: __proto__, campos extras, tipos errados, JSON quebrado', () => {
   const corpos: Array<[string, string]> = [
-    ['__proto__ no topo', '{"categoriaId":"armas","itemId":"colt","quantidade":1,"__proto__":{"poluido":true}}'],
-    ['constructor.prototype', '{"categoriaId":"armas","itemId":"colt","quantidade":1,"constructor":{"prototype":{"poluido":true}}}'],
+    ['__proto__ no topo', '{"categoriaId":"armas","itemId":"desert","quantidade":1,"__proto__":{"poluido":true}}'],
+    ['constructor.prototype', '{"categoriaId":"armas","itemId":"desert","quantidade":1,"constructor":{"prototype":{"poluido":true}}}'],
     ['itemId __proto__', '{"categoriaId":"armas","itemId":"__proto__","quantidade":1}'],
     ['itemId com barra', '{"categoriaId":"armas","itemId":"../gerencia","quantidade":1}'],
-    ['itemId com ponto', '{"categoriaId":"armas","itemId":"itens.colt","quantidade":1}'],
-    ['quantidade objeto', '{"categoriaId":"armas","itemId":"colt","quantidade":{"$gt":0}}'],
-    ['quantidade lista', '{"categoriaId":"armas","itemId":"colt","quantidade":[1]}'],
-    ['quantidade negativa', '{"categoriaId":"armas","itemId":"colt","quantidade":-5}'],
-    ['quantidade -0 em texto', '{"categoriaId":"armas","itemId":"colt","quantidade":"-0"}'],
-    ['quantidade 1e3 em texto', '{"categoriaId":"armas","itemId":"colt","quantidade":"1e3"}'],
-    ['quantidade enorme', '{"categoriaId":"armas","itemId":"colt","quantidade":"999999999999999999999"}'],
-    ['quantidade 2^53', '{"categoriaId":"armas","itemId":"colt","quantidade":9007199254740993}'],
-    ['quantidade fullwidth', '{"categoriaId":"armas","itemId":"colt","quantidade":"１２"}'],
+    ['itemId com ponto', '{"categoriaId":"armas","itemId":"itens.desert","quantidade":1}'],
+    ['quantidade objeto', '{"categoriaId":"armas","itemId":"desert","quantidade":{"$gt":0}}'],
+    ['quantidade lista', '{"categoriaId":"armas","itemId":"desert","quantidade":[1]}'],
+    ['quantidade negativa', '{"categoriaId":"armas","itemId":"desert","quantidade":-5}'],
+    ['quantidade -0 em texto', '{"categoriaId":"armas","itemId":"desert","quantidade":"-0"}'],
+    ['quantidade 1e3 em texto', '{"categoriaId":"armas","itemId":"desert","quantidade":"1e3"}'],
+    ['quantidade enorme', '{"categoriaId":"armas","itemId":"desert","quantidade":"999999999999999999999"}'],
+    ['quantidade 2^53', '{"categoriaId":"armas","itemId":"desert","quantidade":9007199254740993}'],
+    ['quantidade fullwidth', '{"categoriaId":"armas","itemId":"desert","quantidade":"１２"}'],
     ['JSON quebrado', '{"categoriaId":'],
     ['JSON lista', '[1,2,3]'],
     ['JSON nulo', 'null'],
@@ -313,7 +313,7 @@ describe('QA corpo hostil: __proto__, campos extras, tipos errados, JSON quebrad
 
   it('ids hostis no DELETE do catálogo e na auditoria → 400 sem tocar o banco', async () => {
     const dono = await sessao(3);
-    for (const [categoriaId, itemId] of [['armas', '__proto__'], ['..', 'colt'], ['armas', 'colt%2F..'], ['ARMAS', 'colt'], ['armas', 'a'.repeat(51)]] as const) {
+    for (const [categoriaId, itemId] of [['armas', '__proto__'], ['..', 'desert'], ['armas', 'colt%2F..'], ['ARMAS', 'desert'], ['armas', 'a'.repeat(51)]] as const) {
       const r = await chamar(CATALOGO_REMOVER, {
         metodo: 'DELETE',
         cookies: dono.cookies,
@@ -358,7 +358,7 @@ describe('QA entradas enormes', () => {
     const linhas = Array.from({ length: 201 }, (_, i) => ({ categoriaId: 'armas', itemId: `item_${i}`, quantidade: 1 }));
     const r = await mutacao(PREVIA, 2, { linhas }, { tipo: 'membros' });
     expect(r.status).toBe(400);
-    const enorme = { linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 'x'.repeat(LIMITES.CORPO_AJUSTE_MAX_BYTES) }] };
+    const enorme = { linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 'x'.repeat(LIMITES.CORPO_AJUSTE_MAX_BYTES) }] };
     expect((await mutacao(CONFIRMAR, 2, { versao: 0, ...enorme }, { tipo: 'membros' })).status).toBe(413);
     expect(escritas()).toHaveLength(0);
   });
@@ -370,10 +370,10 @@ describe('QA entradas enormes', () => {
   });
 
   it('estoque perto de MAX_SAFE_INTEGER: soma que estoura é recusada e nada muda', async () => {
-    abrir(seedBase({ membros: { armas: { colt: Number.MAX_SAFE_INTEGER - 1 } } }));
-    const r = await mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'colt', quantidade: 5 }, { tipo: 'membros' });
+    abrir(seedBase({ membros: { armas: { desert: Number.MAX_SAFE_INTEGER - 1 } } }));
+    const r = await mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'desert', quantidade: 5 }, { tipo: 'membros' });
     expect(r.status).toBe(400);
-    expect(fake.dump()['baus/membros']!.itens).toEqual({ armas: { colt: Number.MAX_SAFE_INTEGER - 1 } });
+    expect(fake.dump()['baus/membros']!.itens).toEqual({ armas: { desert: Number.MAX_SAFE_INTEGER - 1 } });
   });
 });
 
@@ -413,10 +413,10 @@ describe('QA unicode e XSS em nomes e anotações', () => {
 /* ------------------------------------------------------------------ concorrência */
 describe('QA concorrência nas rotas', () => {
   it('duas confirmações do mesmo ajuste em paralelo: uma aplica, outra 409; auditoria única', async () => {
-    const linhas = [{ categoriaId: 'armas', itemId: 'colt', quantidade: 3 }];
+    const linhas = [{ categoriaId: 'armas', itemId: 'desert', quantidade: 3 }];
     const [a, b] = await Promise.all([
       mutacao(CONFIRMAR, 2, { versao: 0, linhas }, { tipo: 'membros' }),
-      mutacao(CONFIRMAR, 2, { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 7 }] }, { tipo: 'membros' }),
+      mutacao(CONFIRMAR, 2, { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 7 }] }, { tipo: 'membros' }),
     ]);
     expect([a.status, b.status].sort()).toEqual([200, 409]);
     expect(Object.keys(fake.dump()).filter((k) => k.startsWith('auditoria/'))).toHaveLength(1);
@@ -425,10 +425,10 @@ describe('QA concorrência nas rotas', () => {
   it('zerar em paralelo com adicionar: resultado sempre consistente com alguma ordem serial', async () => {
     const [z, add] = await Promise.all([
       mutacao(ZERAR, 3, { alvo: 'membros', confirmacao: 'ZERAR' }),
-      mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'colt', quantidade: 5 }, { tipo: 'membros' }),
+      mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'desert', quantidade: 5 }, { tipo: 'membros' }),
     ]);
     expect([z.status, add.status]).toEqual([200, 200]);
-    const colt = (fake.dump()['baus/membros']!.itens as Record<string, Record<string, number>>).armas?.colt ?? 0;
+    const colt = (fake.dump()['baus/membros']!.itens as Record<string, Record<string, number>>).armas?.desert ?? 0;
     expect([0, 5]).toContain(colt);
     const versao = fake.dump()['baus/membros']!.versao;
     expect(versao).toBe(2);
@@ -445,17 +445,17 @@ describe('QA concorrência nas rotas', () => {
 
   it('remover do catálogo em paralelo com ajuste da mesma versão: o ajuste perde (409) ou o item some, nunca reaparece', async () => {
     const [rem, aj] = await Promise.all([
-      mutacao(CATALOGO_REMOVER, 3, undefined, { categoriaId: 'armas', itemId: 'colt' }),
-      mutacao(CONFIRMAR, 2, { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 50 }] }, { tipo: 'membros' }),
+      mutacao(CATALOGO_REMOVER, 3, undefined, { categoriaId: 'armas', itemId: 'desert' }),
+      mutacao(CONFIRMAR, 2, { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 50 }] }, { tipo: 'membros' }),
     ]);
     expect(rem.status).toBe(200);
     const itens = fake.dump()['baus/membros']!.itens as Record<string, Record<string, number>>;
     if (aj.status === 200) {
       // ajuste veio antes: a remoção depois limpou o item
-      expect(itens.armas?.colt).toBeUndefined();
+      expect(itens.armas?.desert).toBeUndefined();
     } else {
       expect([400, 409]).toContain(aj.status);
-      expect(itens.armas?.colt).toBeUndefined();
+      expect(itens.armas?.desert).toBeUndefined();
     }
   });
 });
@@ -465,7 +465,7 @@ describe('QA nenhum segredo em resposta ou log', () => {
   it('webhook que falha com a URL na mensagem de erro não vaza a URL no log; respostas não citam o Discord', async () => {
     const urlMembros = ENV_TESTE.WEBHOOK_LOG_MEMBROS!;
     setFetch(((u: RequestInfo | URL) => Promise.reject(new Error(`falhou ${String(u)} com ${ENV_TESTE.DISCORD_CLIENT_SECRET}`))) as typeof fetch);
-    const r = await mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'colt', quantidade: 1 }, { tipo: 'membros' });
+    const r = await mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'desert', quantidade: 1 }, { tipo: 'membros' });
     expect(r.status).toBe(200);
     while (tarefas.length > 0) await Promise.all(tarefas.splice(0).map((t) => t()));
     const tudo = saidas.join('\n') + r.texto;
@@ -478,7 +478,7 @@ describe('QA nenhum segredo em resposta ou log', () => {
   it('erro interno com segredo na mensagem vira 500 genérico e o log sai mascarado', async () => {
     await garantirCatalogo(); // a semente roda a própria transação; sem isto ela consumiria a falha
     fake.falharProximoCommit(new Error(`boom ${ENV_TESTE.SESSION_SECRET} ${ENV_TESTE.WEBHOOK_SALDO_CAIXA} Bearer abc.def`));
-    const r = await mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'colt', quantidade: 1 }, { tipo: 'membros' });
+    const r = await mutacao(ADICIONAR, 1, { categoriaId: 'armas', itemId: 'desert', quantidade: 1 }, { tipo: 'membros' });
     expect(r.status).toBe(500);
     expect(r.texto).not.toMatch(/boom|stack/);
     const tudo = saidas.join('\n');

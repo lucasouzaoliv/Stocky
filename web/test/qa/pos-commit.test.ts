@@ -29,7 +29,7 @@ beforeEach(async () => {
   resetSemente();
   tarefas = [];
   setAgendador((t) => void tarefas.push(t));
-  fake = criarFakeFirestore({ seed: seedBase({ membros: { armas: { colt: 10 } }, gerencia: { armas: { usp: 5 } }, saldo: { sujo: 100 } }) });
+  fake = criarFakeFirestore({ seed: seedBase({ membros: { armas: { desert: 10 } }, gerencia: { armas: { usp: 5 } }, saldo: { sujo: 100 } }) });
   setDb(comoDb(fake));
   await garantirCatalogo();
 });
@@ -43,13 +43,13 @@ afterEach(() => {
 
 const c = '/api/x';
 const cenarios: Array<[string, unknown, PedidoTeste & { params?: Record<string, string> }]> = [
-  ['adicionar', ADICIONAR, { metodo: 'POST', caminho: c, perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 1 } }],
-  ['remover', REMOVER, { metodo: 'POST', caminho: c, perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 1 } }],
+  ['adicionar', ADICIONAR, { metodo: 'POST', caminho: c, perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 1 } }],
+  ['remover', REMOVER, { metodo: 'POST', caminho: c, perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 1 } }],
   ['caixa', MOVIMENTAR, { metodo: 'POST', caminho: c, perfil: 2, corpo: { tipo: 'sujo', acao: 'saida', valor: 1, anotacao: 'x' } }],
-  ['ajuste', CONFIRMAR, { metodo: 'POST', caminho: c, perfil: 2, params: { tipo: 'membros' }, corpo: { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 3 }] } }],
+  ['ajuste', CONFIRMAR, { metodo: 'POST', caminho: c, perfil: 2, params: { tipo: 'membros' }, corpo: { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 3 }] } }],
   ['zerar', ZERAR, { metodo: 'POST', caminho: c, perfil: 3, corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } }],
   ['catálogo adicionar', CATALOGO_ADICIONAR, { metodo: 'POST', caminho: c, perfil: 2, corpo: { categoriaId: 'armas', nome: 'Faca' } }],
-  ['catálogo remover', CATALOGO_REMOVER, { metodo: 'DELETE', caminho: c, perfil: 3, params: { categoriaId: 'armas', itemId: 'colt' } }],
+  ['catálogo remover', CATALOGO_REMOVER, { metodo: 'DELETE', caminho: c, perfil: 3, params: { categoriaId: 'armas', itemId: 'desert' } }],
 ];
 
 describe('QA falha de commit na transação do domínio', () => {

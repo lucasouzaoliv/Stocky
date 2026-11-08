@@ -13,7 +13,7 @@ import { Catalogo } from '@/components/Catalogo';
 import { criarClienteApi } from '@/components/api';
 import { SessaoProvider } from '@/components/SessaoProvider';
 
-const HOSTIL = '<img src=x onerror="window.__xss=1"><b>Colt</b>';
+const HOSTIL = '<img src=x onerror="window.__xss=1"><b>Desert Eagle</b>';
 const CATALOGO: CatalogoDTO = {
   categorias: [{ id: 'armas', nome: 'Armas <i>x</i>', emoji: '🔫', total: 1, itens: [{ id: 'img_src_x', nome: HOSTIL }] }],
 };

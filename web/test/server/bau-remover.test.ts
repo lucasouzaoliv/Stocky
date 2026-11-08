@@ -85,17 +85,17 @@ describe('WEB-030 removerDoBau', () => {
   });
 
   it('AC2: remover exatamente o estoque apaga a chave (não fica 0) e a categoria vazia; outros itens ficam', async () => {
-    await abrir({ medicamentos: { analgesico: 5, gaze: 2 }, armas: { colt: 1 } });
+    await abrir({ medicamentos: { analgesico: 5, gaze: 2 }, armas: { desert: 1 } });
     const r = await removerDoBau(pedido(5), USUARIO);
     expect(r.quantidade).toBe(0);
-    expect(itensDoBau()).toEqual({ medicamentos: { gaze: 2 }, armas: { colt: 1 } });
-    await removerDoBau(pedido(1, { categoriaId: 'armas', itemId: 'colt' }), USUARIO);
+    expect(itensDoBau()).toEqual({ medicamentos: { gaze: 2 }, armas: { desert: 1 } });
+    await removerDoBau(pedido(1, { categoriaId: 'armas', itemId: 'desert' }), USUARIO);
     expect(itensDoBau()).toEqual({ medicamentos: { gaze: 2 } });
-    expect('colt' in (itensDoBau().armas ?? {})).toBe(false);
+    expect('desert' in (itensDoBau().armas ?? {})).toBe(false);
   });
 
   it('AC3: item que não está no baú → 404 "O item não está no baú.", nada gravado', async () => {
-    await abrir({ armas: { colt: 1 } });
+    await abrir({ armas: { desert: 1 } });
     const antes = fake.dump();
     const e = await recusa(removerDoBau(pedido(1), USUARIO));
     expect(e.status).toBe(404);
@@ -177,14 +177,14 @@ describe('WEB-030 removerDoBau', () => {
   });
 
   it('AC6: adições e remoções de itens diferentes em paralelo não se perdem', async () => {
-    await abrir({ medicamentos: { analgesico: 10 }, armas: { colt: 4 } });
+    await abrir({ medicamentos: { analgesico: 10 }, armas: { desert: 4 } });
     await Promise.all([
       removerDoBau(pedido(3), USUARIO),
-      adicionarAoBau(pedido(5, { categoriaId: 'armas', itemId: 'colt' }), OUTRO_USUARIO),
+      adicionarAoBau(pedido(5, { categoriaId: 'armas', itemId: 'desert' }), OUTRO_USUARIO),
       adicionarAoBau(pedido(7, { itemId: 'gaze' }), USUARIO),
-      removerDoBau(pedido(1, { categoriaId: 'armas', itemId: 'colt' }), OUTRO_USUARIO),
+      removerDoBau(pedido(1, { categoriaId: 'armas', itemId: 'desert' }), OUTRO_USUARIO),
     ]);
-    expect(itensDoBau()).toEqual({ medicamentos: { analgesico: 7, gaze: 7 }, armas: { colt: 8 } });
+    expect(itensDoBau()).toEqual({ medicamentos: { analgesico: 7, gaze: 7 }, armas: { desert: 8 } });
     expect(versao()).toBe(4);
     expect(logsDe(fake.dump(), 'membros')).toHaveLength(4);
   });

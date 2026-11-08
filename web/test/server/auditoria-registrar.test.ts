@@ -78,7 +78,7 @@ describe('esquemas de corpo da onda 5 (ADR-14)', () => {
   });
 
   it('esquemaPrevia/esquemaConfirmar: linhas em lista de objetos estritos; versão numérica obrigatória na confirmação', () => {
-    const l = [{ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }];
+    const l = [{ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }];
     expect(validarCorpo(esquemaPrevia, { linhas: l })).toEqual({ linhas: l });
     expect(validarCorpo(esquemaConfirmar, { versao: 0, linhas: l })).toEqual({ versao: 0, linhas: l });
     for (const d of [{}, { linhas: 'x' }, { linhas: [1] }, { linhas: [{ ...l[0], x: 1 }] }, { linhas: l, versao: 1 }]) expect(recusa(esquemaPrevia, d)).toBe(true);

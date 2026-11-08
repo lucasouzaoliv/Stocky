@@ -27,7 +27,7 @@ let saidas: string[];
 
 const SEED = () =>
   seedBase({
-    membros: { medicamentos: { analgesico: 10 }, armas: { colt: 2 } },
+    membros: { medicamentos: { analgesico: 10 }, armas: { desert: 2 } },
     gerencia: { medicamentos: { analgesico: 5 } },
     saldo: { sujo: 1000, limpo: 500 },
   });
@@ -151,9 +151,9 @@ describe('WEB-051 AC1: mapa de eventos pelas rotas', () => {
   });
 
   it('remover do catálogo um item que só existe no baú dos membros avisa só os membros; sem estoque, ninguém', async () => {
-    abrir(seedBase({ membros: { armas: { colt: 2 } } }));
+    abrir(seedBase({ membros: { armas: { desert: 2 } } }));
     let d = discord();
-    expect((await chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho: '/api/catalogo/itens/armas/colt', params: { categoriaId: 'armas', itemId: 'colt' }, perfil: 3 })).status).toBe(200);
+    expect((await chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho: '/api/catalogo/itens/armas/colt', params: { categoriaId: 'armas', itemId: 'desert' }, perfil: 3 })).status).toBe(200);
     await executar();
     expect(canaisChamados(d)).toEqual(esperados('WEBHOOK_LOG_MEMBROS', 'WEBHOOK_INVENTARIO_MEMBROS'));
 
@@ -336,7 +336,7 @@ describe('WEB-051 AC4: webhook só depois do commit', () => {
     const rs = await Promise.all([
       chamarRota(ZERAR, { metodo: 'POST', caminho: '/api/bau/zerar', perfil: 2, corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } }),
       chamarRota(ZERAR, { metodo: 'POST', caminho: '/api/bau/zerar', perfil: 'anonimo', corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } }),
-      chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho: '/api/catalogo/itens/armas/colt', params: { categoriaId: 'armas', itemId: 'colt' }, perfil: 2 }),
+      chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho: '/api/catalogo/itens/armas/colt', params: { categoriaId: 'armas', itemId: 'desert' }, perfil: 2 }),
     ]);
     expect(rs.map((r) => r.status)).toEqual([403, 401, 403]);
     expect(tarefas).toHaveLength(0);

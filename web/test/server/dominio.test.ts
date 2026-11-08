@@ -56,17 +56,17 @@ describe('WEB-013 modelo de dados', () => {
     const doc = lerDocBau({
       versao: 7,
       atualizadoEm: 'x',
-      armas: { colt: 5 },
+      armas: { desert: 5 },
       itens: {
-        armas: { colt: 3, usp: 0, ak_47: -1, desert: 1.5, versao: 'a', __proto__x: 4, '../a': 2 },
+        armas: { desert: 3, usp: 0, ak_47: -1, c_4: 1.5, versao: 'a', __proto__x: 4, '../a': 2 },
         __proto__: { x: 1 },
         vazia: { nada: 0 },
         ruim: 'texto',
-        'Chave Ruim': { colt: 1 },
+        'Chave Ruim': { desert: 1 },
       },
     });
     expect(doc.versao).toBe(7);
-    expect(doc.itens).toEqual({ armas: { colt: 3 } });
+    expect(doc.itens).toEqual({ armas: { desert: 3 } });
     expect(JSON.stringify(doc.itens)).not.toContain('versao');
     expect(Object.getPrototypeOf(doc.itens)).toBe(Object.prototype);
   });

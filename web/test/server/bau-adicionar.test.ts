@@ -45,8 +45,8 @@ describe('WEB-029 adicionarAoBau', () => {
 
   it('cria a categoria e o item quando o baú está vazio, e não mexe no outro baú', async () => {
     await abrir();
-    await adicionarAoBau(pedido(2, { categoriaId: 'armas', itemId: 'colt' }), USUARIO);
-    expect(itensDoBau()).toEqual({ armas: { colt: 2 } });
+    await adicionarAoBau(pedido(2, { categoriaId: 'armas', itemId: 'desert' }), USUARIO);
+    expect(itensDoBau()).toEqual({ armas: { desert: 2 } });
     expect(itensDoBau('gerencia')).toEqual({});
     expect(versao('gerencia')).toBe(0);
   });

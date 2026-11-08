@@ -95,7 +95,7 @@ describe('WEB-047 conteúdo (quem, o quê, quanto, saldo)', () => {
     expect(z.description).toBe('Baú zerado: 3 itens, 40 unidades.');
     const a = embedAvisoBau(logBau({ acao: 'ajuste', resumo: 'Ajuste em massa no Baú dos Membros: 2 itens alterados.' }), 'membros');
     expect(a.title).toBe('🛠️ Ajuste em massa');
-    const c = embedAvisoBau(logBau({ acao: 'catalogo_remover', resumo: 'Item removido do catálogo: Colt.', quantidade: 12 }), 'gerencia');
+    const c = embedAvisoBau(logBau({ acao: 'catalogo_remover', resumo: 'Item removido do catálogo: Desert Eagle.', quantidade: 12 }), 'gerencia');
     expect(c.title).toBe('🗑️ Item removido do catálogo');
     expect(c.fields).toContainEqual({ name: 'Unidades que estavam no baú', value: '12', inline: true });
     for (const e of [z, a, c]) {

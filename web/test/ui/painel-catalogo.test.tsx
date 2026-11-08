@@ -116,12 +116,12 @@ describe('WEB-060 AC1: adicionar', () => {
     const chamadas = montar();
     const campo = await screen.findByLabelText('Novo item em Armas');
     expect(campo).toHaveAttribute('maxlength', '50');
-    fireEvent.change(campo, { target: { value: '  Colt 45  ' } });
+    fireEvent.change(campo, { target: { value: '  Desert Eagle 45  ' } });
     fireEvent.click(within(campo.closest('form')!).getByRole('button', { name: 'Adicionar item' }));
     await waitFor(() => expect(chamadas.find((c) => c.metodo === 'POST')).toBeDefined());
     const post = chamadas.find((c) => c.metodo === 'POST')!;
     expect(post.url).toBe('/api/catalogo/itens');
-    expect(post.corpo).toEqual({ categoriaId: 'armas', nome: 'Colt 45' });
+    expect(post.corpo).toEqual({ categoriaId: 'armas', nome: 'Desert Eagle 45' });
   });
 
   it('nome vazio mostra erro e não chama a API', async () => {
@@ -140,7 +140,7 @@ describe('WEB-060 AC1: adicionar', () => {
   ])('erro %s aparece em português', async (codigo, status, texto) => {
     montar({ post: () => falha(status, codigo, 'Nome de item inválido.') });
     const campo = await screen.findByLabelText('Novo item em Armas');
-    fireEvent.change(campo, { target: { value: 'Colt' } });
+    fireEvent.change(campo, { target: { value: 'Desert Eagle' } });
     fireEvent.click(within(campo.closest('form')!).getByRole('button', { name: 'Adicionar item' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(texto);
   });
@@ -165,18 +165,18 @@ describe('WEB-060 AC4: lista atualiza sem recarregar', () => {
       catalogo: () =>
         versao === 0
           ? catalogo()
-          : { categorias: [{ id: 'armas', nome: 'Armas', emoji: '', total: 3, itens: [{ id: 'pistola', nome: 'Pistola' }, { id: 'fuzil', nome: 'Fuzil' }, { id: 'colt', nome: 'Colt' }] }] },
+          : { categorias: [{ id: 'armas', nome: 'Armas', emoji: '', total: 3, itens: [{ id: 'pistola', nome: 'Pistola' }, { id: 'fuzil', nome: 'Fuzil' }, { id: 'desert', nome: 'Desert Eagle' }] }] },
       post: () => {
         versao = 1;
-        return ok({ categoriaId: 'armas', item: { id: 'colt', nome: 'Colt' } });
+        return ok({ categoriaId: 'armas', item: { id: 'desert', nome: 'Desert Eagle' } });
       },
     });
     const campo = await screen.findByLabelText('Novo item em Armas');
-    fireEvent.change(campo, { target: { value: 'Colt' } });
+    fireEvent.change(campo, { target: { value: 'Desert Eagle' } });
     fireEvent.click(within(campo.closest('form')!).getByRole('button', { name: 'Adicionar item' }));
-    expect(await screen.findByText('Colt')).toBeInTheDocument();
+    expect(await screen.findByText('Desert Eagle')).toBeInTheDocument();
     expect(chamadas.filter((c) => c.url === '/api/catalogo')).toHaveLength(2);
-    expect(screen.getByRole('status')).toHaveTextContent('Item “Colt” adicionado em Armas.');
+    expect(screen.getByRole('status')).toHaveTextContent('Item “Desert Eagle” adicionado em Armas.');
     expect(campo).toHaveValue('');
   });
 });

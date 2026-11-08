@@ -25,7 +25,6 @@ const COM_IMAGEM: ReadonlySet<string> = new Set([
   'bateria_de_impressora',
   'skateboard',
   'insumo_para_fabricacao_de_drogas',
-  'knife',
   'tablet',
   'radio',
   'chave_de_carro',

@@ -26,7 +26,7 @@ beforeEach(() => {
   aplicarEnvTeste();
   resetSemente();
   // categoria armas já tem colt no baú dos membros
-  fake = criarFakeFirestore({ seed: seedBase({ membros: { armas: { colt: 4 } } }) });
+  fake = criarFakeFirestore({ seed: seedBase({ membros: { armas: { desert: 4 } } }) });
   setDb(comoDb(fake));
 });
 afterEach(() => {
@@ -53,7 +53,7 @@ async function criacaoRecusada(): Promise<void> {
 
 /** Catálogo e baú com "constructor" já gravado (dado legado, de antes da regra). */
 function abrirLegado(qtd?: number): void {
-  const seed = seedBase({ membros: { armas: { colt: 4, ...(qtd === undefined ? {} : { constructor: qtd }) } } });
+  const seed = seedBase({ membros: { armas: { desert: 4, ...(qtd === undefined ? {} : { constructor: qtd }) } } });
   const catalogo = structuredClone(CATALOGO_PADRAO) as unknown as Array<{ id: string; itens: Array<{ id: string; nome: string }> }>;
   catalogo.find((c) => c.id === 'armas')!.itens.push({ id: 'constructor', nome: 'Constructor' });
   (seed['config/catalogo'] as Dados).categorias = catalogo as unknown as Dados[];
@@ -71,11 +71,11 @@ describe('QA chave de protótipo como id de item', () => {
     expect(Object.keys(fake.dump()).filter((k) => k.startsWith('logs/'))).toHaveLength(0);
   });
 
-  it('adicionar "constructor": criação recusada; adicionar pelo id → 400; o baú continua só com colt: 4', async () => {
+  it('adicionar "constructor": criação recusada; adicionar pelo id → 400; o baú continua só com desert: 4', async () => {
     await criacaoRecusada();
     const r = await chamarRota(ADICIONAR, { metodo: 'POST', caminho, perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'constructor', quantidade: 3 } });
     expect(r.status, r.texto).toBe(400);
-    expect((fake.dump()['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { colt: 4 } });
+    expect((fake.dump()['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { desert: 4 } });
   });
 
   it('prévia do ajuste com "constructor" → 400 listando a linha; nada gravado', async () => {
@@ -97,7 +97,7 @@ describe('QA chave de protótipo como id de item', () => {
     const com = await chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho, perfil: 3, params: { categoriaId: 'armas', itemId: 'constructor' } });
     expect(com.status, com.texto).toBe(200);
     expect((com.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 2, gerencia: 0, casa: 0 });
-    expect((fake.dump()['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { colt: 4 } });
+    expect((fake.dump()['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { desert: 4 } });
     const logs = Object.entries(fake.dump()).filter(([k]) => k.startsWith('logs/membros/')).map(([, v]) => v as Record<string, unknown>);
     expect(logs).toHaveLength(1);
     for (const l of logs) {

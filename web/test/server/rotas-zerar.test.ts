@@ -11,7 +11,7 @@ import type { PerfilTeste } from '../helpers/pedidos';
 import { chamarRota } from '../helpers/rotas';
 import { falharCommitDaOperacao } from './commit-falho';
 
-const MEMBROS: ItensBau = { medicamentos: { analgesico: 10 }, armas: { colt: 2 } };
+const MEMBROS: ItensBau = { medicamentos: { analgesico: 10 }, armas: { desert: 2 } };
 const GERENCIA: ItensBau = { armas: { usp: 4 } };
 
 let fake: FakeFirestore;
