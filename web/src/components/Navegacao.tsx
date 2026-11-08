@@ -6,6 +6,7 @@ import {
   ChartColumn,
   Ellipsis,
   History,
+  House,
   LayoutDashboard,
   LogOut,
   Pill,
@@ -34,6 +35,7 @@ interface ItemMenu {
 export const ITENS_MENU: readonly ItemMenu[] = [
   { rotulo: 'Baú dos Membros', href: '/bau/membros', nivelMinimo: 1, icone: Warehouse, principal: true },
   { rotulo: 'Baú da Gerência', href: '/bau/gerencia', nivelMinimo: 2, icone: Vault, principal: true },
+  { rotulo: 'Baú da Casa', href: '/bau/casa', nivelMinimo: 2, icone: House, principal: true },
   { rotulo: 'Caixa', href: '/caixa', nivelMinimo: 2, icone: Banknote, principal: true },
   { rotulo: 'Drogas', href: '/drogas', nivelMinimo: 1, icone: Pill, principal: true },
   { rotulo: 'Movimentações', href: '/logs', nivelMinimo: 1, icone: History, principal: false },

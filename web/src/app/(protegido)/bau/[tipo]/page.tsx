@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 const BAUS: Record<TipoBau, { titulo: string; nivel: NivelAcesso }> = {
   membros: { titulo: 'Baú dos Membros', nivel: 1 },
   gerencia: { titulo: 'Baú da Gerência', nivel: 2 },
+  casa: { titulo: 'Baú da Casa', nivel: 2 },
 };
 
 function tipoValido(valor: string): valor is TipoBau {

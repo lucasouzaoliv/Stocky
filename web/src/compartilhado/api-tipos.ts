@@ -1,4 +1,12 @@
-export type TipoBau = 'membros' | 'gerencia';
+export const TIPOS_BAU = ['membros', 'gerencia', 'casa'] as const;
+export type TipoBau = (typeof TIPOS_BAU)[number];
+
+/** Nome de cada baú nas telas e nas mensagens. */
+export const NOME_DO_BAU: Readonly<Record<TipoBau, string>> = {
+  membros: 'Baú dos Membros',
+  gerencia: 'Baú da Gerência',
+  casa: 'Baú da Casa',
+};
 export type AlvoZerar = TipoBau | 'ambos';
 export type TipoCaixa = 'sujo' | 'limpo';
 export type AcaoCaixa = 'entrada' | 'saida';

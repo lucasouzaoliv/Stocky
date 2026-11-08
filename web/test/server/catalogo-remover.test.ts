@@ -35,7 +35,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
   it('AC1: remove do catálogo e dos dois baús, devolve quantidades e grava auditoria completa', async () => {
     const r = await removerItemDoCatalogo('medicamentos', 'analgesico', DONO);
     expect(r.item).toEqual({ id: 'analgesico', nome: 'Analgésico' });
-    expect(r.removidoDe).toEqual({ membros: 10, gerencia: 5 });
+    expect(r.removidoDe).toEqual({ membros: 10, gerencia: 5, casa: 0 });
     expect(itensCat('medicamentos').map((i) => i.id)).toEqual(['gaze', 'adrenalina']);
     expect(bau('membros').itens).toEqual({ medicamentos: { gaze: 2 } });
     expect(bau('gerencia').itens).toEqual({ armas: { colt: 1 } });
@@ -103,7 +103,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('AC5: item sem estoque nos baús sai só do catálogo, com auditoria de quantidades 0 e sem logs de baú', async () => {
     const r = await removerItemDoCatalogo('drogas', 'lsd', DONO);
-    expect(r.removidoDe).toEqual({ membros: 0, gerencia: 0 });
+    expect(r.removidoDe).toEqual({ membros: 0, gerencia: 0, casa: 0 });
     expect(auditorias(fake.dump())[0]).toMatchObject({ antes: { membros: 0, gerencia: 0 }, depois: null });
     expect(logsDe(fake.dump(), 'membros')).toHaveLength(0);
     expect(logsDe(fake.dump(), 'gerencia')).toHaveLength(0);
@@ -146,7 +146,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
       removerItemDoCatalogo('medicamentos', 'analgesico', DONO),
     ]);
     expect(r.map((x) => x.status)).toEqual(['fulfilled', 'fulfilled']);
-    expect(auditorias(fake.dump())[0]!.antes).toEqual({ membros: 17, gerencia: 5 });
+    expect(auditorias(fake.dump())[0]!.antes).toEqual({ membros: 17, gerencia: 5, casa: 0 });
     expect(bau('membros').itens.medicamentos?.analgesico).toBeUndefined();
     expect(bau('membros').versao).toBe(2);
   });

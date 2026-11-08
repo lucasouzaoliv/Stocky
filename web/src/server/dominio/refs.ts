@@ -4,8 +4,8 @@ import type { CollectionReference, Db, DocumentReference } from '../firebase';
 import { ehIdDeFormatoValido } from '../validacao/item';
 import type { AlvoZerar, ChaveMensagem, DocBau, DocSaldo, EscopoLog, TipoBau } from './tipos';
 
-const TIPOS_BAU: readonly string[] = ['membros', 'gerencia'];
-const CHAVES_MENSAGEM: readonly string[] = ['inventario_membros', 'inventario_gerencia', 'saldo_caixa'];
+const TIPOS_BAU: readonly string[] = ['membros', 'gerencia', 'casa'];
+const CHAVES_MENSAGEM: readonly string[] = ['inventario_membros', 'inventario_gerencia', 'inventario_casa', 'saldo_caixa'];
 
 export function exigirTipoBau(v: unknown): TipoBau {
   if (typeof v === 'string' && TIPOS_BAU.includes(v)) return v as TipoBau;

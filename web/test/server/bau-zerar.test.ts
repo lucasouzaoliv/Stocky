@@ -49,7 +49,7 @@ describe('WEB-038 zerarBau', () => {
 
   it('AC1: "ambos" zera os dois numa única transação com uma única auditoria', async () => {
     const r = await zerarBau('ambos', DONO);
-    expect(r).toMatchObject({ alvos: ['membros', 'gerencia'], itens: 4, unidades: 17 });
+    expect(r).toMatchObject({ alvos: ['membros', 'gerencia', 'casa'], itens: 4, unidades: 17 });
     expect(bau('membros').itens).toEqual({});
     expect(bau('gerencia').itens).toEqual({});
     expect(auditorias(fake.dump())).toHaveLength(1);
@@ -62,8 +62,8 @@ describe('WEB-038 zerarBau', () => {
     expect(a).toMatchObject({
       acao: 'bau.zerar',
       usuario: { id: DONO.id, nome: DONO.nome },
-      alvo: { alvos: ['membros', 'gerencia'] },
-      antes: { membros: MEMBROS, gerencia: GERENCIA },
+      alvo: { alvos: ['membros', 'gerencia', 'casa'] },
+      antes: { membros: MEMBROS, gerencia: GERENCIA, casa: {} },
       depois: {},
     });
     await zerarBau('membros', DONO);

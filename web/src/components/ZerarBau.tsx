@@ -15,19 +15,22 @@ export interface ZerarBauProps {
 const OPCOES: Array<[AlvoZerar, string]> = [
   ['membros', 'Baú dos Membros'],
   ['gerencia', 'Baú da Gerência'],
-  ['ambos', 'Os dois baús'],
+  ['casa', 'Baú da Casa'],
+  ['ambos', 'Os três baús'],
 ];
 
 const DESCRICAO_ALVO: Record<AlvoZerar, string> = {
   membros: 'o Baú dos Membros',
   gerencia: 'o Baú da Gerência',
-  ambos: 'o Baú dos Membros e o Baú da Gerência',
+  casa: 'o Baú da Casa',
+  ambos: 'o Baú dos Membros, o Baú da Gerência e o Baú da Casa',
 };
 
 const RESULTADO_ALVO: Record<AlvoZerar, string> = {
   membros: 'do Baú dos Membros',
   gerencia: 'do Baú da Gerência',
-  ambos: 'dos dois baús',
+  casa: 'do Baú da Casa',
+  ambos: 'dos três baús',
 };
 
 /** Exclusivo do dono (nível 3): para os demais não renderiza nada. A segurança real é o 403 da rota. */

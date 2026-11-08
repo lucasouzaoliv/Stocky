@@ -90,13 +90,13 @@ describe('QA chave de protótipo como id de item', () => {
     abrirLegado();
     const sem = await chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho, perfil: 3, params: { categoriaId: 'armas', itemId: 'constructor' } });
     expect(sem.status, sem.texto).toBe(200);
-    expect((sem.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 0, gerencia: 0 });
+    expect((sem.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 0, gerencia: 0, casa: 0 });
     expect(Object.keys(fake.dump()).filter((k) => k.startsWith('logs/membros/'))).toHaveLength(0);
 
     abrirLegado(2);
     const com = await chamarRota(CATALOGO_REMOVER, { metodo: 'DELETE', caminho, perfil: 3, params: { categoriaId: 'armas', itemId: 'constructor' } });
     expect(com.status, com.texto).toBe(200);
-    expect((com.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 2, gerencia: 0 });
+    expect((com.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 2, gerencia: 0, casa: 0 });
     expect((fake.dump()['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { colt: 4 } });
     const logs = Object.entries(fake.dump()).filter(([k]) => k.startsWith('logs/membros/')).map(([, v]) => v as Record<string, unknown>);
     expect(logs).toHaveLength(1);

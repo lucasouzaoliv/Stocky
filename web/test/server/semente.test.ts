@@ -24,21 +24,21 @@ describe('WEB-014 semente do catálogo', () => {
   it('AC1/AC6: banco vazio cria catálogo, 2 baús e saldo, tudo dentro de transação', async () => {
     await garantirCatalogo();
     const d = fake.dump();
-    expect(Object.keys(d).sort()).toEqual(['baus/gerencia', 'baus/membros', 'caixa/saldo', 'config/catalogo']);
+    expect(Object.keys(d).sort()).toEqual(['baus/casa', 'baus/gerencia', 'baus/membros', 'caixa/saldo', 'config/catalogo']);
     const categorias = (d['config/catalogo'] as { categorias: Array<{ itens: unknown[] }> }).categorias;
     expect(categorias).toHaveLength(6);
     expect(categorias.reduce((n, c) => n + c.itens.length, 0)).toBe(59);
     expect(d['baus/membros']).toMatchObject({ versao: 0, itens: {} });
     expect(d['baus/gerencia']).toMatchObject({ versao: 0, itens: {} });
     expect(d['caixa/saldo']).toMatchObject({ sujo: 0, limpo: 0, versao: 0 });
-    expect(escritas()).toHaveLength(4);
+    expect(escritas()).toHaveLength(5);
     expect(escritas().every((c) => c.emTransacao)).toBe(true);
   });
 
   it('AC2: 20 chamadas paralelas resultam em um único catálogo e uma escrita por documento', async () => {
     await Promise.all(Array.from({ length: 20 }, () => garantirCatalogo()));
-    expect(escritas()).toHaveLength(4);
-    expect(new Set(escritas().map((c) => c.caminho)).size).toBe(4);
+    expect(escritas()).toHaveLength(5);
+    expect(new Set(escritas().map((c) => c.caminho)).size).toBe(5);
     expect((fake.dump()['config/catalogo'] as { categorias: unknown[] }).categorias).toHaveLength(6);
   });
 
@@ -53,7 +53,7 @@ describe('WEB-014 semente do catálogo', () => {
     fake.falharProximoCommit(new Error('commit falhou'));
     await expect(garantirCatalogo()).rejects.toThrow('commit falhou');
     await garantirCatalogo();
-    expect(Object.keys(fake.dump())).toHaveLength(4);
+    expect(Object.keys(fake.dump())).toHaveLength(5);
   });
 
   it('AC3: dados existentes (item do usuário, baú com itens, saldo) ficam intactos', async () => {
@@ -73,7 +73,7 @@ describe('WEB-014 semente do catálogo', () => {
     expect(d['baus/membros']).toEqual(bau);
     expect(d['caixa/saldo']).toEqual(saldo);
     expect(d['baus/gerencia']).toMatchObject({ versao: 0, itens: {} });
-    expect(escritas().map((c) => c.caminho)).toEqual(['baus/gerencia']);
+    expect(escritas().map((c) => c.caminho).sort()).toEqual(['baus/casa', 'baus/gerencia']);
   });
 
   it('AC4: item adicionado em corrida com a semente nunca é perdido (D6), com adicionarItemAoCatalogo real', async () => {

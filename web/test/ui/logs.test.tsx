@@ -50,7 +50,7 @@ describe('WEB-063 AC1: abas por nível', () => {
       ok({ itens: [url.includes('caixa') ? caixa(1) : bau(1, { nomeItem: url.includes('gerencia') ? 'Colete' : 'Pistola' })], proximoCursor: null }),
     );
     await screen.findByText(/Pistola/);
-    expect(screen.getAllByRole('tab').map((a) => a.textContent)).toEqual(['Baú dos Membros', 'Baú da Gerência', 'Caixa']);
+    expect(screen.getAllByRole('tab').map((a) => a.textContent)).toEqual(['Baú dos Membros', 'Baú da Gerência', 'Baú da Casa', 'Caixa']);
     expect(chamadas).toEqual(['/api/logs/bau/membros?limite=20']);
     fireEvent.click(screen.getByRole('tab', { name: 'Baú da Gerência' }));
     await screen.findByText(/Colete/);
@@ -62,7 +62,10 @@ describe('WEB-063 AC1: abas por nível', () => {
   it('navega por teclado (setas, Home, End) com tabindex móvel e aria-selected', async () => {
     montar(2);
     await screen.findByText('Nenhum registro');
-    const [a1, a2, a3] = screen.getAllByRole('tab');
+    const abasTab = screen.getAllByRole('tab');
+    const a1 = abasTab[0];
+    const a2 = abasTab[1];
+    const a3 = abasTab[abasTab.length - 1];
     expect(a1).toHaveAttribute('aria-selected', 'true');
     expect(a2).toHaveAttribute('tabindex', '-1');
     fireEvent.keyDown(a1!, { key: 'ArrowRight' });

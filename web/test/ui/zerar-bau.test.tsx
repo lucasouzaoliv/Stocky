@@ -33,7 +33,7 @@ describe('WEB-061 AC0: exclusivo do dono', () => {
   it('nível 3 vê o seletor e o botão', () => {
     montar(3);
     expect(screen.getByRole('button', { name: /zerar baú/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.getAllByRole('radio')).toHaveLength(4);
   });
 });
 
@@ -77,7 +77,8 @@ describe('WEB-061 AC3: diálogo explica o que será zerado', () => {
   it.each([
     ['Baú dos Membros', /zerar o Baú dos Membros\./],
     ['Baú da Gerência', /zerar o Baú da Gerência\./],
-    ['Os dois baús', /zerar o Baú dos Membros e o Baú da Gerência\./],
+    ['Baú da Casa', /zerar o Baú da Casa\./],
+    ['Os três baús', /zerar o Baú dos Membros, o Baú da Gerência e o Baú da Casa\./],
   ])('opção %s', (rotulo, texto) => {
     montar(3);
     fireEvent.click(screen.getByRole('radio', { name: rotulo }));
@@ -90,7 +91,7 @@ describe('WEB-061 AC3: diálogo explica o que será zerado', () => {
 describe('WEB-061 AC4: resultado e erro', () => {
   it('envia alvo e confirmação, fecha e anuncia o resultado em aria-live', async () => {
     const { chamadas } = montar(3);
-    fireEvent.click(screen.getByRole('radio', { name: 'Os dois baús' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Os três baús' }));
     const dialogo = abrir();
     fireEvent.change(within(dialogo).getByLabelText('Digite ZERAR para confirmar'), { target: { value: 'ZERAR' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Confirmar' }));
@@ -99,7 +100,7 @@ describe('WEB-061 AC4: resultado e erro', () => {
     expect(chamadas[0]).toMatchObject({ url: '/api/bau/zerar', metodo: 'POST', corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } });
     const status = screen.getByRole('status');
     expect(status).toHaveAttribute('aria-live', 'polite');
-    expect(status).toHaveTextContent('Concluído: 3 itens (12 unidades) removidos dos dois baús.');
+    expect(status).toHaveTextContent('Concluído: 3 itens (12 unidades) removidos dos três baús.');
   });
 
   it('erro da API aparece como alerta e o diálogo fica aberto', async () => {

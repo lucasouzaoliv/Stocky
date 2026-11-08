@@ -21,7 +21,7 @@ function catalogo(extra: Partial<CatalogoDTO['categorias'][number]>[] = []): Cat
   return { categorias: [...base, ...extra.map((c) => ({ id: 'x', nome: 'X', emoji: '', itens: [], total: 0, ...c }))] };
 }
 
-const bau = (tipo: 'membros' | 'gerencia', qtd: number): BauDTO => ({
+const bau = (tipo: 'membros' | 'gerencia' | 'casa', qtd: number): BauDTO => ({
   tipo,
   versao: 3,
   categorias: [{ id: 'armas', nome: 'Armas', emoji: '', itens: [{ id: 'pistola', nome: 'Pistola', quantidade: qtd }] }],
@@ -42,6 +42,7 @@ function montar(o: Opcoes = {}) {
     if (c.url === '/api/catalogo') return ok(cat());
     if (c.url === '/api/bau/membros') return ok(bau('membros', 4));
     if (c.url === '/api/bau/gerencia') return ok(bau('gerencia', 2));
+    if (c.url === '/api/bau/casa') return ok(bau('casa', 1));
     return falha(404, 'NAO_ENCONTRADO', 'x');
   });
   render(
@@ -188,6 +189,7 @@ describe('WEB-060 AC2: remover com confirmação', () => {
     expect(dialogo).toHaveAttribute('aria-modal', 'true');
     expect(await within(dialogo).findByText('Baú dos Membros: 4 unidades')).toBeInTheDocument();
     expect(within(dialogo).getByText('Baú da Gerência: 2 unidades')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Baú da Casa: 1 unidade')).toBeInTheDocument();
     expect(within(dialogo).getByRole('button', { name: 'Cancelar' })).toHaveFocus();
   });
 

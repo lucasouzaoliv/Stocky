@@ -39,7 +39,7 @@ export type RotaPublica = ((req: Request) => Promise<Response>) & ComMarca;
 
 /** Nível exigido por um baú: `membros` 1, `gerencia` 2; qualquer outro tipo é 400 e o handler não roda. */
 export function nivelDoBau(params: { tipo: string }): NivelAcesso {
-  return exigirTipoBau(params.tipo) === 'gerencia' ? 2 : 1;
+  return exigirTipoBau(params.tipo) === 'membros' ? 1 : 2;
 }
 
 function comoNextRequest(req: Request): NextRequest {

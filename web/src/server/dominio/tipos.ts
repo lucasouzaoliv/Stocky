@@ -53,7 +53,7 @@ export interface DocAuditoria {
   depois: unknown;
 }
 
-export type ChaveMensagem = 'inventario_membros' | 'inventario_gerencia' | 'saldo_caixa';
+export type ChaveMensagem = 'inventario_membros' | 'inventario_gerencia' | 'inventario_casa' | 'saldo_caixa';
 
 export interface DocMensagemFixa {
   mensagemId: string | null;

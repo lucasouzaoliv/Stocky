@@ -40,7 +40,7 @@ function AtualizarCatalogoDono({ cliente, csrf }: { cliente: ClienteApi; csrf: s
       <h2 id="painel-atualizar" className="painel__titulo">
         Atualizar catálogo
       </h2>
-      <p className="painel__ajuda">Troca a lista de itens pela da season atual e coloca nos dois baús o estoque contado nos prints. O estoque atual dos baús é substituído.</p>
+      <p className="painel__ajuda">Troca a lista de itens pela da season atual e coloca nos três baús o estoque contado nos prints e ajusta o dinheiro sujo para o total de notas marcadas. O estoque atual dos baús é substituído.</p>
       <div className="bau__acoes">
         <button type="button" className="botao botao--perigo" onClick={() => void atualizar()} disabled={enviando}>
           {enviando ? 'Atualizando…' : 'Atualizar catálogo'}

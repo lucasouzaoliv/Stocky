@@ -1,10 +1,10 @@
 import 'server-only';
-import type { BauDTO } from '@/compartilhado/api-tipos';
+import { NOME_DO_BAU, type BauDTO } from '@/compartilhado/api-tipos';
 import { formatarNumero } from '@/compartilhado/formatacao';
 import type { Embed } from '../discord/webhook';
 import { COR, LIMITES_DISCORD, RODAPE, escaparMarkdown, truncar } from './formatacao';
 
-const NOME_BAU = { membros: 'Baú dos Membros', gerencia: 'Baú da Gerência' } as const;
+const NOME_BAU = NOME_DO_BAU;
 const NOME_LINHA_MAX = 120;
 /** Espaço guardado, quando algo fica de fora, para o aviso "… e mais N itens" com o link e o rodapé. */
 const RESERVA_AVISO = 400;

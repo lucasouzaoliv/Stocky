@@ -1,5 +1,5 @@
 import 'server-only';
-import type { ConfirmacaoAjusteDTO, PreviaAjusteDTO } from '@/compartilhado/api-tipos';
+import { NOME_DO_BAU, type ConfirmacaoAjusteDTO, type PreviaAjusteDTO } from '@/compartilhado/api-tipos';
 import { LIMITES } from '@/compartilhado/limites';
 import { parseInteiro } from '@/compartilhado/numero';
 import { registrarAuditoriaTx } from '../auditoria/registrar';
@@ -186,7 +186,7 @@ export async function confirmarAjusteComEvento(
       itens: aplicar(bau, mudancas),
       atualizadoEm: new Date().toISOString(),
     });
-    const nomeBau = tipo === 'membros' ? 'Baú dos Membros' : 'Baú da Gerência';
+    const nomeBau = NOME_DO_BAU[tipo];
     const resumo = `Ajuste em massa no ${nomeBau}: ${mudancas.length} ${mudancas.length === 1 ? 'item alterado' : 'itens alterados'}.`;
     const auditoriaId = registrarAuditoriaTx(tx, db, {
       acao: 'bau.ajuste_massa',

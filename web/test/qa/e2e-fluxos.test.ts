@@ -290,12 +290,12 @@ describe('WEB-066 AC4 catálogo', () => {
       params: { categoriaId: 'drogas', itemId: 'erva_fina' },
     });
     expect(r.status).toBe(200);
-    expect(r.corpo.dados.removidoDe).toEqual({ membros: 3, gerencia: 7 });
+    expect(r.corpo.dados.removidoDe).toEqual({ membros: 3, gerencia: 7, casa: 0 });
     const dump = fake.dump();
     expect(dump['baus/membros']!.itens).toEqual({});
     expect(dump['baus/gerencia']!.itens).toEqual({});
     const aud = auditorias(dump).find((a) => a.acao === 'catalogo.remover_item')!;
-    expect(aud).toMatchObject({ usuario: { id: d.userId }, antes: { membros: 3, gerencia: 7 }, depois: null });
+    expect(aud).toMatchObject({ usuario: { id: d.userId }, antes: { membros: 3, gerencia: 7, casa: 0 }, depois: null });
     const cat = await chamar(CATALOGO, g, 'GET', '/api/catalogo');
     expect(JSON.stringify(cat.corpo.dados)).not.toContain('erva_fina');
     const lista = await chamar(AUDITORIA, g, 'GET', '/api/auditoria?acao=catalogo.remover_item');
@@ -303,7 +303,7 @@ describe('WEB-066 AC4 catálogo', () => {
     const det = await chamar(AUDITORIA_ID, g, 'GET', `/api/auditoria/${lista.corpo.dados.itens[0].id}`, {
       params: { id: lista.corpo.dados.itens[0].id },
     });
-    expect(det.corpo.dados.antes).toEqual({ membros: 3, gerencia: 7 });
+    expect(det.corpo.dados.antes).toEqual({ membros: 3, gerencia: 7, casa: 0 });
   });
 });
 
@@ -370,11 +370,11 @@ describe('WEB-066 AC6 zerar e remover do catálogo: só o dono', () => {
     expect(z1.corpo.dados).toMatchObject({ alvos: ['membros'], itens: 1, unidades: 4 });
     expect(await qtd(g, 'gerencia', 'armas', 'usp')).toBe(9);
     const z2 = await chamar(ZERAR, d, 'POST', '/api/bau/zerar', { corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } });
-    expect(z2.corpo.dados).toMatchObject({ alvos: ['membros', 'gerencia'], itens: 1, unidades: 9 });
+    expect(z2.corpo.dados).toMatchObject({ alvos: ['membros', 'gerencia', 'casa'], itens: 1, unidades: 9 });
     const aud = auditorias(fake.dump()).filter((a) => a.acao === 'bau.zerar');
     expect(aud).toHaveLength(2);
     expect(aud.map((a) => a.antes)).toContainEqual({ membros: { armas: { usp: 4 } } });
-    expect(aud.map((a) => a.antes)).toContainEqual({ membros: {}, gerencia: { armas: { usp: 9 } } });
+    expect(aud.map((a) => a.antes)).toContainEqual({ membros: {}, gerencia: { armas: { usp: 9 } }, casa: {} });
     expect(logs(fake.dump(), 'gerencia').some((l) => l.acao === 'zerar')).toBe(true);
   });
 });

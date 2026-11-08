@@ -18,7 +18,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const GERENCIA = ['Baú da Gerência', 'Caixa', 'Painel', 'Auditoria'];
+const GERENCIA = ['Baú da Gerência', 'Baú da Casa', 'Caixa', 'Painel', 'Auditoria'];
 
 describe('WEB-053 navegação por nível (AC2)', () => {
   it('nível 1 vê Baú dos Membros e Movimentações, sem itens de gerência', () => {
@@ -55,7 +55,7 @@ describe('WEB-053 teclado e item atual (AC3)', () => {
     render(<Navegacao nivel={3} csrf="tok" />);
     const controles = [...screen.getByRole('navigation', { name: 'Principal' }).querySelectorAll('a, button')];
     expect(controles.map((c) => c.textContent)).toEqual([
-      'Baú dos Membros', 'Baú da Gerência', 'Caixa', 'Drogas', 'Mais', 'Movimentações', 'Calculadora', 'Dados', 'Painel', 'Auditoria', 'Sair',
+      'Baú dos Membros', 'Baú da Gerência', 'Baú da Casa', 'Caixa', 'Drogas', 'Mais', 'Movimentações', 'Calculadora', 'Dados', 'Painel', 'Auditoria', 'Sair',
     ]);
     for (const c of controles) expect((c as HTMLElement).tabIndex).toBeGreaterThanOrEqual(0);
     // links são <a href> e o botão é <button>: Enter ativa ambos nativamente

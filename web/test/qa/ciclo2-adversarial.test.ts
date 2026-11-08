@@ -172,7 +172,7 @@ describe('QA-W1 revalidado: ids reservados (sem retorno antecipado)', () => {
       abrirLegado();
       const r = await chamar(CATALOGO_REMOVER, { metodo: 'DELETE', perfil: 3, params: { categoriaId: 'armas', itemId: 'constructor' } });
       expect(r.status, r.texto).toBe(200);
-      expect((r.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 2, gerencia: 7 });
+      expect((r.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 2, gerencia: 7, casa: 0 });
       expect(itensBau('membros').armas).toEqual({ colt: 4 });
       expect(itensBau('gerencia')).toEqual({});
       for (const [chave, doc] of Object.entries(fake.dump())) {

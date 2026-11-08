@@ -2,7 +2,7 @@
 
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { EstadoDrogaDTO, ResultadoDrogaDTO, TipoBau } from '@/compartilhado/api-tipos';
+import { TIPOS_BAU, type EstadoDrogaDTO, type ResultadoDrogaDTO, type TipoBau } from '@/compartilhado/api-tipos';
 import {
   DROGA,
   MOTIVOS_GUARDAR,
@@ -196,10 +196,10 @@ export function Drogas({ cliente = apiPadrao }: DrogasProps) {
         <fieldset className="escolha">
           <legend className="campo__rotulo">Baú</legend>
           <div className="escolha__opcoes">
-            {(['membros', 'gerencia'] as const).map((t) => (
+            {TIPOS_BAU.map((t) => (
               <label key={t} className="escolha__opcao">
                 <input type="radio" name="droga-bau" value={t} checked={tipo === t} onChange={() => { setEstado(null); setTipo(t); }} />
-                <span>{t === 'membros' ? 'Membros' : 'Gerência'}</span>
+                <span>{t === 'membros' ? 'Membros' : t === 'gerencia' ? 'Gerência' : 'Casa'}</span>
               </label>
             ))}
           </div>
