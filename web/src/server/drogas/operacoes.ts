@@ -150,15 +150,15 @@ export async function movimentarDroga(p: PedidoDroga, usuario: UsuarioRef): Prom
     const eventos: ComEvento<ResultadoDrogaDTO>['eventos'] = [{ tipo: 'bau.movimento', bau: tipo, log }];
 
     if (deposito > 0) {
-      const novoSujo = saldo.sujo + deposito;
-      if (!Number.isSafeInteger(novoSujo)) throw new ErroApp('VALIDACAO', 'O saldo passaria do limite permitido.');
-      tx.set(refSaldo(db), { sujo: novoSujo, limpo: saldo.limpo, versao: saldo.versao + 1, atualizadoEm: agora });
+      const novoLimpo = saldo.limpo + deposito;
+      if (!Number.isSafeInteger(novoLimpo)) throw new ErroApp('VALIDACAO', 'O saldo passaria do limite permitido.');
+      tx.set(refSaldo(db), { sujo: saldo.sujo, limpo: novoLimpo, versao: saldo.versao + 1, atualizadoEm: agora });
       const { log: logCaixa } = registrarLogTxCompleto(tx, db, 'caixa', {
         acao: 'entrada',
-        tipo: 'sujo',
+        tipo: 'limpo',
         valor: deposito,
         anotacao: `Depósito da venda de ${DROGA.nome}`,
-        saldoResultante: novoSujo,
+        saldoResultante: novoLimpo,
         usuario: quem,
       });
       eventos.push({ tipo: 'caixa.movimento', log: logCaixa });
@@ -189,7 +189,7 @@ export async function movimentarDroga(p: PedidoDroga, usuario: UsuarioRef): Prom
   });
 }
 
-/** Depósito de dinheiro da venda: entra no caixa (dinheiro sujo) e abate a pendência do usuário. */
+/** Depósito de dinheiro da venda: entra no caixa (dinheiro limpo) e abate a pendência do usuário. */
 export async function depositarVenda(valorCru: unknown, usuario: UsuarioRef): Promise<ComEvento<{ devido: number }>> {
   const v = parseInteiro(valorCru, { min: LIMITES.VALOR_CAIXA_MIN, max: LIMITES.VALOR_CAIXA_MAX });
   if (!v.ok) throw new ErroApp('VALIDACAO', v.erro);
@@ -200,16 +200,16 @@ export async function depositarVenda(valorCru: unknown, usuario: UsuarioRef): Pr
     const saldo = lerDocSaldo((await tx.get(refSaldo(db))).data());
     const pend = lerPendenciaDoc((await tx.get(refPendencia(db, quem.id))).data());
     const agora = new Date().toISOString();
-    const novoSujo = saldo.sujo + v.valor;
-    if (!Number.isSafeInteger(novoSujo)) throw new ErroApp('VALIDACAO', 'O saldo passaria do limite permitido.');
+    const novoLimpo = saldo.limpo + v.valor;
+    if (!Number.isSafeInteger(novoLimpo)) throw new ErroApp('VALIDACAO', 'O saldo passaria do limite permitido.');
     const devido = Math.max(0, pend.devido - v.valor);
-    tx.set(refSaldo(db), { sujo: novoSujo, limpo: saldo.limpo, versao: saldo.versao + 1, atualizadoEm: agora });
+    tx.set(refSaldo(db), { sujo: saldo.sujo, limpo: novoLimpo, versao: saldo.versao + 1, atualizadoEm: agora });
     const { log } = registrarLogTxCompleto(tx, db, 'caixa', {
       acao: 'entrada',
-      tipo: 'sujo',
+      tipo: 'limpo',
       valor: v.valor,
       anotacao: `Depósito da venda de ${DROGA.nome}`,
-      saldoResultante: novoSujo,
+      saldoResultante: novoLimpo,
       usuario: quem,
     });
     tx.set(refPendencia(db, quem.id), {

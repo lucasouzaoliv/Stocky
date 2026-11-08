@@ -57,11 +57,11 @@ describe('movimentarDroga', () => {
     expect(r.eventos.find((e) => e.tipo === 'droga.pendencia')).toMatchObject({ jaPendente: true, comprador: 'Fulano' });
   });
 
-  it('com dinheiro depositado junto, entra no caixa sujo e abate a pendência', async () => {
+  it('com dinheiro depositado junto, entra no caixa limpo e abate a pendência', async () => {
     const r = await movimentarDroga(pedido({ deposito: 2300 }), ana);
     expect(r.dto.devido).toBe(0);
     expect(r.eventos.map((e) => e.tipo)).toEqual(['bau.movimento', 'caixa.movimento']);
-    expect((fake.dump()['caixa/saldo'] as { sujo: number }).sujo).toBe(2300);
+    expect((fake.dump()['caixa/saldo'] as { limpo: number }).limpo).toBe(2300);
   });
 
   it('o comprador vai para o log do baú junto com o motivo', async () => {
@@ -91,12 +91,13 @@ describe('movimentarDroga', () => {
 });
 
 describe('depositarVenda e dados', () => {
-  it('o depósito abate a pendência (sem ficar negativa) e entra no caixa sujo', async () => {
+  it('o depósito abate a pendência (sem ficar negativa) e entra no caixa limpo', async () => {
     await movimentarDroga(pedido(), ana);
     expect((await depositarVenda(1000, ana)).dto.devido).toBe(1300);
     expect((await depositarVenda(5000, ana)).dto.devido).toBe(0);
     expect(await listarPendencias()).toEqual([]);
-    expect((fake.dump()['caixa/saldo'] as { sujo: number }).sujo).toBe(6000);
+    expect((fake.dump()['caixa/saldo'] as { limpo: number }).limpo).toBe(6000);
+    expect((fake.dump()['caixa/saldo'] as { sujo: number }).sujo).toBe(0);
     expect((await recusa(depositarVenda(0, ana))).status).toBe(400);
   });
 
