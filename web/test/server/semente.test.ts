@@ -27,7 +27,7 @@ describe('WEB-014 semente do catálogo', () => {
     expect(Object.keys(d).sort()).toEqual(['baus/casa', 'baus/gerencia', 'baus/membros', 'caixa/saldo', 'config/catalogo']);
     const categorias = (d['config/catalogo'] as { categorias: Array<{ itens: unknown[] }> }).categorias;
     expect(categorias).toHaveLength(6);
-    expect(categorias.reduce((n, c) => n + c.itens.length, 0)).toBe(59);
+    expect(categorias.reduce((n, c) => n + c.itens.length, 0)).toBe(56);
     expect(d['baus/membros']).toMatchObject({ versao: 0, itens: {} });
     expect(d['baus/gerencia']).toMatchObject({ versao: 0, itens: {} });
     expect(d['caixa/saldo']).toMatchObject({ sujo: 0, limpo: 0, versao: 0 });
@@ -89,7 +89,7 @@ describe('WEB-014 semente do catálogo', () => {
       .categorias.find((c) => c.id === 'armas');
     expect(armas?.itens.filter((i) => i.id === 'faca')).toHaveLength(1);
     expect(armas?.itens.filter((i) => i.id === 'machado')).toHaveLength(1);
-    expect(armas?.itens.some((i) => i.id === 'colt')).toBe(true);
+    expect(armas?.itens.some((i) => i.id === 'desert')).toBe(true);
   });
 
   it('ADR-11: dentro de transação, catálogo ausente vira erro interno e nada é semeado', async () => {
@@ -125,9 +125,9 @@ describe('WEB-014 semente do catálogo', () => {
     }).toThrow();
   });
 
-  it('catálogo padrão: 6 categorias, 59 itens, ids válidos e únicos, no máximo 25 por categoria', () => {
+  it('catálogo padrão: 6 categorias, 56 itens, ids válidos e únicos, no máximo 25 por categoria', () => {
     expect(CATALOGO_PADRAO).toHaveLength(6);
-    expect(CATALOGO_PADRAO.reduce((n, c) => n + c.itens.length, 0)).toBe(59);
+    expect(CATALOGO_PADRAO.reduce((n, c) => n + c.itens.length, 0)).toBe(56);
     for (const c of CATALOGO_PADRAO) {
       expect(c.itens.length, c.nome).toBeLessThanOrEqual(25);
       const ids = c.itens.map((i) => i.id);

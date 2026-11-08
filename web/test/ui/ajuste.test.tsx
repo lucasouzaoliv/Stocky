@@ -21,7 +21,7 @@ const CAT: CatalogoDTO = {
       emoji: '',
       total: 3,
       itens: [
-        { id: 'colt', nome: 'Colt' },
+        { id: 'desert', nome: 'Desert Eagle' },
         { id: 'especial', nome: '#1 Especial: .50' },
         { id: 'faca', nome: 'Faca' },
       ],
@@ -31,7 +31,7 @@ const CAT: CatalogoDTO = {
 const BAU = (versao = 7): BauDTO => ({
   tipo: 'membros',
   versao,
-  categorias: [{ id: 'armas', nome: 'Armas', emoji: '', itens: [{ id: 'colt', nome: 'Colt', quantidade: 3 }, { id: 'especial', nome: '#1 Especial: .50', quantidade: 10 }] }],
+  categorias: [{ id: 'armas', nome: 'Armas', emoji: '', itens: [{ id: 'desert', nome: 'Desert Eagle', quantidade: 3 }, { id: 'especial', nome: '#1 Especial: .50', quantidade: 10 }] }],
 });
 
 interface Opcoes {
@@ -44,8 +44,8 @@ interface Opcoes {
 function previaDe(c: Chamada, versao = 7): PreviaAjusteDTO {
   const linhas = (c.corpo!.linhas as Array<{ categoriaId: string; itemId: string; quantidade: number }>).map((l) => ({
     ...l,
-    nome: l.itemId === 'colt' ? 'Colt' : l.itemId === 'especial' ? '#1 Especial: .50' : 'Faca',
-    antes: l.itemId === 'colt' ? 3 : l.itemId === 'especial' ? 10 : 0,
+    nome: l.itemId === 'desert' ? 'Desert Eagle' : l.itemId === 'especial' ? '#1 Especial: .50' : 'Faca',
+    antes: l.itemId === 'desert' ? 3 : l.itemId === 'especial' ? 10 : 0,
     depois: l.quantidade,
   }));
   return { tipo: 'membros', versao, alterados: linhas.length, linhas };
@@ -100,11 +100,11 @@ describe('WEB-062 páginas /ajuste/[tipo]', () => {
 describe('WEB-062 AC6: sem alterações', () => {
   it('"Ver resumo" começa desabilitado, habilita ao alterar e desabilita ao desfazer', async () => {
     montar();
-    await screen.findByText('Colt');
+    await screen.findByText('Desert Eagle');
     expect(verResumo()).toBeDisabled();
-    digitar('Colt', '5');
+    digitar('Desert Eagle', '5');
     expect(verResumo()).toBeEnabled();
-    digitar('Colt', '3');
+    digitar('Desert Eagle', '3');
     expect(verResumo()).toBeDisabled();
   });
 
@@ -134,13 +134,13 @@ describe('WEB-062 AC1: ids, nunca texto livre', () => {
 describe('WEB-062 AC2: só linhas alteradas; limite de 200', () => {
   it('a prévia leva apenas as linhas alteradas', async () => {
     const chamadas = montar();
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     digitar('Faca', '0');
     fireEvent.click(verResumo());
     await screen.findByRole('heading', { name: 'Resumo do ajuste' });
     const corpo = chamadas.find((c) => c.url.endsWith('/previa'))!.corpo as { linhas: unknown[] };
-    expect(corpo.linhas).toEqual([{ categoriaId: 'armas', itemId: 'colt', quantidade: 5 }]);
+    expect(corpo.linhas).toEqual([{ categoriaId: 'armas', itemId: 'desert', quantidade: 5 }]);
   });
 
   it('mais de 200 alteradas bloqueia com mensagem e não chama a API', async () => {
@@ -165,8 +165,8 @@ describe('WEB-062 AC2: só linhas alteradas; limite de 200', () => {
 describe('WEB-062 AC3: campo inválido', () => {
   it.each(['10abc', '-1', '10000001', '', '1,5', '2.5'])('"%s" marca a linha e impede Ver resumo', async (texto) => {
     const chamadas = montar();
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     digitar('Faca', texto === '' ? '' : texto);
     const entrada = campo('Faca');
     expect(entrada).toHaveAttribute('aria-invalid', 'true');
@@ -181,11 +181,11 @@ describe('WEB-062 AC3: campo inválido', () => {
   });
 
   it('erro de linha devolvido pelo servidor (400) marca a linha certa', async () => {
-    montar({ previa: () => falha(400, 'VALIDACAO', 'Há linhas inválidas.', { linhas: [{ indice: 0, categoriaId: 'armas', itemId: 'colt', motivo: 'Item sem cadastro.' }] }) });
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    montar({ previa: () => falha(400, 'VALIDACAO', 'Há linhas inválidas.', { linhas: [{ indice: 0, categoriaId: 'armas', itemId: 'desert', motivo: 'Item sem cadastro.' }] }) });
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     fireEvent.click(verResumo());
-    await waitFor(() => expect(campo('Colt')).toHaveAttribute('aria-invalid', 'true'));
+    await waitFor(() => expect(campo('Desert Eagle')).toHaveAttribute('aria-invalid', 'true'));
     expect(screen.getByText('Item sem cadastro.')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Há linhas inválidas.');
   });
@@ -194,13 +194,13 @@ describe('WEB-062 AC3: campo inválido', () => {
 describe('WEB-062 AC4: resumo antes → depois e confirmação com a versão', () => {
   it('mostra antes e depois de cada item e confirma com a versão da prévia', async () => {
     const chamadas = montar({ previa: (c) => ok(previaDe(c, 42)) });
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     digitar('#1 Especial: .50', '0');
     fireEvent.click(verResumo());
     const titulo = await screen.findByRole('heading', { name: 'Resumo do ajuste' });
     expect(titulo).toHaveFocus();
-    const colt = screen.getByRole('rowheader', { name: 'Colt' }).closest('tr')!;
+    const colt = screen.getByRole('rowheader', { name: 'Desert Eagle' }).closest('tr')!;
     expect(within(colt).getByText('3')).toBeInTheDocument();
     expect(colt.querySelector('[data-rotulo="Depois"]')).toHaveTextContent('→ 5');
     const esp = screen.getByRole('rowheader', { name: '#1 Especial: .50' }).closest('tr')!;
@@ -213,7 +213,7 @@ describe('WEB-062 AC4: resumo antes → depois e confirmação com a versão', (
     expect(conf.corpo).toEqual({
       versao: 42,
       linhas: [
-        { categoriaId: 'armas', itemId: 'colt', quantidade: 5 },
+        { categoriaId: 'armas', itemId: 'desert', quantidade: 5 },
         { categoriaId: 'armas', itemId: 'especial', quantidade: 0 },
       ],
     });
@@ -225,19 +225,19 @@ describe('WEB-062 AC4: resumo antes → depois e confirmação com a versão', (
 
   it('"Voltar e editar" mantém as edições sem confirmar', async () => {
     const chamadas = montar();
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     fireEvent.click(verResumo());
     await screen.findByRole('heading', { name: 'Resumo do ajuste' });
     fireEvent.click(screen.getByRole('button', { name: 'Voltar e editar' }));
-    expect(campo('Colt')).toHaveValue('5');
+    expect(campo('Desert Eagle')).toHaveValue('5');
     expect(chamadas.some((c) => c.url.endsWith('/confirmar'))).toBe(false);
   });
 
   it('erro genérico na confirmação aparece como alerta e permite tentar de novo', async () => {
     montar({ confirmar: () => falha(500, 'INTERNO', 'x') });
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     fireEvent.click(verResumo());
     fireEvent.click(await screen.findByRole('button', { name: 'Confirmar ajuste' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Ocorreu um erro');
@@ -247,8 +247,8 @@ describe('WEB-062 AC4: resumo antes → depois e confirmação com a versão', (
   it('duplo clique em Confirmar envia uma vez só', async () => {
     let liberar!: () => void;
     const chamadas = montar({ confirmar: () => new Promise<Response>((r) => { liberar = () => r(ok({ alterados: 1, versao: 8, auditoriaId: null })); }) });
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     fireEvent.click(verResumo());
     const botao = await screen.findByRole('button', { name: 'Confirmar ajuste' });
     fireEvent.click(botao);
@@ -264,14 +264,14 @@ describe('WEB-062 AC5: 409 de versão velha (cenário D3)', () => {
   it('mostra "o baú mudou", descarta o resumo e não deixa reconfirmar', async () => {
     let versaoBau = 7;
     const chamadas = montar({
-      bau: () => (versaoBau === 7 ? BAU(7) : { ...BAU(8), categorias: [{ id: 'armas', nome: 'Armas', emoji: '', itens: [{ id: 'colt', nome: 'Colt', quantidade: 13 }] }] }),
+      bau: () => (versaoBau === 7 ? BAU(7) : { ...BAU(8), categorias: [{ id: 'armas', nome: 'Armas', emoji: '', itens: [{ id: 'desert', nome: 'Desert Eagle', quantidade: 13 }] }] }),
       confirmar: () => {
         versaoBau = 8;
         return falha(409, 'VERSAO_DESATUALIZADA', 'O baú mudou desde o resumo. Refaça o ajuste.');
       },
     });
-    await screen.findByText('Colt');
-    digitar('Colt', '5');
+    await screen.findByText('Desert Eagle');
+    digitar('Desert Eagle', '5');
     fireEvent.click(verResumo());
     fireEvent.click(await screen.findByRole('button', { name: 'Confirmar ajuste' }));
 
@@ -283,7 +283,7 @@ describe('WEB-062 AC5: 409 de versão velha (cenário D3)', () => {
     expect(chamadas.filter((c) => c.url.endsWith('/confirmar'))).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Recarregar o baú' }));
-    await waitFor(() => expect(campo('Colt')).toHaveValue('13'));
+    await waitFor(() => expect(campo('Desert Eagle')).toHaveValue('13'));
     expect(screen.queryByRole('alert')).toBeNull();
     expect(verResumo()).toBeDisabled();
     expect(chamadas.filter((c) => c.url.endsWith('/confirmar'))).toHaveLength(1);

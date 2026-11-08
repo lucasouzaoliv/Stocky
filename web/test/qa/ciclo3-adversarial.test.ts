@@ -43,7 +43,7 @@ interface Resp {
 
 let fake: FakeFirestore;
 
-function abrir(o: Parameters<typeof seedBase>[0] = { membros: { armas: { colt: 10 } }, gerencia: { armas: { usp: 2 } }, saldo: { sujo: 100, limpo: 0 } }) {
+function abrir(o: Parameters<typeof seedBase>[0] = { membros: { armas: { desert: 10 } }, gerencia: { armas: { usp: 2 } }, saldo: { sujo: 100, limpo: 0 } }) {
   fake = criarFakeFirestore({ seed: seedBase(o) });
   setDb(comoDb(fake));
 }
@@ -121,20 +121,20 @@ describe('ordem de chaves JSON não muda o resultado', () => {
   it('adicionar com chaves em qualquer ordem → 200 e mesma quantidade', async () => {
     const s = await sessao(1);
     const ordens = [
-      '{"categoriaId":"armas","itemId":"colt","quantidade":1}',
-      '{"quantidade":1,"itemId":"colt","categoriaId":"armas"}',
-      '{"itemId":"colt","quantidade":1,"categoriaId":"armas"}',
+      '{"categoriaId":"armas","itemId":"desert","quantidade":1}',
+      '{"quantidade":1,"itemId":"desert","categoriaId":"armas"}',
+      '{"itemId":"desert","quantidade":1,"categoriaId":"armas"}',
     ];
     for (const corpo of ordens) expect((await cru(ADICIONAR, { s, corpo, params: { tipo: 'membros' } })).status).toBe(200);
-    expect(itensBau('membros').itens.armas!.colt).toBe(13);
+    expect(itensBau('membros').itens.armas!.desert).toBe(13);
   });
 
   it('confirmar ajuste com versao depois das linhas e linhas com chaves trocadas → 200', async () => {
     const s = await sessao(2);
-    const corpo = '{"linhas":[{"quantidade":7,"itemId":"colt","categoriaId":"armas"}],"versao":0}';
+    const corpo = '{"linhas":[{"quantidade":7,"itemId":"desert","categoriaId":"armas"}],"versao":0}';
     const r = await cru(CONFIRMAR, { s, corpo, params: { tipo: 'membros' } });
     expect(r.status, r.texto).toBe(200);
-    expect(itensBau('membros').itens.armas!.colt).toBe(7);
+    expect(itensBau('membros').itens.armas!.desert).toBe(7);
   });
 
   it('movimentar caixa com chaves trocadas → 200', async () => {
@@ -161,8 +161,8 @@ describe('números como texto/decimal/exponencial em todas as rotas que recebem 
   const BONS: ReadonlyArray<[string, number]> = [['5', 5], ['"5"', 5], ['"5\\u00a0"', 5], ['" 5 "', 5], ['"00005"', 5], ['5.0', 5], ['5e0', 5], ['1e3', 1000]];
 
   const ROTAS_QTD: ReadonlyArray<[string, unknown, 1 | 2, (v: string) => string, Record<string, string>]> = [
-    ['adicionar', ADICIONAR, 1, (v) => `{"categoriaId":"armas","itemId":"colt","quantidade":${v}}`, { tipo: 'membros' }],
-    ['remover', REMOVER, 1, (v) => `{"categoriaId":"armas","itemId":"colt","quantidade":${v}}`, { tipo: 'membros' }],
+    ['adicionar', ADICIONAR, 1, (v) => `{"categoriaId":"armas","itemId":"desert","quantidade":${v}}`, { tipo: 'membros' }],
+    ['remover', REMOVER, 1, (v) => `{"categoriaId":"armas","itemId":"desert","quantidade":${v}}`, { tipo: 'membros' }],
     ['movimentar', MOVIMENTAR, 2, (v) => `{"tipo":"sujo","acao":"entrada","valor":${v},"anotacao":"x"}`, {}],
   ];
 
@@ -178,15 +178,15 @@ describe('números como texto/decimal/exponencial em todas as rotas que recebem 
 
   it.each(BONS)('adicionar: %s → +%i', async (v, n) => {
     const s = await sessao(1);
-    const r = await cru(ADICIONAR, { s, corpo: `{"categoriaId":"armas","itemId":"colt","quantidade":${v}}`, params: { tipo: 'membros' } });
+    const r = await cru(ADICIONAR, { s, corpo: `{"categoriaId":"armas","itemId":"desert","quantidade":${v}}`, params: { tipo: 'membros' } });
     expect(r.status, r.texto).toBe(200);
-    expect(itensBau('membros').itens.armas!.colt).toBe(10 + n);
+    expect(itensBau('membros').itens.armas!.desert).toBe(10 + n);
   });
 
   it.each(RUINS)('prévia/confirmar: quantidade %s → 400 com a linha listada, nada gravado', async (v) => {
     const s = await sessao(2);
     const antes = fake.dump();
-    const linhas = `[{"categoriaId":"armas","itemId":"colt","quantidade":${v}}]`;
+    const linhas = `[{"categoriaId":"armas","itemId":"desert","quantidade":${v}}]`;
     const p = await cru(PREVIA, { s, corpo: `{"linhas":${linhas}}`, params: { tipo: 'membros' } });
     // quantidade 0 no ajuste é válida (zera o item); o resto é inválido
     if (v === '0' || v === '"0"' || v === '-0') {
@@ -202,7 +202,7 @@ describe('números como texto/decimal/exponencial em todas as rotas que recebem 
   it.each(['"0"', '0.5', '-1', '1e400', 'null', '[0]', '9007199254740993'])('confirmar: versao %s → 400 ou 409, nada gravado', async (v) => {
     const s = await sessao(2);
     const antes = fake.dump();
-    const r = await cru(CONFIRMAR, { s, corpo: `{"versao":${v},"linhas":[{"categoriaId":"armas","itemId":"colt","quantidade":1}]}`, params: { tipo: 'membros' } });
+    const r = await cru(CONFIRMAR, { s, corpo: `{"versao":${v},"linhas":[{"categoriaId":"armas","itemId":"desert","quantidade":1}]}`, params: { tipo: 'membros' } });
     expect([400, 409], `${v}: ${r.texto}`).toContain(r.status);
     expect(fake.dump()).toEqual(antes);
   });
@@ -275,14 +275,14 @@ describe('corpo vazio, gigante, duplicado, malformado', () => {
   it('chave duplicada: a última vale e é validada ("quantidade":1 e depois -5 → 400)', async () => {
     const s = await sessao(1);
     const antes = fake.dump();
-    const r = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","quantidade":1,"quantidade":-5}', params: { tipo: 'membros' } });
+    const r = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","quantidade":1,"quantidade":-5}', params: { tipo: 'membros' } });
     expect(r.status).toBe(400);
     expect(fake.dump()).toEqual(antes);
   });
 
-  it('chave duplicada: itemId "colt" e depois "constructor" → 400', async () => {
+  it('chave duplicada: itemId "desert" e depois "constructor" → 400', async () => {
     const s = await sessao(1);
-    const r = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","itemId":"constructor","quantidade":1}', params: { tipo: 'membros' } });
+    const r = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","itemId":"constructor","quantidade":1}', params: { tipo: 'membros' } });
     expect(r.status).toBe(400);
   });
 
@@ -297,14 +297,14 @@ describe('corpo vazio, gigante, duplicado, malformado', () => {
   it('chave duplicada: versao certa e depois errada no confirmar → 409, nada gravado', async () => {
     const s = await sessao(2);
     const antes = fake.dump();
-    const r = await cru(CONFIRMAR, { s, corpo: '{"versao":0,"versao":99,"linhas":[{"categoriaId":"armas","itemId":"colt","quantidade":1}]}', params: { tipo: 'membros' } });
+    const r = await cru(CONFIRMAR, { s, corpo: '{"versao":0,"versao":99,"linhas":[{"categoriaId":"armas","itemId":"desert","quantidade":1}]}', params: { tipo: 'membros' } });
     expect(r.status).toBe(409);
     expect(fake.dump()).toEqual(antes);
   });
 
   it('BOM no início do JSON é tolerado (é removido pelo decodificador) e o resto é validado', async () => {
     const s = await sessao(1);
-    const r = await cru(ADICIONAR, { s, corpo: '\uFEFF{"categoriaId":"armas","itemId":"colt","quantidade":1}', params: { tipo: 'membros' } });
+    const r = await cru(ADICIONAR, { s, corpo: '\uFEFF{"categoriaId":"armas","itemId":"desert","quantidade":1}', params: { tipo: 'membros' } });
     expect([200, 400]).toContain(r.status);
   });
 });
@@ -364,7 +364,7 @@ describe('caminhos com .. e %2e, ids gigantes', () => {
   it.each(IDS.map((v) => [v.length > 60 ? `${v.slice(0, 8)}…(${v.length})` : v, v]))('DELETE do catálogo com itemId %s → 400, nada removido', async (_r, itemId) => {
     const s = await sessao(3);
     const antes = fake.dump();
-    for (const params of [{ categoriaId: 'armas', itemId }, { categoriaId: itemId, itemId: 'colt' }]) {
+    for (const params of [{ categoriaId: 'armas', itemId }, { categoriaId: itemId, itemId: 'desert' }]) {
       const r = await cru(CATALOGO_REMOVER, { metodo: 'DELETE', s, params });
       expect(r.status, r.texto).toBe(400);
     }
@@ -375,7 +375,7 @@ describe('caminhos com .. e %2e, ids gigantes', () => {
     const s = await sessao(2);
     const r = await cru(AUDITORIA_ID, { metodo: 'GET', s, params: { id: id.length > 60 ? id : id } });
     expect([400, 404], r.texto.slice(0, 200)).toContain(r.status);
-    expect(r.texto).not.toContain('colt');
+    expect(r.texto).not.toContain('desert');
   });
 
   it.each(['..', '../x', 'a'.repeat(41), 'a'.repeat(10_000), '%2e%2e'])('cursor "%s" nas listas → 400', async (cursor) => {
@@ -414,9 +414,9 @@ describe('Host e Origin forjados', () => {
   it('Host/X-Forwarded-Host forjados não mudam nada: Origin certa passa, Origin = host forjado é recusada', async () => {
     const s = await sessao(1);
     const forjado = { host: 'evil.com', 'x-forwarded-host': 'evil.com', 'x-forwarded-proto': 'http' };
-    const ok = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","quantidade":1}', params: { tipo: 'membros' }, headers: forjado, url: 'https://evil.com/api/bau/membros/adicionar' });
+    const ok = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","quantidade":1}', params: { tipo: 'membros' }, headers: forjado, url: 'https://evil.com/api/bau/membros/adicionar' });
     expect(ok.status, ok.texto).toBe(200);
-    const ruim = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","quantidade":1}', params: { tipo: 'membros' }, headers: { ...forjado, origin: 'https://evil.com' }, url: 'https://evil.com/api/bau/membros/adicionar' });
+    const ruim = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","quantidade":1}', params: { tipo: 'membros' }, headers: { ...forjado, origin: 'https://evil.com' }, url: 'https://evil.com/api/bau/membros/adicionar' });
     expect(ruim.status).toBe(403);
   });
 
@@ -482,10 +482,10 @@ describe('sessão e revalidação no limite exato', () => {
     const exp = (await lerSessao(s.token))!.exp;
     expect(exp).toBe(t0 + 2000);
     vi.setSystemTime(exp - 1000);
-    expect((await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","quantidade":1}', params: { tipo: 'membros' } })).status).toBe(200);
+    expect((await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","quantidade":1}', params: { tipo: 'membros' } })).status).toBe(200);
     const antes = fake.dump();
     vi.setSystemTime(exp);
-    const r = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","quantidade":1}', params: { tipo: 'membros' } });
+    const r = await cru(ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","quantidade":1}', params: { tipo: 'membros' } });
     expect(r.status).toBe(401);
     expect(r.corpo.codigo).toBe('SEM_SESSAO');
     expect(fake.dump()).toEqual(antes);
@@ -508,7 +508,7 @@ describe('sessão e revalidação no limite exato', () => {
     for (const [rota, corpo, params] of [
       [MOVIMENTAR, '{"tipo":"sujo","acao":"saida","valor":1,"anotacao":"x"}', {}],
       [ZERAR, '{"alvo":"ambos","confirmacao":"ZERAR"}', {}],
-      [ADICIONAR, '{"categoriaId":"armas","itemId":"colt","quantidade":1}', { tipo: 'membros' }],
+      [ADICIONAR, '{"categoriaId":"armas","itemId":"desert","quantidade":1}', { tipo: 'membros' }],
     ] as const) {
       const r = await cru(rota, { s, corpo, params });
       expect(r.status).toBe(401);
@@ -557,12 +557,12 @@ describe('sessão e revalidação no limite exato', () => {
 describe('concorrência nova', () => {
   it('zerar × ajuste simultâneos (10 rodadas): nunca sobra ajuste depois do zerar sem versão nova; auditoria = operações 200', async () => {
     for (let rodada = 0; rodada < 10; rodada += 1) {
-      abrir({ membros: { armas: { colt: 10 } }, gerencia: { armas: { usp: 2 } }, versao: 3 });
+      abrir({ membros: { armas: { desert: 10 } }, gerencia: { armas: { usp: 2 } }, versao: 3 });
       const dono = await sessao(3);
       const gerente = await sessao(2);
       const ops = [
         () => cru(ZERAR, { s: dono, corpo: '{"alvo":"membros","confirmacao":"ZERAR"}' }),
-        () => cru(CONFIRMAR, { s: gerente, corpo: '{"versao":3,"linhas":[{"categoriaId":"armas","itemId":"colt","quantidade":50}]}', params: { tipo: 'membros' } }),
+        () => cru(CONFIRMAR, { s: gerente, corpo: '{"versao":3,"linhas":[{"categoriaId":"armas","itemId":"desert","quantidade":50}]}', params: { tipo: 'membros' } }),
       ];
       const [z, a] = await Promise.all(rodada % 2 === 0 ? ops.map((f) => f()) : ops.reverse().map((f) => f()).reverse());
       expect(z!.status, z!.texto).toBe(200);
@@ -624,7 +624,7 @@ describe('concorrência nova', () => {
     const s = await sessao(1);
     const rs = await Promise.all(
       Array.from({ length: 100 }, (_v, i) =>
-        cru(i % 2 ? REMOVER : ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"colt","quantidade":1}', params: { tipo: 'membros' } }),
+        cru(i % 2 ? REMOVER : ADICIONAR, { s, corpo: '{"categoriaId":"armas","itemId":"desert","quantidade":1}', params: { tipo: 'membros' } }),
       ),
     );
     let esperado = 10;
@@ -632,7 +632,7 @@ describe('concorrência nova', () => {
       expect([200, 409]).toContain(r.status);
       if (r.status === 200) esperado += i % 2 ? -1 : 1;
     });
-    expect(itensBau('membros').itens.armas?.colt ?? 0).toBe(esperado);
+    expect(itensBau('membros').itens.armas?.desert ?? 0).toBe(esperado);
     expect(logsDe(fake.dump(), 'membros')).toHaveLength(rs.filter((r) => r.status === 200).length);
   });
 });

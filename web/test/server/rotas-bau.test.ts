@@ -18,7 +18,7 @@ let fake: FakeFirestore;
 beforeEach(() => {
   aplicarEnvTeste();
   resetSemente();
-  fake = criarFakeFirestore({ seed: seedBase({ membros: { medicamentos: { analgesico: 10 } }, gerencia: { armas: { colt: 2 }, medicamentos: { analgesico: 5 } } }) });
+  fake = criarFakeFirestore({ seed: seedBase({ membros: { medicamentos: { analgesico: 10 } }, gerencia: { armas: { desert: 2 }, medicamentos: { analgesico: 5 } } }) });
   setDb(comoDb(fake));
 });
 afterEach(() => {
@@ -243,8 +243,8 @@ describe('WEB-031 AC3: sucesso e erros de regra', () => {
   });
 
   it('o baú da gerência é independente do dos membros', async () => {
-    await chamar(ROTAS[1], 'gerencia', 2, corpoOk({ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }));
-    expect(itens('gerencia')).toEqual({ armas: { colt: 3 }, medicamentos: { analgesico: 5 } });
+    await chamar(ROTAS[1], 'gerencia', 2, corpoOk({ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }));
+    expect(itens('gerencia')).toEqual({ armas: { desert: 3 }, medicamentos: { analgesico: 5 } });
     expect(itens('membros')).toEqual({ medicamentos: { analgesico: 10 } });
   });
 });

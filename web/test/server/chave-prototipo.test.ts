@@ -34,22 +34,22 @@ describe('QA-W1 ids que colidem com Object.prototype', () => {
   });
 
   it('quantidadeNoBau ignora chaves herdadas em qualquer nível', () => {
-    const itens = { armas: { colt: 2 } };
+    const itens = { armas: { desert: 2 } };
     expect(quantidadeNoBau(itens, 'armas', 'constructor')).toBe(0);
     expect(quantidadeNoBau(itens, 'armas', 'toString')).toBe(0);
-    expect(quantidadeNoBau(itens, 'constructor', 'colt')).toBe(0);
-    expect(quantidadeNoBau(itens, 'armas', 'colt')).toBe(2);
+    expect(quantidadeNoBau(itens, 'constructor', 'desert')).toBe(0);
+    expect(quantidadeNoBau(itens, 'armas', 'desert')).toBe(2);
   });
 
   it('lerDocBau preserva um "constructor" que já existe gravado (dado antigo)', () => {
-    const doc = lerDocBau({ versao: 1, itens: { armas: { constructor: 3, colt: 1 } } });
+    const doc = lerDocBau({ versao: 1, itens: { armas: { constructor: 3, desert: 1 } } });
     expect(quantidadeNoBau(doc.itens, 'armas', 'constructor')).toBe(3);
   });
 });
 
 describe('QA-W1 dados antigos: item "constructor" já no catálogo', () => {
   let fake: FakeFirestore;
-  function abrir(membros: Record<string, Record<string, number>> = { armas: { colt: 4 } }) {
+  function abrir(membros: Record<string, Record<string, number>> = { armas: { desert: 4 } }) {
     resetSemente();
     const seed = seedBase({ membros, gerencia: { armas: { constructor: 7 } } });
     const catalogo = structuredClone(CATALOGO_PADRAO);
@@ -84,7 +84,7 @@ describe('QA-W1 dados antigos: item "constructor" já no catálogo', () => {
     expect(r.removidoDe).toEqual({ membros: 0, gerencia: 7, casa: 0 });
     const dump = fake.dump();
     expect((dump['baus/gerencia'] as { itens: unknown }).itens).toEqual({});
-    expect((dump['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { colt: 4 } });
+    expect((dump['baus/membros'] as { itens: unknown }).itens).toEqual({ armas: { desert: 4 } });
   });
 
   it('a leitura do baú com "constructor" antigo não quebra nem mistura categorias', async () => {

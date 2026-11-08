@@ -18,12 +18,12 @@ const dono = { id: '1', nome: 'Dono', nivel: 3 as const };
 describe('atualizarCatalogoParaPadrao', () => {
   it('troca o catálogo e grava nos baús o estoque contado', async () => {
     resetSemente();
-    const antigo = { atualizadoEm: 'x', categorias: [{ id: 'armas', nome: 'Armas', emoji: 'x', itens: [{ id: 'colt', nome: 'Colt' }, { id: 'ak_47', nome: 'AK-47' }] }] };
-    const fake = criarFakeFirestore({ seed: { ...seedBase({ membros: { armas: { colt: 3, ak_47: 9 } }, versao: 4 }), 'config/catalogo': antigo } });
+    const antigo = { atualizadoEm: 'x', categorias: [{ id: 'armas', nome: 'Armas', emoji: 'x', itens: [{ id: 'desert', nome: 'Desert Eagle' }, { id: 'ak_47', nome: 'AK-47' }] }] };
+    const fake = criarFakeFirestore({ seed: { ...seedBase({ membros: { armas: { desert: 3, ak_47: 9 } }, versao: 4 }), 'config/catalogo': antigo } });
     setDb(comoDb(fake));
     const r = await atualizarCatalogoParaPadrao(dono);
     expect(r.removidos).toBe(1);
-    expect(r.adicionados).toBe(58);
+    expect(r.adicionados).toBe(55);
     const d = fake.dump();
     expect((d['config/catalogo'] as { categorias: unknown[] }).categorias).toHaveLength(CATALOGO_PADRAO.length);
     expect(d['baus/membros']).toMatchObject({ versao: 5, itens: ESTOQUE_INICIAL.membros });

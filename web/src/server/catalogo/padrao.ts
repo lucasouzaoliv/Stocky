@@ -29,10 +29,8 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
     nome: 'Armas',
     emoji: '🔫',
     itens: [
-      { id: 'colt', nome: 'Colt' },
       { id: 'usp', nome: 'USP' },
       { id: 'desert', nome: 'Desert Eagle' },
-      { id: 'knife', nome: 'Knife' },
       { id: 'cz_scorpion_evo', nome: 'CZ Scorpion Evo' },
       { id: 'c_4', nome: 'C-4' },
     ],
@@ -46,7 +44,6 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'colete_danificado', nome: 'Colete Danificado' },
       { id: 'muni_9mm', nome: 'Munição 9MM' },
       { id: 'muni_45acp', nome: 'Munição .45 ACP' },
-      { id: 'muni_50', nome: 'Munição .50' },
       { id: 'muni_50ae', nome: 'Munição .50 AE' },
     ],
   },

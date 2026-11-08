@@ -30,7 +30,7 @@ type Rota = (req: Request, ctx?: { params: Promise<Record<string, string>> }) =>
 const caminho = '/api/qa';
 let fake: FakeFirestore;
 
-function abrir(seed: Record<string, Dados> = seedBase({ membros: { armas: { colt: 10 } } })) {
+function abrir(seed: Record<string, Dados> = seedBase({ membros: { armas: { desert: 10 } } })) {
   fake = criarFakeFirestore({ seed });
   setDb(comoDb(fake));
 }
@@ -123,15 +123,15 @@ describe('QA-W1 revalidado: ids reservados (sem retorno antecipado)', () => {
   });
 
   it('categoriaId reservado ("constructor") também é recusado nas rotas', async () => {
-    const r = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'constructor', itemId: 'colt', quantidade: 1 } });
+    const r = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'constructor', itemId: 'desert', quantidade: 1 } });
     expect(r.status).toBe(400);
-    const p = await chamar(PREVIA, { perfil: 2, params: { tipo: 'membros' }, corpo: { linhas: [{ categoriaId: 'constructor', itemId: 'colt', quantidade: 1 }] } });
+    const p = await chamar(PREVIA, { perfil: 2, params: { tipo: 'membros' }, corpo: { linhas: [{ categoriaId: 'constructor', itemId: 'desert', quantidade: 1 }] } });
     expect(p.status).toBe(400);
   });
 
   describe('dados legados com "constructor" e "__proto__" gravados', () => {
     function abrirLegado() {
-      const seed = seedBase({ membros: { armas: { colt: 4, constructor: 2 } }, gerencia: { armas: { constructor: 7 } } });
+      const seed = seedBase({ membros: { armas: { desert: 4, constructor: 2 } }, gerencia: { armas: { constructor: 7 } } });
       // "__proto__" como chave PRÓPRIA (como viria de um JSON/Firestore), em categoria e item
       seed['baus/membros'] = JSON.parse(
         JSON.stringify(seed['baus/membros']).replace('"itens":{', '"itens":{"__proto__":{"nivel":3},"armas_x":{"__proto__":5},'),
@@ -148,22 +148,22 @@ describe('QA-W1 revalidado: ids reservados (sem retorno antecipado)', () => {
       expect(r.status, r.texto).toBe(200);
       const armas = (r.corpo.dados as { categorias: Array<{ id: string; itens: Array<{ id: string; quantidade: unknown }> }> }).categorias.find((c) => c.id === 'armas')!;
       expect(armas.itens.find((i) => i.id === 'constructor')?.quantidade).toBe(2);
-      expect(armas.itens.find((i) => i.id === 'colt')?.quantidade).toBe(4);
+      expect(armas.itens.find((i) => i.id === 'desert')?.quantidade).toBe(4);
       expect(r.texto).not.toContain('__proto__');
       expect(({} as Record<string, unknown>).nivel).toBeUndefined();
     });
 
     it('adicionar colt na mesma categoria preserva o constructor antigo', async () => {
       abrirLegado();
-      const r = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 1 } });
+      const r = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 1 } });
       expect(r.status, r.texto).toBe(200);
-      expect(itensBau('membros').armas).toEqual({ colt: 5, constructor: 2 });
+      expect(itensBau('membros').armas).toEqual({ desert: 5, constructor: 2 });
     });
 
     it('ajuste de colt com constructor antigo presente: 200 e constructor preservado', async () => {
       abrirLegado();
       const v = versaoBau('membros');
-      const r = await chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: v, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 0 }] } });
+      const r = await chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: v, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 0 }] } });
       expect(r.status, r.texto).toBe(200);
       expect(itensBau('membros').armas).toEqual({ constructor: 2 });
     });
@@ -173,7 +173,7 @@ describe('QA-W1 revalidado: ids reservados (sem retorno antecipado)', () => {
       const r = await chamar(CATALOGO_REMOVER, { metodo: 'DELETE', perfil: 3, params: { categoriaId: 'armas', itemId: 'constructor' } });
       expect(r.status, r.texto).toBe(200);
       expect((r.corpo.dados as { removidoDe: unknown }).removidoDe).toEqual({ membros: 2, gerencia: 7, casa: 0 });
-      expect(itensBau('membros').armas).toEqual({ colt: 4 });
+      expect(itensBau('membros').armas).toEqual({ desert: 4 });
       expect(itensBau('gerencia')).toEqual({});
       for (const [chave, doc] of Object.entries(fake.dump())) {
         if (!chave.startsWith('logs/')) continue;
@@ -211,11 +211,11 @@ describe('QA-W5 revalidado: anotação só com invisíveis', () => {
 });
 
 describe('QA-W5 no nome do item: invisíveis não criam duplicado visual nem ficam gravados', () => {
-  it.each(INVISIVEIS)('"Co<%s>lt" não vira um segundo "Colt" visualmente igual', async (_n, c) => {
-    const r = await novoItem(`Co${c}lt`);
+  it.each(INVISIVEIS)('"US<%s>P" não vira um segundo "USP" visualmente igual', async (_n, c) => {
+    const r = await novoItem(`US${c}P`);
     expect([201, 400, 409], r.texto).toContain(r.status);
     const visiveis = itensDaCategoria('armas').map((i) => i.nome.replace(new RegExp(FORMATO_OU_CONTROLE.source, 'gu'), '').toLowerCase());
-    expect(visiveis.filter((n) => n === 'colt'), JSON.stringify(itensDaCategoria('armas').map((i) => i.nome))).toHaveLength(1);
+    expect(visiveis.filter((n) => n === 'usp'), JSON.stringify(itensDaCategoria('armas').map((i) => i.nome))).toHaveLength(1);
   });
 
   it.each(INVISIVEIS)('nome novo com %s: se aceito, é gravado sem o caractere', async (_n, c) => {
@@ -246,7 +246,7 @@ describe('QA unicode, nomes quase iguais, emoji e entradas enormes no catálogo'
     expect((await novoItem('MUNICAO-PESADA')).status).toBe(409);
   });
 
-  it.each(['colt', ' COLT ', 'Colt!', 'Colt.', '🔫 Colt', 'Colt 🔫', 'Ćolt', 'Ｃolt'.normalize('NFKC')])('"%s" é duplicado de Colt (409)', async (nome) => {
+  it.each(['usp', ' USP ', 'USP!', 'USP.', '🔫 USP', 'USP 🔫', 'ÚSP', 'ＵSP'.normalize('NFKC')])('"%s" é duplicado de USP (409)', async (nome) => {
     const r = await novoItem(nome);
     expect(r.status, r.texto).toBe(409);
   });
@@ -279,7 +279,7 @@ describe('QA unicode, nomes quase iguais, emoji e entradas enormes no catálogo'
       const r = await chamar(CATALOGO_ADICIONAR, { perfil: 2, corpo });
       expect(r.status, r.texto).toBe(400);
     }
-    const mov = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 1, usuario: 'outro' } });
+    const mov = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 1, usuario: 'outro' } });
     expect(mov.status).toBe(400);
     const caixa = await chamar(MOVIMENTAR, { perfil: 2, corpo: { tipo: 'sujo', acao: 'entrada', valor: 1, anotacao: 'x', saldo: 999 } });
     expect(caixa.status).toBe(400);
@@ -287,7 +287,7 @@ describe('QA unicode, nomes quase iguais, emoji e entradas enormes no catálogo'
   });
 
   it('ajuste com 201 linhas → 400; com 200 linhas válidas mas repetidas → 400 listando as repetidas', async () => {
-    const linhas = Array.from({ length: 201 }, () => ({ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }));
+    const linhas = Array.from({ length: 201 }, () => ({ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }));
     expect((await chamar(PREVIA, { perfil: 2, params: { tipo: 'membros' }, corpo: { linhas } })).status).toBe(400);
     const r = await chamar(PREVIA, { perfil: 2, params: { tipo: 'membros' }, corpo: { linhas: linhas.slice(0, 200) } });
     expect(r.status).toBe(400);
@@ -298,16 +298,16 @@ describe('QA unicode, nomes quase iguais, emoji e entradas enormes no catálogo'
 describe('QA concorrência', () => {
   it('zerar em paralelo com adicionar: resultado é {} ou só a adição, nunca a soma antiga', async () => {
     for (let i = 0; i < 5; i++) {
-      abrir(seedBase({ membros: { armas: { colt: 10 } } }));
+      abrir(seedBase({ membros: { armas: { desert: 10 } } }));
       resetSemente();
       const [z, a] = await Promise.all([
         chamar(ZERAR, { perfil: 3, corpo: { alvo: 'membros', confirmacao: 'ZERAR' } }),
-        chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 3 } }),
+        chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 3 } }),
       ]);
       expect(z.status, z.texto).toBe(200);
       expect(a.status, a.texto).toBe(200);
       const final = itensBau('membros');
-      expect([JSON.stringify({}), JSON.stringify({ armas: { colt: 3 } })]).toContain(JSON.stringify(final));
+      expect([JSON.stringify({}), JSON.stringify({ armas: { desert: 3 } })]).toContain(JSON.stringify(final));
       expect(versaoBau('membros')).toBe(2);
     }
   });
@@ -315,28 +315,28 @@ describe('QA concorrência', () => {
   it('dois ajustes com a mesma versão em paralelo: um aplica, o outro 409 VERSAO_DESATUALIZADA', async () => {
     const v = versaoBau('membros');
     const [a, b] = await Promise.all([
-      chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: v, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }] } }),
-      chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: v, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 2 }] } }),
+      chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: v, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }] } }),
+      chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: v, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 2 }] } }),
     ]);
     const st = [a.status, b.status].sort();
     expect(st).toEqual([200, 409]);
     const perdedor = a.status === 409 ? a : b;
     expect(perdedor.corpo.codigo).toBe('VERSAO_DESATUALIZADA');
     const vencedor = a.status === 200 ? 1 : 2;
-    expect(itensBau('membros').armas?.colt).toBe(vencedor);
+    expect(itensBau('membros').armas?.desert).toBe(vencedor);
     expect(versaoBau('membros')).toBe(v + 1);
   });
 
   it('ajuste em paralelo com adicionar: ou o ajuste é recusado (409) ou a adição vem depois dele', async () => {
     for (let i = 0; i < 5; i++) {
-      abrir(seedBase({ membros: { armas: { colt: 10 } } }));
+      abrir(seedBase({ membros: { armas: { desert: 10 } } }));
       resetSemente();
       const [aj, ad] = await Promise.all([
-        chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 50 }] } }),
-        chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 3 } }),
+        chamar(CONFIRMAR, { perfil: 2, params: { tipo: 'membros' }, corpo: { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 50 }] } }),
+        chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 3 } }),
       ]);
       expect(ad.status, ad.texto).toBe(200);
-      const colt = itensBau('membros').armas?.colt;
+      const colt = itensBau('membros').armas?.desert;
       if (aj.status === 200) expect(colt).toBe(53);
       else {
         expect(aj.status, aj.texto).toBe(409);
@@ -347,7 +347,7 @@ describe('QA concorrência', () => {
 
   it('remover em paralelo com zerar nunca deixa negativo nem NaN', async () => {
     const [r, z] = await Promise.all([
-      chamar(REMOVER, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 10 } }),
+      chamar(REMOVER, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 10 } }),
       chamar(ZERAR, { perfil: 3, corpo: { alvo: 'membros', confirmacao: 'ZERAR' } }),
     ]);
     expect(z.status).toBe(200);
@@ -360,13 +360,13 @@ describe('QA sessão e CSRF', () => {
   it('sem sessão → 401 e sessão adulterada → 401 em todas as mutações, nada gravado', async () => {
     const antes = fake.dump();
     const casos: Array<[unknown, Record<string, string> | undefined, unknown, string?]> = [
-      [ADICIONAR, { tipo: 'membros' }, { categoriaId: 'armas', itemId: 'colt', quantidade: 1 }],
-      [REMOVER, { tipo: 'membros' }, { categoriaId: 'armas', itemId: 'colt', quantidade: 1 }],
-      [CONFIRMAR, { tipo: 'membros' }, { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }] }],
+      [ADICIONAR, { tipo: 'membros' }, { categoriaId: 'armas', itemId: 'desert', quantidade: 1 }],
+      [REMOVER, { tipo: 'membros' }, { categoriaId: 'armas', itemId: 'desert', quantidade: 1 }],
+      [CONFIRMAR, { tipo: 'membros' }, { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }] }],
       [ZERAR, undefined, { alvo: 'ambos', confirmacao: 'ZERAR' }],
       [MOVIMENTAR, undefined, { tipo: 'sujo', acao: 'entrada', valor: 1, anotacao: 'x' }],
       [CATALOGO_ADICIONAR, undefined, { categoriaId: 'armas', nome: 'Faca' }],
-      [CATALOGO_REMOVER, { categoriaId: 'armas', itemId: 'colt' }, undefined, 'DELETE'],
+      [CATALOGO_REMOVER, { categoriaId: 'armas', itemId: 'desert' }, undefined, 'DELETE'],
     ];
     for (const perfil of ['anonimo', 'adulterado'] as const) {
       for (const [rota, params, corpo, metodo] of casos) {
@@ -378,29 +378,29 @@ describe('QA sessão e CSRF', () => {
   });
 
   it('replay de CSRF: token válido de OUTRA sessão (mesmo usuário) é recusado com 403', async () => {
-    const pedido = await montarPedido({ metodo: 'POST', caminho, perfil: 2, csrf: 'ausente', corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 1 } });
+    const pedido = await montarPedido({ metodo: 'POST', caminho, perfil: 2, csrf: 'ausente', corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 1 } });
     const outro = tokenCsrf('sid-de-outra-sessao-qa');
     const h = new Headers(pedido.headers);
     h.set('x-csrf-token', outro);
-    const req = new Request(pedido.url, { method: 'POST', headers: h, body: JSON.stringify({ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }) });
+    const req = new Request(pedido.url, { method: 'POST', headers: h, body: JSON.stringify({ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }) });
     const res = await (ADICIONAR as Rota)(req, { params: Promise.resolve({ tipo: 'membros' }) });
     expect(res.status).toBe(403);
-    expect(itensBau('membros').armas?.colt).toBe(10);
+    expect(itensBau('membros').armas?.desert).toBe(10);
   });
 
   it('o mesmo token CSRF reapresentado na mesma sessão continua válido (token por sessão, decisão ADR-06)', async () => {
     for (let i = 0; i < 3; i++) {
-      const r = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 1 } });
+      const r = await chamar(ADICIONAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 1 } });
       expect(r.status).toBe(200);
     }
-    expect(itensBau('membros').armas?.colt).toBe(13);
+    expect(itensBau('membros').armas?.desert).toBe(13);
   });
 
   it('nível 1 não ajusta, nível 2 não zera nem remove do catálogo (rota de dono), nada gravado', async () => {
     const antes = fake.dump();
-    expect((await chamar(CONFIRMAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }] } })).status).toBe(403);
+    expect((await chamar(CONFIRMAR, { perfil: 1, params: { tipo: 'membros' }, corpo: { versao: 0, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }] } })).status).toBe(403);
     expect((await chamar(ZERAR, { perfil: 2, corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } })).status).toBe(403);
-    expect((await chamar(CATALOGO_REMOVER, { metodo: 'DELETE', perfil: 2, params: { categoriaId: 'armas', itemId: 'colt' } })).status).toBe(403);
+    expect((await chamar(CATALOGO_REMOVER, { metodo: 'DELETE', perfil: 2, params: { categoriaId: 'armas', itemId: 'desert' } })).status).toBe(403);
     expect((await chamar(CATALOGO_ADICIONAR, { perfil: 1, corpo: { categoriaId: 'armas', nome: 'Faca' } })).status).toBe(403);
     expect(fake.dump()).toEqual(antes);
   });

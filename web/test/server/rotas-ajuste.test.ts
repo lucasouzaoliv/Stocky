@@ -22,7 +22,7 @@ function abrir() {
   catalogo.find((c) => c.id === 'armas')!.itens.push({ id: '1_especial_50', nome: '#1 Especial: .50' });
   fake = criarFakeFirestore({
     seed: {
-      ...seedBase({ membros: { armas: { colt: 3 } }, gerencia: { armas: { usp: 1 } }, versao: 4 }),
+      ...seedBase({ membros: { armas: { desert: 3 } }, gerencia: { armas: { usp: 1 } }, versao: 4 }),
       'config/catalogo': { categorias: catalogo, atualizadoEm: 'x' },
     },
   });
@@ -43,9 +43,9 @@ afterEach(() => {
 const bau = (t = 'membros') => fake.dump()[`baus/${t}`] as { itens: ItensBau; versao: number };
 const escritas = () => fake.chamadas.filter((c) => c.op !== 'get');
 const linha = (categoriaId: string, itemId: string, quantidade: unknown) => ({ categoriaId, itemId, quantidade });
-const previa = (tipo: string, perfil: PerfilTeste, corpo: unknown = { linhas: [linha('armas', 'colt', 5)] }, extra: Record<string, unknown> = {}) =>
+const previa = (tipo: string, perfil: PerfilTeste, corpo: unknown = { linhas: [linha('armas', 'desert', 5)] }, extra: Record<string, unknown> = {}) =>
   chamarRota(PREVIA, { metodo: 'POST', caminho: `/api/bau/${tipo}/ajuste/previa`, params: { tipo }, perfil, corpo, ...extra });
-const confirmar = (tipo: string, perfil: PerfilTeste, corpo: unknown = { versao: 4, linhas: [linha('armas', 'colt', 5)] }, extra: Record<string, unknown> = {}) =>
+const confirmar = (tipo: string, perfil: PerfilTeste, corpo: unknown = { versao: 4, linhas: [linha('armas', 'desert', 5)] }, extra: Record<string, unknown> = {}) =>
   chamarRota(CONFIRMAR, { metodo: 'POST', caminho: `/api/bau/${tipo}/ajuste/confirmar`, params: { tipo }, perfil, corpo, ...extra });
 
 const ROTAS = [
@@ -65,7 +65,7 @@ describe('WEB-042 AC1: exigem nível 2 (inclusive para o baú membros) e CSRF', 
       });
 
       it(`${nome} ${tipo}: gerência (2) e dono (3) são aceitos`, async () => {
-        const doc = tipo === 'membros' ? { versao: 4, linhas: [linha('armas', 'colt', 5)] } : { versao: 4, linhas: [linha('armas', 'usp', 5)] };
+        const doc = tipo === 'membros' ? { versao: 4, linhas: [linha('armas', 'desert', 5)] } : { versao: 4, linhas: [linha('armas', 'usp', 5)] };
         for (const nivel of [2, 3] as const) {
           abrir();
           const r = await chamar(tipo, nivel, nome === 'previa' ? { linhas: doc.linhas } : doc);
@@ -101,9 +101,9 @@ describe('WEB-042 AC3: tipo e tamanho', () => {
     });
 
     it(`${nome}: corpo acima de 100 KB → 413; corpo entre 10 KB e 100 KB é aceito pelo limite`, async () => {
-      const grande = await chamar('membros', 2, { versao: 4, linhas: [linha('armas', 'colt', 5)], lixo: 'a'.repeat(103_000) });
+      const grande = await chamar('membros', 2, { versao: 4, linhas: [linha('armas', 'desert', 5)], lixo: 'a'.repeat(103_000) });
       expect([grande.status, grande.corpo.codigo]).toEqual([413, 'CORPO_GRANDE']);
-      const medio = await chamar('membros', 2, { versao: 4, linhas: [linha('armas', 'colt', 5)], lixo: 'a'.repeat(20_000) });
+      const medio = await chamar('membros', 2, { versao: 4, linhas: [linha('armas', 'desert', 5)], lixo: 'a'.repeat(20_000) });
       expect(medio.status).toBe(400); // passou do limite de 10 KB; recusado só pelo campo extra
       expect(medio.corpo.codigo).toBe('VALIDACAO');
       expect(escritas()).toEqual([]);
@@ -113,14 +113,14 @@ describe('WEB-042 AC3: tipo e tamanho', () => {
 
 describe('WEB-042 POST /api/bau/[tipo]/ajuste/previa', () => {
   it('AC4: nunca escreve (nenhuma escrita em fake.chamadas) e devolve a PreviaAjusteDTO', async () => {
-    const r = await previa('membros', 2, { linhas: [linha('armas', 'colt', 5), linha('armas', '1_especial_50', 2)] });
+    const r = await previa('membros', 2, { linhas: [linha('armas', 'desert', 5), linha('armas', '1_especial_50', 2)] });
     expect(r.status).toBe(200);
     expect(r.corpo.dados).toEqual({
       tipo: 'membros',
       versao: 4,
       alterados: 2,
       linhas: [
-        { categoriaId: 'armas', itemId: 'colt', nome: 'Colt', antes: 3, depois: 5 },
+        { categoriaId: 'armas', itemId: 'desert', nome: 'Desert Eagle', antes: 3, depois: 5 },
         { categoriaId: 'armas', itemId: '1_especial_50', nome: '#1 Especial: .50', antes: 0, depois: 2 },
       ],
     });
@@ -129,14 +129,14 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/previa', () => {
   });
 
   it('AC4: prévia inválida também não escreve; devolve detalhes.linhas com os índices inválidos', async () => {
-    const r = await previa('membros', 2, { linhas: [linha('armas', 'colt', 1), linha('armas', 'nada', 1), linha('armas', 'usp', -1)] });
+    const r = await previa('membros', 2, { linhas: [linha('armas', 'desert', 1), linha('armas', 'nada', 1), linha('armas', 'usp', -1)] });
     expect([r.status, r.corpo.codigo]).toEqual([400, 'VALIDACAO']);
     expect((r.corpo.detalhes as { linhas: Array<{ indice: number }> }).linhas.map((l) => l.indice)).toEqual([1, 2]);
     expect(escritas()).toEqual([]);
   });
 
   it('corpo mal formado → 400: sem linhas, linhas não-lista, linha com campo extra, campo extra no corpo, versão sobrando', async () => {
-    for (const corpo of [{}, { linhas: 'x' }, { linhas: [{ ...linha('armas', 'colt', 1), usuario: 'x' }] }, { linhas: [], x: 1 }, { versao: 4, linhas: [linha('armas', 'colt', 1)] }, null, []]) {
+    for (const corpo of [{}, { linhas: 'x' }, { linhas: [{ ...linha('armas', 'desert', 1), usuario: 'x' }] }, { linhas: [], x: 1 }, { versao: 4, linhas: [linha('armas', 'desert', 1)] }, null, []]) {
       const r = await previa('membros', 2, corpo);
       expect([r.status, r.corpo.codigo], JSON.stringify(corpo)).toEqual([400, 'VALIDACAO']);
       expect(r.corpo.erro).not.toMatch(/zod|expected|invalid_type/i);
@@ -146,18 +146,18 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/previa', () => {
 
   it('lista vazia e mais de 200 linhas → 400', async () => {
     expect((await previa('membros', 2, { linhas: [] })).status).toBe(400);
-    expect((await previa('membros', 2, { linhas: Array.from({ length: 201 }, () => linha('armas', 'colt', 1)) })).status).toBe(400);
+    expect((await previa('membros', 2, { linhas: Array.from({ length: 201 }, () => linha('armas', 'desert', 1)) })).status).toBe(400);
   });
 });
 
 describe('WEB-042 POST /api/bau/[tipo]/ajuste/confirmar', () => {
   it('AC2: sem versão (ou com versão não numérica) → 400 e nada gravado', async () => {
     for (const corpo of [
-      { linhas: [linha('armas', 'colt', 5)] },
-      { versao: '4', linhas: [linha('armas', 'colt', 5)] },
-      { versao: null, linhas: [linha('armas', 'colt', 5)] },
-      { versao: -1, linhas: [linha('armas', 'colt', 5)] },
-      { versao: 1.5, linhas: [linha('armas', 'colt', 5)] },
+      { linhas: [linha('armas', 'desert', 5)] },
+      { versao: '4', linhas: [linha('armas', 'desert', 5)] },
+      { versao: null, linhas: [linha('armas', 'desert', 5)] },
+      { versao: -1, linhas: [linha('armas', 'desert', 5)] },
+      { versao: 1.5, linhas: [linha('armas', 'desert', 5)] },
       { versao: 4 },
     ]) {
       const r = await confirmar('membros', 2, corpo);
@@ -169,31 +169,31 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/confirmar', () => {
   it('AC2/D3: prévia, depósito de +10, confirmação com a versão velha → 409 pedindo para refazer; estoque 13 e zero auditoria', async () => {
     const p = await previa('membros', 2);
     const versao = (p.corpo.dados as { versao: number }).versao;
-    const dep = await chamarRota(ADICIONAR, { metodo: 'POST', caminho: '/api/bau/membros/adicionar', params: { tipo: 'membros' }, perfil: 1, corpo: { categoriaId: 'armas', itemId: 'colt', quantidade: 10 } });
+    const dep = await chamarRota(ADICIONAR, { metodo: 'POST', caminho: '/api/bau/membros/adicionar', params: { tipo: 'membros' }, perfil: 1, corpo: { categoriaId: 'armas', itemId: 'desert', quantidade: 10 } });
     expect(dep.status).toBe(200);
     const antes = fake.dump();
-    const r = await confirmar('membros', 2, { versao, linhas: [linha('armas', 'colt', 5)] });
+    const r = await confirmar('membros', 2, { versao, linhas: [linha('armas', 'desert', 5)] });
     expect([r.status, r.corpo.codigo]).toEqual([409, 'VERSAO_DESATUALIZADA']);
     expect(r.corpo.erro).toBe('O baú mudou desde o resumo. Refaça o ajuste.');
-    expect(bau().itens.armas!.colt).toBe(13);
+    expect(bau().itens.armas!.desert).toBe(13);
     expect(auditorias(fake.dump())).toHaveLength(0);
     expect(fake.dump()).toEqual(antes);
   });
 
   it('fluxo feliz prévia → confirmar: aplica, sobe a versão, grava auditoria e log com o usuário da sessão', async () => {
-    const p = await previa('gerencia', 2, { linhas: [linha('armas', 'usp', 6), linha('armas', 'colt', 1)] });
+    const p = await previa('gerencia', 2, { linhas: [linha('armas', 'usp', 6), linha('armas', 'desert', 1)] });
     const versao = (p.corpo.dados as { versao: number }).versao;
-    const r = await confirmar('gerencia', 2, { versao, linhas: [linha('armas', 'usp', 6), linha('armas', 'colt', 1)] }, { userId: '555555555555555551' });
+    const r = await confirmar('gerencia', 2, { versao, linhas: [linha('armas', 'usp', 6), linha('armas', 'desert', 1)] }, { userId: '555555555555555551' });
     expect(r.status).toBe(200);
     expect(r.corpo.dados).toMatchObject({ alterados: 2, versao: 5 });
-    expect(bau('gerencia')).toMatchObject({ versao: 5, itens: { armas: { usp: 6, colt: 1 } } });
+    expect(bau('gerencia')).toMatchObject({ versao: 5, itens: { armas: { usp: 6, desert: 1 } } });
     expect(bau('membros').versao).toBe(4);
     expect(auditorias(fake.dump())[0]).toMatchObject({ acao: 'bau.ajuste_massa', usuario: { id: '555555555555555551' } });
     expect(logsDe(fake.dump(), 'gerencia')).toHaveLength(1);
   });
 
   it('usuário do corpo é ignorado/recusado: campo "usuario" → 400', async () => {
-    const r = await confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'colt', 5)], usuario: { id: '1', nome: 'Falso' } });
+    const r = await confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'desert', 5)], usuario: { id: '1', nome: 'Falso' } });
     expect(r.status).toBe(400);
     expect(escritas()).toEqual([]);
   });
@@ -209,7 +209,7 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/confirmar', () => {
 
   it('linha inválida (quantidade, item inexistente) → 400 com detalhes.linhas e nada gravado', async () => {
     const antes = fake.dump();
-    const r = await confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'colt', 9), linha('armas', 'colt', 9), linha('nada', 'x', '10abc')] });
+    const r = await confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'desert', 9), linha('armas', 'desert', 9), linha('nada', 'x', '10abc')] });
     expect(r.status).toBe(400);
     expect((r.corpo.detalhes as { linhas: Array<{ indice: number }> }).linhas.map((l) => l.indice)).toEqual([1, 2]);
     expect(fake.dump()).toEqual(antes);
@@ -217,8 +217,8 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/confirmar', () => {
 
   it('duas confirmações simultâneas com a mesma versão: um 200 e um 409', async () => {
     const r = await Promise.all([
-      confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'colt', 5)] }),
-      confirmar('membros', 3, { versao: 4, linhas: [linha('armas', 'colt', 8)] }, { userId: '555555555555555551' }),
+      confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'desert', 5)] }),
+      confirmar('membros', 3, { versao: 4, linhas: [linha('armas', 'desert', 8)] }, { userId: '555555555555555551' }),
     ]);
     expect(r.map((x) => x.status).sort()).toEqual([200, 409]);
     expect(bau().versao).toBe(5);
@@ -226,7 +226,7 @@ describe('WEB-042 POST /api/bau/[tipo]/ajuste/confirmar', () => {
   });
 
   it('sem alterações: 200, alterados 0, nenhuma escrita', async () => {
-    const r = await confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'colt', 3)] });
+    const r = await confirmar('membros', 2, { versao: 4, linhas: [linha('armas', 'desert', 3)] });
     expect([r.status, r.corpo.dados]).toEqual([200, { alterados: 0, versao: 4, auditoriaId: null }]);
     expect(escritas()).toEqual([]);
   });

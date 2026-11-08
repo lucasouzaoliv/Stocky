@@ -217,16 +217,16 @@ describe('WEB-066 AC1 login e acesso por nível', () => {
 describe('WEB-066 AC2 baú', () => {
   it('adicionar, remover até zerar, log e webhooks de movimentação + inventário', async () => {
     const m = await entrarOk('500000000000000001', [CARGO.membro]);
-    expect((await mover(ADICIONAR, m, 'membros', 'armas', 'colt', 10)).status).toBe(200);
-    expect(await qtd(m, 'membros', 'armas', 'colt')).toBe(10);
-    expect((await mover(REMOVER, m, 'membros', 'armas', 'colt', '4')).corpo.dados).toMatchObject({ quantidade: 6 });
-    expect((await mover(REMOVER, m, 'membros', 'armas', 'colt', 6)).corpo.dados).toMatchObject({ quantidade: 0 });
+    expect((await mover(ADICIONAR, m, 'membros', 'armas', 'desert', 10)).status).toBe(200);
+    expect(await qtd(m, 'membros', 'armas', 'desert')).toBe(10);
+    expect((await mover(REMOVER, m, 'membros', 'armas', 'desert', '4')).corpo.dados).toMatchObject({ quantidade: 6 });
+    expect((await mover(REMOVER, m, 'membros', 'armas', 'desert', 6)).corpo.dados).toMatchObject({ quantidade: 0 });
     const dump = fake.dump();
     expect(dump['baus/membros']!.itens).toEqual({}); // chave apagada, sem 0
     const l = logs(dump, 'membros');
     expect(l.map((x) => x.acao).sort()).toEqual(['adicionar', 'remover', 'remover']);
     expect(l.every((x) => (x.usuario as { id: string }).id === m.userId)).toBe(true);
-    expect((await mover(REMOVER, m, 'membros', 'armas', 'colt', 1)).status).toBe(404);
+    expect((await mover(REMOVER, m, 'membros', 'armas', 'desert', 1)).status).toBe(404);
 
     await executarPosCommit();
     expect(canaisChamados()).toEqual(esperados('WEBHOOK_LOG_MEMBROS', 'WEBHOOK_INVENTARIO_MEMBROS'));
@@ -315,20 +315,20 @@ describe('WEB-066 AC5 ajuste em massa (D1 e D3)', () => {
     expect(novo.status).toBe(201);
     const idD1 = novo.corpo.dados.item.id as string;
     expect(idD1).toBe('1_especial_50');
-    await mover(ADICIONAR, g, 'gerencia', 'armas', 'colt', 3);
+    await mover(ADICIONAR, g, 'gerencia', 'armas', 'desert', 3);
 
     const previa = (linhas: object[]) => chamar(PREVIA, g, 'POST', '/api/bau/gerencia/ajuste/previa', { params: { tipo: 'gerencia' }, corpo: { linhas } });
     const confirmar = (versao: number, linhas: object[]) =>
       chamar(CONFIRMAR, g, 'POST', '/api/bau/gerencia/ajuste/confirmar', { params: { tipo: 'gerencia' }, corpo: { versao, linhas } });
 
     const linhas = [
-      { categoriaId: 'armas', itemId: 'colt', quantidade: 5 },
+      { categoriaId: 'armas', itemId: 'desert', quantidade: 5 },
       { categoriaId: 'armas', itemId: idD1, quantidade: '2' },
     ];
     const p1 = await previa(linhas);
     expect(p1.status).toBe(200);
     expect(p1.corpo.dados.linhas.map((l: { nome: string; antes: number; depois: number }) => `${l.nome}:${l.antes}->${l.depois}`)).toEqual([
-      'Colt:3->5',
+      'Desert Eagle:3->5',
       `${nomeD1}:0->2`,
     ]);
     const ok = await confirmar(p1.corpo.dados.versao, linhas);
@@ -337,14 +337,14 @@ describe('WEB-066 AC5 ajuste em massa (D1 e D3)', () => {
     expect(await qtd(g, 'gerencia', 'armas', idD1)).toBe(2);
 
     // D3: prévia mostra 5 → 8; entra +10 antes de confirmar; confirmação recusada, estoque 15, sem nova auditoria
-    const p2 = await previa([{ categoriaId: 'armas', itemId: 'colt', quantidade: 8 }]);
+    const p2 = await previa([{ categoriaId: 'armas', itemId: 'desert', quantidade: 8 }]);
     expect(p2.corpo.dados.linhas[0]).toMatchObject({ antes: 5, depois: 8 });
-    await mover(ADICIONAR, g, 'gerencia', 'armas', 'colt', 10);
+    await mover(ADICIONAR, g, 'gerencia', 'armas', 'desert', 10);
     const audAntes = auditorias(fake.dump()).length;
-    const velho = await confirmar(p2.corpo.dados.versao, [{ categoriaId: 'armas', itemId: 'colt', quantidade: 8 }]);
+    const velho = await confirmar(p2.corpo.dados.versao, [{ categoriaId: 'armas', itemId: 'desert', quantidade: 8 }]);
     expect(velho.status).toBe(409);
     expect(velho.corpo.codigo).toBe('VERSAO_DESATUALIZADA');
-    expect(await qtd(g, 'gerencia', 'armas', 'colt')).toBe(15);
+    expect(await qtd(g, 'gerencia', 'armas', 'desert')).toBe(15);
     expect(auditorias(fake.dump())).toHaveLength(audAntes);
   });
 });
@@ -384,23 +384,23 @@ describe('WEB-066 AC7 webhook fora do ar', () => {
     webhookForaDoAr = true;
     const g = await entrarOk('500000000000000002', [CARGO.gerente]);
     const d = await entrarOk('500000000000000003', [CARGO.dono]);
-    expect((await mover(ADICIONAR, g, 'membros', 'armas', 'colt', 5)).status).toBe(200);
-    expect((await mover(REMOVER, g, 'membros', 'armas', 'colt', 2)).status).toBe(200);
+    expect((await mover(ADICIONAR, g, 'membros', 'armas', 'desert', 5)).status).toBe(200);
+    expect((await mover(REMOVER, g, 'membros', 'armas', 'desert', 2)).status).toBe(200);
     expect(
       (await chamar(MOVIMENTAR, g, 'POST', '/api/caixa/movimentar', { corpo: { tipo: 'limpo', acao: 'entrada', valor: 50, anotacao: 'a' } })).status,
     ).toBe(200);
     const p = await chamar(PREVIA, g, 'POST', '/api/bau/membros/ajuste/previa', {
       params: { tipo: 'membros' },
-      corpo: { linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }] },
+      corpo: { linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }] },
     });
     expect(
       (await chamar(CONFIRMAR, g, 'POST', '/api/bau/membros/ajuste/confirmar', {
         params: { tipo: 'membros' },
-        corpo: { versao: p.corpo.dados.versao, linhas: [{ categoriaId: 'armas', itemId: 'colt', quantidade: 1 }] },
+        corpo: { versao: p.corpo.dados.versao, linhas: [{ categoriaId: 'armas', itemId: 'desert', quantidade: 1 }] },
       })).status,
     ).toBe(200);
     expect(
-      (await chamar(CATALOGO_REMOVER, d, 'DELETE', '/api/catalogo/itens/armas/colt', { params: { categoriaId: 'armas', itemId: 'colt' } })).status,
+      (await chamar(CATALOGO_REMOVER, d, 'DELETE', '/api/catalogo/itens/armas/colt', { params: { categoriaId: 'armas', itemId: 'desert' } })).status,
     ).toBe(200);
     expect((await chamar(ZERAR, d, 'POST', '/api/bau/zerar', { corpo: { alvo: 'ambos', confirmacao: 'ZERAR' } })).status).toBe(200);
     await executarPosCommit();

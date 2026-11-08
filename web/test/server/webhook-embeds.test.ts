@@ -85,14 +85,14 @@ describe('WEB-048 AC1: catálogo cheio (6 × 25, nomes de 50 caracteres)', () =>
 describe('WEB-048 AC2: sem truncar quando cabe', () => {
   it('catálogo pequeno: nada fica de fora, sem aviso, e o rodapé está no último embed', () => {
     const b = bau([
-      categoria('a', [{ nome: 'Colt', quantidade: 3 }, { nome: 'USP', quantidade: 1200 }]),
+      categoria('a', [{ nome: 'Desert Eagle', quantidade: 3 }, { nome: 'USP', quantidade: 1200 }]),
       categoria('vazia', []),
       categoria('b', [{ nome: 'Colete', quantidade: 10 }]),
     ]);
     const embeds = montarEmbedsInventario(b, LINK);
     conferirLimites(embeds);
     expect(embeds).toHaveLength(2);
-    expect(lerSaida(embeds)).toEqual({ mostradas: ['Colt: **3**', 'USP: **1.200**', 'Colete: **10**'], restantes: 0 });
+    expect(lerSaida(embeds)).toEqual({ mostradas: ['Desert Eagle: **3**', 'USP: **1.200**', 'Colete: **10**'], restantes: 0 });
     expect(embeds[0]!.footer).toBeUndefined();
     expect(embeds[1]!.footer?.text).toBe(RODAPE);
     expect(embeds.some((e) => (e.description ?? '').includes('… e mais'))).toBe(false);

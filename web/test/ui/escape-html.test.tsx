@@ -22,7 +22,7 @@ const HOSTIS = [
   '<img src=x onerror=alert(1)>',
   '<script>alert(1)</script>',
   '&lt;b&gt;negrito&lt;/b&gt;',
-  `${RLO}Colt${ZWSP}45`,
+  `${RLO}Desert Eagle${ZWSP}45`,
 ];
 
 afterEach(() => {

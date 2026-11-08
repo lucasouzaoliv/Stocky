@@ -35,7 +35,7 @@ describe('WEB-035 adicionarItemAoCatalogo', () => {
     const r = await adicionarItemAoCatalogo('armas', '  Faca   de Cozinha ', USUARIO);
     expect(r).toEqual({ categoriaId: 'armas', item: { id: 'faca_de_cozinha', nome: 'Faca de Cozinha' } });
     expect(itensDe('armas').at(-1)).toEqual({ id: 'faca_de_cozinha', nome: 'Faca de Cozinha' });
-    expect(itensDe('armas').some((i) => i.id === 'colt')).toBe(true);
+    expect(itensDe('armas').some((i) => i.id === 'desert')).toBe(true);
   });
 
   it('AC2: "!!!", "", espaços, não-texto e 51 caracteres → 400 sem escrita', async () => {
@@ -156,7 +156,7 @@ describe('WEB-014 AC4 com a função real: adicionarItem x semeadura (D6)', () =
     ]);
     expect(r[1]?.item.id).toBe('faca');
     const ids = (c: string) => itensDe(c).map((i) => i.id);
-    expect(ids('armas')).toEqual(expect.arrayContaining(['colt', 'usp', 'desert', 'knife', 'faca', 'machado']));
+    expect(ids('armas')).toEqual(expect.arrayContaining(['desert', 'usp', 'desert', 'usp', 'faca', 'machado']));
     expect(ids('extras')).toContain('corda');
     expect(categorias()).toHaveLength(6);
     expect(auditorias(fake.dump())).toHaveLength(3);

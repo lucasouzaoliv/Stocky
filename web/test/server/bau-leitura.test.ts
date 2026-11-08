@@ -46,7 +46,7 @@ describe('WEB-028 lerBau', () => {
   });
 
   it('AC4: com o banco já semeado, ler não escreve nada e não altera o dump', async () => {
-    abrir({ seed: seedBase({ membros: { armas: { colt: 2 } } }) });
+    abrir({ seed: seedBase({ membros: { armas: { desert: 2 } } }) });
     const antes = fake.dump();
     await lerBau('membros');
     expect(escritas()).toEqual([]);
@@ -56,14 +56,14 @@ describe('WEB-028 lerBau', () => {
   it('AC2: itens aparecem na categoria certa, com nome do catálogo, quantidade e versao do baú; cada baú é separado', async () => {
     abrir({
       seed: seedBase({
-        membros: { armas: { colt: 3 }, medicamentos: { analgesico: 10, gaze: 4 } },
+        membros: { armas: { desert: 3 }, medicamentos: { analgesico: 10, gaze: 4 } },
         gerencia: { drogas: { lsd: 9 } },
         versao: 7,
       }),
     });
     const m = await lerBau('membros');
     expect(m.versao).toBe(7);
-    expect(m.categorias.find((c) => c.id === 'armas')!.itens).toEqual([{ id: 'colt', nome: 'Colt', quantidade: 3 }]);
+    expect(m.categorias.find((c) => c.id === 'armas')!.itens).toEqual([{ id: 'desert', nome: 'Desert Eagle', quantidade: 3 }]);
     expect(m.categorias.find((c) => c.id === 'medicamentos')!.itens).toEqual([
       { id: 'analgesico', nome: 'Analgésico', quantidade: 10 },
       { id: 'gaze', nome: 'Gaze', quantidade: 4 },
@@ -74,10 +74,10 @@ describe('WEB-028 lerBau', () => {
   });
 
   it('AC2: item que saiu do catálogo aparece como "Item removido" e não quebra; quantidade inválida no banco é ignorada', async () => {
-    abrir({ seed: seedBase({ membros: { armas: { colt: 1, fantasma: 5, zero: 0, negativo: -3, quebrado: 1.5 } } }) });
+    abrir({ seed: seedBase({ membros: { armas: { desert: 1, fantasma: 5, zero: 0, negativo: -3, quebrado: 1.5 } } }) });
     const armas = (await lerBau('membros')).categorias.find((c) => c.id === 'armas')!;
     expect(armas.itens).toEqual([
-      { id: 'colt', nome: 'Colt', quantidade: 1 },
+      { id: 'desert', nome: 'Desert Eagle', quantidade: 1 },
       { id: 'fantasma', nome: 'Item removido', quantidade: 5 },
     ]);
   });
@@ -119,7 +119,7 @@ describe('WEB-028 lerCatalogo', () => {
     abrir();
     const c = await lerCatalogo();
     expect(c.categorias).toHaveLength(6);
-    expect(c.categorias.reduce((n, x) => n + x.total, 0)).toBe(59);
+    expect(c.categorias.reduce((n, x) => n + x.total, 0)).toBe(56);
     for (const cat of c.categorias) expect(cat.total).toBe(cat.itens.length);
     expect(c.categorias[0]).toMatchObject({ id: 'medicamentos', nome: 'Medicamentos', emoji: '💊' });
     expect(c.categorias[0]!.itens[0]).toEqual({ id: 'gaze', nome: 'Gaze' });

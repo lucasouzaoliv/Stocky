@@ -15,7 +15,7 @@ function abrir(o: { membros?: ItensBau; gerencia?: ItensBau; versao?: number } =
   fake = criarFakeFirestore({ seed: seedBase(o) });
   setDb(comoDb(fake));
 }
-beforeEach(() => abrir({ membros: { medicamentos: { analgesico: 10, gaze: 2 } }, gerencia: { medicamentos: { analgesico: 5 }, armas: { colt: 1 } } }));
+beforeEach(() => abrir({ membros: { medicamentos: { analgesico: 10, gaze: 2 } }, gerencia: { medicamentos: { analgesico: 5 }, armas: { desert: 1 } } }));
 afterEach(() => {
   resetDb();
   resetSemente();
@@ -38,7 +38,7 @@ describe('WEB-036 removerItemDoCatalogo', () => {
     expect(r.removidoDe).toEqual({ membros: 10, gerencia: 5, casa: 0 });
     expect(itensCat('medicamentos').map((i) => i.id)).toEqual(['gaze', 'adrenalina']);
     expect(bau('membros').itens).toEqual({ medicamentos: { gaze: 2 } });
-    expect(bau('gerencia').itens).toEqual({ armas: { colt: 1 } });
+    expect(bau('gerencia').itens).toEqual({ armas: { desert: 1 } });
     const [a] = auditorias(fake.dump());
     expect(a).toMatchObject({
       acao: 'catalogo.remover_item',
@@ -53,10 +53,10 @@ describe('WEB-036 removerItemDoCatalogo', () => {
   });
 
   it('AC1: cria um log catalogo_remover em cada baú que tinha quantidade, ligado à auditoria', async () => {
-    const r = await removerItemDoCatalogo('armas', 'colt', DONO);
+    const r = await removerItemDoCatalogo('armas', 'desert', DONO);
     expect(logsDe(fake.dump(), 'membros')).toHaveLength(0);
     const [log] = logsDe(fake.dump(), 'gerencia');
-    expect(log).toMatchObject({ acao: 'catalogo_remover', itemId: 'colt', quantidade: 1, auditoriaId: r.auditoriaId, versao: 1 });
+    expect(log).toMatchObject({ acao: 'catalogo_remover', itemId: 'desert', quantidade: 1, auditoriaId: r.auditoriaId, versao: 1 });
   });
 
   it('AC1/AC4: toda a remoção é feita em transação e a versão dos dois baús sobe 1', async () => {
@@ -153,8 +153,8 @@ describe('WEB-036 removerItemDoCatalogo', () => {
 
   it('remover duas vezes: a segunda dá 404 e não duplica a auditoria', async () => {
     const r = await Promise.allSettled([
-      removerItemDoCatalogo('armas', 'colt', DONO),
-      removerItemDoCatalogo('armas', 'colt', DONO),
+      removerItemDoCatalogo('armas', 'desert', DONO),
+      removerItemDoCatalogo('armas', 'desert', DONO),
     ]);
     expect(r.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
     expect(((r.find((x) => x.status === 'rejected') as PromiseRejectedResult).reason as ErroApp).status).toBe(404);

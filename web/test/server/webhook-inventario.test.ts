@@ -26,7 +26,7 @@ beforeEach(() => {
   resetSemente();
   saidas = [];
   for (const m of ['log', 'warn', 'error'] as const) vi.spyOn(console, m).mockImplementation((...a) => void saidas.push(a.map(String).join(' ')));
-  abrir(seedBase({ membros: BANDAGEM, gerencia: { armas: { colt: 2 } } }));
+  abrir(seedBase({ membros: BANDAGEM, gerencia: { armas: { desert: 2 } } }));
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -81,7 +81,7 @@ describe('WEB-049 AC1: envia na primeira vez e edita depois', () => {
     const ids = new Set([doc('inventario_membros')?.mensagemId, doc('inventario_gerencia')?.mensagemId]);
     expect(ids.size).toBe(2);
     const colt = [...d.mensagens.values()].find((m) => m.canalToken === tokenDe('WEBHOOK_INVENTARIO_GERENCIA'))!;
-    expect(JSON.stringify(colt.payload.embeds)).toContain('Colt: **2**');
+    expect(JSON.stringify(colt.payload.embeds)).toContain('Desert Eagle: **2**');
   });
 });
 
