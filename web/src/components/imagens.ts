@@ -7,6 +7,7 @@ const COM_IMAGEM: ReadonlySet<string> = new Set([
   'gaze',
   'adrenalina',
   'usp',
+  'muni_556x45',
   'bateria',
   'material_reciclavel',
   'assault_rifle_mk2',
