@@ -33,6 +33,7 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'desert', nome: 'Desert Eagle' },
       { id: 'cz_scorpion_evo', nome: 'CZ Scorpion Evo' },
       { id: 'c_4', nome: 'C-4' },
+      { id: 'assault_rifle_mk2', nome: 'Assault Rifle MK2' },
     ],
   },
   {
@@ -57,6 +58,8 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'plastico', nome: 'Plástico' },
       { id: 'sucata_metal', nome: 'Sucata de Metal' },
       { id: 'bateria_de_impressora', nome: 'Bateria de Impressora' },
+      { id: 'bateria', nome: 'Bateria' },
+      { id: 'material_reciclavel', nome: 'Material Reciclável' },
       { id: 'pneu', nome: 'Pneu' },
       { id: 'esponjinha', nome: 'Esponjinha' },
       { id: 'caixa_de_ferramentas', nome: 'Caixa de Ferramentas' },

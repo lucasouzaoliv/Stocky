@@ -50,10 +50,13 @@ M={
  'usb_trojan':('s4',(162,428,210,474)),
  'arquivo_ghost':('s5',(46,98,104,176)),
  'cz_scorpion_evo':('s5',(56,236,96,274)),
+ 'assault_rifle_mk2':('s7',(596,144,651,176)),
+ 'bateria':('s8',(616,146,658,184)),
+ 'material_reciclavel':('s8',(616,396,660,435)),
 }
 
 only=sys.argv[1:]
-REFINA={'chave_de_fenda':34,'lockpick':34,'trojan_bancario':34,'skateboard':40,'adrenalina':34,'agulha':30,'tesoura':34,'linha':30}
+REFINA={'assault_rifle_mk2':20,'chave_de_fenda':34,'lockpick':34,'trojan_bancario':34,'skateboard':40,'adrenalina':34,'agulha':30,'tesoura':34,'linha':30}
 S=160  # lado final
 for k,(s,(x0,y0,x1,y1)) in M.items():
     if only and k not in only: continue
