@@ -44,6 +44,7 @@ export const CATALOGO_PADRAO: readonly CategoriaCatalogo[] = congelar([
       { id: 'colete', nome: 'Colete' },
       { id: 'colete_danificado', nome: 'Colete Danificado' },
       { id: 'muni_9mm', nome: 'Munição 9MM' },
+      { id: 'muni_556x45', nome: 'Munição 5.56x45' },
       { id: 'muni_45acp', nome: 'Munição .45 ACP' },
       { id: 'muni_50ae', nome: 'Munição .50 AE' },
     ],

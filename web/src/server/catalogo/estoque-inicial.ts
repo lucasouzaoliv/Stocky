@@ -28,7 +28,7 @@ export const ESTOQUE_INICIAL: Readonly<Record<TipoBau, DocBau['itens']>> = {
   },
   casa: {
     armas: { desert: 1, usp: 5, cz_scorpion_evo: 3, assault_rifle_mk2: 3 },
-    coletesemuni: { muni_50ae: 277, muni_9mm: 302, muni_45acp: 1385 },
+    coletesemuni: { muni_50ae: 277, muni_9mm: 302, muni_45acp: 1385, muni_556x45: 500 },
     extras: { arquivo_ghost: 2 },
   },
 };
