@@ -119,7 +119,7 @@ describe('WEB-028 lerCatalogo', () => {
     abrir();
     const c = await lerCatalogo();
     expect(c.categorias).toHaveLength(6);
-    expect(c.categorias.reduce((n, x) => n + x.total, 0)).toBe(60);
+    expect(c.categorias.reduce((n, x) => n + x.total, 0)).toBe(62);
     for (const cat of c.categorias) expect(cat.total).toBe(cat.itens.length);
     expect(c.categorias[0]).toMatchObject({ id: 'medicamentos', nome: 'Medicamentos', emoji: '💊' });
     expect(c.categorias[0]!.itens[0]).toEqual({ id: 'gaze', nome: 'Gaze' });
